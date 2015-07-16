@@ -45,9 +45,11 @@ V_ROI = double(max(RGB_R, max(RGB_G, RGB_B)))/255; % 虽然范围不同(ROI调�
 [h, w] = size(V_ROI);
 
 DldFeature = zeros(h, w);
+Dld = zeros(h, w);
 for r = 1 : h
 	mw = ceil(5 * r / h); % marking width
 	for c = (mw + max(1, left(r))) : (min(right(r), w) - mw )
+		Dld(r, c) = 2* V_ROI(r, c) - (V_ROI(r , c - mw)+V_ROI(r , c + mw)) - abs(V_ROI(r , c - mw) - V_ROI(r , c + mw));
 		DldFeature(r, c) = V_ROI(r, c) ./ (V_ROI(r , c - mw)+V_ROI(r , c + mw));
 	end
 end 
@@ -60,7 +62,14 @@ Marking = bwareaopen(Marking, 15);
 RemovedRegion = zeros(horizon-1, w);
 line = bwFitLine([RemovedRegion; Marking], theta);
 
-% implot(RGB, DldFeature, Marking);
+% 对比
+figure;
+imwrite(Dld, 'results/Dld.jpg');
+imwrite(DldFeature, 'results/DldFeature.jpg');
+imshow(Dld);
+figure;
+imshow(DldFeature);
+% implot 做了对比度调整!implot(RGB, Dld, DldFeature, Marking);
 
 try
 % 与horizon交点
@@ -93,14 +102,17 @@ RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
 S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 
 % road boundary detection
-S_bw = S_modified > 0.4; %  0.3 0.2 % 用histeq和graythresh效果不好
+S_bw = S_modified > 0.3; %  0.3 0.2 % 用histeq和graythresh效果不好
+imwrite(S_bw, 'results/Fig5-a.jpg');
 S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
+imwrite(S_bw, 'results/Fig5-b.jpg');
 S_bw = bwareaopen(S_bw, 50); % 车道线可能成为干扰
+imwrite(S_bw, 'results/Fig5-c.jpg');
 
 [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw);
 RemovedRegion = zeros(horizon-1, numColumn); % 为了正确显示直线，补上去掉的区域
-lineL = bwFitLine([RemovedRegion; BoundaryL]);
-lineR = bwFitLine([RemovedRegion; BoundaryR]);
+lineL = bwFitLine([RemovedRegion; BoundaryL], [0:89]);
+lineR = bwFitLine([RemovedRegion; BoundaryR], [-89:0]);
 
 % lineL = bwFitLine(BoundaryL);
 % lineR = bwFitLine(BoundaryR);
@@ -166,7 +178,7 @@ else
 end
 
 % Finding the Hough peaks
-P = houghpeaks(H, 2);
+P = houghpeaks(H, 1);
 x = theta(P(:,2));
 y = rho(P(:,1));
 
@@ -174,13 +186,23 @@ y = rho(P(:,1));
 lines = houghlines(BW,theta,rho,P, 'MinLength',10, 'FillGap',570);
 line = lines(1);
 
+% figure;
+% imshow(H,[],'XData',theta,'YData',rho,'InitialMagnification','fit');
+% xlabel('\theta'), ylabel('\rho');
+% axis on, axis normal, hold on;
+% plot(theta(P(:,2)),rho(P(:,1)),'s','color','white');
+% figure;
+
 %-------------------------------------------------------------------%
 function [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(BW)
 [numRow, numColumn] = size(BW);
 
 Boundary_candidate = zeros(numRow, numColumn);
-BoundaryL = Boundary_candidate;
-BoundaryR = Boundary_candidate;
+BoundaryL = zeros(numRow, numColumn);
+BoundaryR = zeros(numRow, numColumn);
+ScanB = zeros(numRow, numColumn);
+ScanL = zeros(numRow, numColumn);
+ScanR = zeros(numRow, numColumn);
 
 for c = 1 : numColumn
 	for r = numRow : -1 : 1
@@ -188,22 +210,30 @@ for c = 1 : numColumn
 			Boundary_candidate(r, c) = 1;
 			break;
 		end
+		ScanB(r, c) = 1;
 	end
 end 
 for r = numRow : -1 : 1
 	for c = (numColumn/2) : -1 : 1
-		if 1 == BW(r, c)
+		if 1 == Boundary_candidate(r, c)
 			BoundaryL(r, c) = 1;
 			break;
 		end
+		ScanL(r, c) = 1;
 	end
 	for c = (numColumn/2) : numColumn
-		if 1 == BW(r, c)
+		if 1 == Boundary_candidate(r, c)
 			BoundaryR(r, c) = 1;
 			break;
 		end
+		ScanR(r, c) = 1;
 	end
 end
 
-BoundaryL = BoundaryL & Boundary_candidate;
-BoundaryR = BoundaryR & Boundary_candidate;
+% 论文中显示不清楚，用标记点的方式
+imwrite(Boundary_candidate, 'results/Fig6-a.jpg');
+imwrite(BoundaryL, 'results/Fig6-b.jpg');
+imwrite(BoundaryR, 'results/Fig6-c.jpg');
+imwrite(ScanB, 'results/Fig6-d.jpg');
+imwrite(ScanL, 'results/Fig6-e.jpg');
+imwrite(ScanR, 'results/Fig6-f.jpg');
