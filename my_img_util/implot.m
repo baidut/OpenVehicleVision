@@ -57,6 +57,12 @@ for i = 1: nargin
 
 end
 
-jframe=getJFrame(gcf);jframe.setMaximized(1); 
-% getJFrame 在R2012a适用，R2015a出错，错误信息如下
-% Undefined function 'abs' for input arguments of type 'matlab.ui.Figure'.
+if verLessThan('matlab', '7.11')
+	jframe=getJFrame(gcf);jframe.setMaximized(1); 
+	% getJFrame 在R2012a适用，R2015a出错，错误信息如下
+	% Undefined function 'abs' for input arguments of type 'matlab.ui.Figure'.
+else
+	scrsz = get(0,'ScreenSize');
+    set(gcf,'Position',scrsz);
+    % see more http://blog.163.com/yinhexiwen@126/blog/static/6404826620122942057214/
+end
