@@ -33,8 +33,21 @@ numColumn = size(Orignal, 2);
 horizon = 310; % param.cal
 
 Preprocessed = vvPreprocess(Orignal, horizon); % ROI: [horizon, numRow; 1, numColumn]
+
+% vvRowFilter(Preprocessed, '%TEST'); 
+Filtered = vvRowFilter(Preprocessed, 'SMLT'); 
+Binary = (Preprocessed-Filtered)>30;
+Binary = bwareaopen(Binary, 50); % 滤去孤立点
+implot(Orignal, GroundTruth, Preprocessed, Filtered, Preprocessed-Filtered, Binary);
+
+return;
+
 LT = vvGetFeature(Preprocessed, 'LT');
 MLT = vvGetFeature(Preprocessed, 'MLT');
+MLT = vvGetFeature(Preprocessed, 'SLT');
+MLT = vvGetFeature(Preprocessed, 'SMLT');
 
-implot(Orignal, GroundTruth, Preprocessed, LT, MLT);
+implot(Orignal, GroundTruth, Preprocessed, LT, MLT, SLT, SMLT);
 return;
+
+% 特征提取一步不允许进行假设验证，不能利用高级信息
