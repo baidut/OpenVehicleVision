@@ -62,13 +62,15 @@ Marking = bwareaopen(Marking, 15);
 RemovedRegion = zeros(horizon-1, w);
 line = bwFitLine([RemovedRegion; Marking], theta);
 
-% 对比
-figure;
-imwrite(Dld, 'results/Dld.jpg');
+imwrite(ROI, 'results/ROI.jpg');
 imwrite(DldFeature, 'results/DldFeature.jpg');
-imshow(Dld);
-figure;
-imshow(DldFeature);
+% 对比
+% figure;
+% imwrite(Dld, 'results/Dld.jpg');
+% imwrite(DldFeature, 'results/DldFeature.jpg');
+% imshow(Dld);
+% figure;
+% imshow(DldFeature);
 % implot 做了对比度调整!implot(RGB, Dld, DldFeature, Marking);
 
 try
