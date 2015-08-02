@@ -1,3 +1,25 @@
+function maxfig(varargin)
+%MAXFIG Maximized figure
+% USAGE:
+%	MAXFIG;
+%	MAXFIG(fig1, fig2);
+if nargin == 0
+	maxfig(gcf);
+else 
+	for i = 1: nargin
+		fig = varargin{i};
+		if verLessThan('matlab', '7.11')
+			jframe=getJFrame(fig);jframe.setMaximized(1); 
+			% getJFrame 在R2012a适用，R2015a出错，错误信息如下
+			% Undefined function 'abs' for input arguments of type 'matlab.ui.Figure'.
+		else
+			scrsz = get(0,'ScreenSize');
+		    set(fig,'Position',scrsz);
+		    % see more http://blog.163.com/yinhexiwen@126/blog/static/6404826620122942057214/
+		end
+	end
+end 
+
 function JFrame = getJFrame(hfig)
 %GETJFRAME converts MATLAB figure handle to JAVA object,
 %which provides methods like setMaximized, setMinimized and setAlwaysOnTop.

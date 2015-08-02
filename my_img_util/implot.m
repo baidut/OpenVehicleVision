@@ -7,10 +7,11 @@ function ok = implot(varargin)
 %	implot(I,I,J,I,I,I,J,I,I);
 %	implot('picture1.jpg', 'picture2.jpg');
 % 	files = str2files('pictures/*.picture');
-% 	implot(files{:}); % 没有title？
+% 	implot(files{:});
 % Freatures: 自动布局、支持变量或者文件名，自动将变量名或文件名作为title、矩阵自动转为灰度图
 % Todo: 调整Matlab中Subplot间距
 % Notice: implot(images{:}) 
+% 添加参数配置，如是否最大化，是否创建窗口: figure;implot;maxfig
 
 r = floor(sqrt(nargin)); % 确保最优
 c = ceil(nargin/r); % 确保足够
@@ -24,15 +25,16 @@ for i = 1: nargin
 	
 	image = varargin{i};
 	
-	if ~isstr(image) && ismatrix(image)  % grey
-		imshow(image, []); % imshow(mat2gray(image));
-	else % color image
-		imshow(image);
-	end
-	
 	if isstr(image)
-		name = image;
-	else 
+		[PATHSTR,name,EXT] = fileparts(image);
+		image = imread(image);
+		imshow(image);
+	else
+		if ismatrix(image)  % grey
+			imshow(image, []); % imshow(mat2gray(image));
+		else % color image
+			imshow(image);
+		end
 		%Filtered_Mean 显示为 Filtered_M_e_a_n
 		name = inputname(i); % 'Filtered_Mean'
 		
@@ -55,14 +57,4 @@ for i = 1: nargin
 	end
 	title(name);
 
-end
-
-if verLessThan('matlab', '7.11')
-	jframe=getJFrame(gcf);jframe.setMaximized(1); 
-	% getJFrame 在R2012a适用，R2015a出错，错误信息如下
-	% Undefined function 'abs' for input arguments of type 'matlab.ui.Figure'.
-else
-	scrsz = get(0,'ScreenSize');
-    set(gcf,'Position',scrsz);
-    % see more http://blog.163.com/yinhexiwen@126/blog/static/6404826620122942057214/
 end

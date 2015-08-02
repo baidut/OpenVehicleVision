@@ -14,7 +14,7 @@
 %   str2files                     - Output files matching the input string with wildcard
 %   out2fifo                      - Output to a First In First Out buffer
 %   slidevar                      - Controlling a variable with a slidebar 
-%   getJFrame                     - Converts MATLAB figure handle to JAVA object 
+%   maxfig                        - Maximized figure
 %
 % My img Util
 %   foreach_frame_do              - Traversing frames for image processing
