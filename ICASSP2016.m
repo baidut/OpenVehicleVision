@@ -1,5 +1,6 @@
-function ICASSP2016(folder, no)
-%
+% function ICASSP2016(folder, no)
+%USAGE
+% ICASSP2016('IRC041500','00010');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % doc: https://github.com/baidut/ITS/issues/50
 % log:
@@ -20,28 +21,19 @@ function ICASSP2016(folder, no)
 % RGB = imresize(RGB, [numRow, numColumn]);
 
 % 读取某个数据库，某张图片
-% ICASSP2016('IRC041500','00010');
+folder = 'IRC041500';
+no = '00010';
 
 folder = ['dataset\roma\', folder];
 Orignal = imread([folder, '\IMG', no, '.jpg']);
 GroundTruth = imread([folder, '\RIMG', no, '.pgm']);
 
-figure;
-implot(Orignal, GroundTruth); 
-return;
-
 numRow = size(Orignal, 1);
 numColumn = size(Orignal, 2);
+horizon = 310; % param.cal
 
-%-------------------------------------------------------------------%
-function featureExtraction(RGB, method)
-% 每一行独立地进行滤波，滤波器的大小跟随透视效应改变
-% 使用一维的滤波方式
+Preprocessed = vvPreprocess(Orignal, horizon); % ROI: [horizon, numRow; 1, numColumn]
+FeatureMap = vvGetFeature(Preprocessed, 'LT');
 
-switch method
-case 'LT'
-
-	Filtered_Mean = imfilter(Raw_noisy, [1 1 1; 1 1 1; 1 1 1]/9, 'corr', 'replicate');
-case 'SLT'
-
-end
+implot(Orignal, GroundTruth, Preprocessed, FeatureMap); 
+return;

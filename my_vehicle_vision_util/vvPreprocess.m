@@ -1,7 +1,20 @@
-function Gray = vvPreprocess(image)
-% 如果从速度考虑就应该先ROI再Gray 都差不多
-image = im2gray(image);
-Gray = image(ceil(end/2):end, :);
+function Preprocessed = vvPreprocess(image, horizon)
+% numRow = size(I, 1);
+% numColumn = size(I, 2);
+% vvPreprocess(image, [ceil(numRow/2):numRow;1:numColumn]); % low half
+% vvPreprocess(image, [horizon:numRow;1:numColumn]); % lower than horizontal line 
+
+
+Gray = im2gray(image);
+
+% ROI不一定取某条线以下，应该是个横轴和纵轴的范围，表征一个矩形 [x1,x2;y1,y2]
+% Gray = image(ceil(end/2):end, :);
+
+if nargin < 2
+	Preprocessed = Gray(ceil(end/2):end, :);
+else 
+	Preprocessed = Gray(horizon:end, :);
+end
 
 % 先裁剪 运算较复杂，但不要求精度，可以先将图片缩小，得到坐标后，再放大
 % 分析RGB分量图 观察1-255的值的变化，直方图分布情况
