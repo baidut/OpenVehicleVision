@@ -1,4 +1,4 @@
-function Binary = vvGetFeature(I, feature, preprocess, varargin)
+function FeatureMap = vvGetFeature(I, feature, preprocess, varargin)
 %GETFEATURE
 % USAGE:
 % vvGetFeature('pictures/lanemarking/light_singlelane.jpg', 'light');
@@ -20,19 +20,9 @@ switch upper(feature)
 
 % 每一行独立地进行滤波，滤波器的大小跟随透视效应改变
 % 使用一维的滤波方式
-case 'LT' % 均值滤波
-	Demarkings = I; % 均值滤波去除掉车道标记
-	% 确定一个适合的水平线以及道路宽度
-	% Demarkings(1:horizon, :) = 0; 
-	% 512 参数调节工具
-	
-	for r = 1 : numRow
-		% horizon - 5  numColumn - 512
-		s = ceil(5 + r*512/numColumn); % 确保是奇数
-		Demarkings(r,:) = imfilter(I(r,:), ones(1, s)/s , 'corr', 'replicate');
-	end
-
-	Binary = Demarkings; % 暂不进行二值化
+case {'LT', 'MLT', 'PLT', 'SLT'}
+	Filtered = vvRowFilter(I, feature); 
+	FeatureMap = I - Filtered;
 
 case '1d-dld'	
 	% noise: shadows

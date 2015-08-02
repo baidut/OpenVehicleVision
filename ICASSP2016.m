@@ -33,7 +33,8 @@ numColumn = size(Orignal, 2);
 horizon = 310; % param.cal
 
 Preprocessed = vvPreprocess(Orignal, horizon); % ROI: [horizon, numRow; 1, numColumn]
-FeatureMap = vvGetFeature(Preprocessed, 'LT');
+LT = vvGetFeature(Preprocessed, 'LT');
+MLT = vvGetFeature(Preprocessed, 'MLT');
 
-implot(Orignal, GroundTruth, Preprocessed, FeatureMap); 
+implot(Orignal, GroundTruth, Preprocessed, LT, MLT);
 return;
