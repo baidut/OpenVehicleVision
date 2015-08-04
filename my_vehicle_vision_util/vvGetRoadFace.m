@@ -3,8 +3,15 @@ function RoadRegion = vvGetRoadFace(image)
 % 用低分辨率处理，
 % 得到路面区域再回到高分辨率 注意图像回到高分辨率会出现锯齿，但参数不会，所以在低分辨率提取参数是可行的
 % 或者变化分辨率
+% 大量阴影 
+% dataset\roma\BDXD54\IMG00071.jpg
+% dataset\roma\BDXD54\IMG00030.jpg
+% foreach_file_do('dataset\roma\BDXD54\*.jpg',@vvGetRoadFace)
+
+% 先对图像做倒转，不然坐标变换太麻烦
 
 if isstr(image)
+	disp(['start processing image:', image]);
 	image = imread(image);
 end 
 
@@ -18,21 +25,25 @@ else
 	[numRow, numColumn, nchannel] = size(image);
 end 
 
-
 if nchannel ~= 3
 	error('input must be a colour image.');
 end
 
-figure;
-imshow(image); 
-hold on;% 供描点划线，中间结果写入文件
-
-[horizon, left, right, theta] = detectRoadBoundary(image);
+[horizon, PointO, PointL, PointR] = detectRoadBoundary(image);
+perspectiveTrans(image, horizon, PointO, PointL, PointR);
 
 %-------------------------------------------------------------------%
-function [horizon, left, right, theta] = detectRoadBoundary(RGB) 
-numRow = size(RGB, 1);
-numColumn = size(RGB, 2);
+% ISM2015 中为提取左右边界，这里只提取三个特殊点，从而进行投影变换
+% 其他参数可以通过这三个点求得
+function [horizon, PointO, PointL, PointR] = detectRoadBoundary(image) 
+
+[height, width, nchannel] = size(image);
+
+numRow = 150; %min(height, 150);
+numColumn = 200; %min(width, 200);
+
+image = imresize(image, [numRow, numColumn]);
+
 horizon =  ceil(numRow /3); % numRow/2;
 left = zeros(horizon);
 right = numColumn * ones(horizon);
@@ -40,7 +51,7 @@ theta = [-89:89];
 
 %% image preprocessing
 % 很有可能下半部分全是阴影，使得检测无法进行
-ROI = RGB( horizon:end,:,:);
+ROI = image( horizon:end,:,:);
 % ROI = RGB;
 
 [RGB_R, RGB_G, RGB_B] = getChannel(ROI);
@@ -82,6 +93,8 @@ PointL = linemeetpoint( lineL.point1, lineL.point2, [1, numRow], [2, numRow]);
 PointR = linemeetpoint( lineR.point1, lineR.point2, [1, numRow], [2, numRow]);
 
 % 绘图 先划线
+figure; subplot(1,2,1);
+imshow(image);title('Road face detection');
 % left and right boundary line
 plotline(PointO, PointL,'LineWidth',3,'Color','yellow');
 plotline(PointO, PointR,'LineWidth',3,'Color','green');
@@ -105,39 +118,74 @@ for r = horizon : numRow % 1 : (numRow/2)
 end 
 % 等前面 horizon 用完
 horizon = floor(PointO(2)); % Notice: 特殊图片: horizon为负数 消失点在图像外
-numRow = size(RGB, 1);
-h = numRow - horizon + 1; % horizon : numRow
-for r = 1 : numRow
-	left(r) = ceil( PointO(1) - (PointO(1) - PointL(1))* r / h);
-	right(r) = ceil( PointO(1) + (PointR(1) - PointO(1))* r / h);
+
+% 左右边界用不上了
+% h = numRow - horizon + 1; % horizon : numRow
+% for r = 1 : numRow
+% 	left(r) = ceil( PointO(1) - (PointO(1) - PointL(1))* r / h);
+% 	right(r) = ceil( PointO(1) + (PointR(1) - PointO(1))* r / h);
+% end
+
+% 还原resize带来的影响
+horizon = ceil(horizon*height/numRow);
+
+PointO(1) = PointO(1)*width/numColumn;
+PointO(2) = PointO(2)*height/numRow;
+PointL(1) = PointL(1)*width/numColumn;
+PointL(2) = PointL(2)*height/numRow;
+PointR(1) = PointR(1)*width/numColumn;
+PointR(2) = PointR(2)*height/numRow;
+
+function perspectiveTrans(image, horizon, PointO, PointL, PointR)
+% RoadFace为水平线以下的区域
+% 三个特征点还原到大图的水平线以下
+
+ischop = false; % 裁剪得越多，可用的数据越少?
+
+if ischop
+	% 裁剪掉水平线以上部分
+	horizon = 300;
+	I = image(horizon:end,:,:);
+	% 点的坐标调整
+	PointO(2) = PointO(2) - horizon;
+	PointL(2) = PointL(2) - horizon;
+	PointR(2) = PointR(2) - horizon;
+	% 裁剪后的坐标调整结束
+else
+	I = image;
 end
 
-% return;
+[numRow, numColumn, nchannel] = size(I);
 
 % 透视变换
 PointLU = PointO/2 + PointL/2;
 PointRU = PointO/2 + PointR/2;
-plot(PointLU(1), PointLU(2), 'yo', 'markersize', 10);
-plot(PointRU(1), PointRU(2), 'bo', 'markersize', 10);
+
+% 显示特征点
+% figure;subplot(1,2,1);imshow(I);hold on;
+% plot(PointLU(1), PointLU(2), 'yo', 'markersize', 10);
+% plot(PointRU(1), PointRU(2), 'bo', 'markersize', 10);
+% plot(PointL(1), PointL(2), 'y*', 'markersize', 10);
+% plot(PointR(1), PointR(2), 'b*', 'markersize', 10);
+
+% % 求变换矩阵：
+% TForm = cp2tform(B,A,'projective');
+% round(tformfwd(TForm,[400 240]));% 每个点对应到新的位置
 
 B = [PointLU;PointRU; PointL;PointR];% 源图像中的点的坐标矩阵为： 点在图像外
 % 透视结果仅仅是拉伸
 A = [1, 1;numColumn,1;1,numRow;numColumn, numRow];% 目标图像中对应的顶点坐标为：
-% % 求变换矩阵：
-% TForm = cp2tform(B,A,'projective');
-% round(tformfwd(TForm,[400 240]));% 每个点对应到新的位置
-A
-B
-I = RGB;
 
 udata = [0 numColumn];  vdata = [0 numRow];  % input coordinate system
 tform = maketform('projective',B,A);
-[B,xdata,ydata] = imtransform(I,tform,'bicubic','udata',udata,...
+% tform = cp2tform(B,A,'projective');
+[Transformed,xdata,ydata] = imtransform(I,tform,'bicubic','udata',udata,...
                                                 'vdata',vdata,...
                                                 'size',size(I),...
                                                 'fill',128);
-imshow(I,'XData',udata,'YData',vdata), axis on
-figure, imshow(B,'XData',xdata,'YData',ydata), axis on
+% imshow(I,'XData',udata,'YData',vdata), axis on
+subplot(1,2,2), imshow(Transformed,'XData',xdata,'YData',ydata), axis on
+title('Inverse perspective mapping');
 
 %-------------------------------------------------------------------%
 function line = bwFitLine(BW, Theta)
