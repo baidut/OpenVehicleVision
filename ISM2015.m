@@ -88,7 +88,7 @@ end
 function [horizon, left, right, theta] = detectRoadBoundary(RGB) 
 numRow = size(RGB, 1);
 numColumn = size(RGB, 2);
-horizon =  numRow /3; % numRow/2;
+horizon =  ceil(numRow /3); % numRow/2;
 left = zeros(horizon);
 right = numColumn * ones(horizon);
 theta = [-89:89];
@@ -136,8 +136,8 @@ catch ME
 end
 	
 PointO = linemeetpoint( lineL.point1, lineL.point2, lineR(1).point1, lineR.point2 ); 
-PointL = linemeetpoint( lineL.point1, lineL.point2, [1, numColumn], [2, numColumn]); 
-PointR = linemeetpoint( lineR.point1, lineR.point2, [1, numColumn], [2, numColumn]);
+PointL = linemeetpoint( lineL.point1, lineL.point2, [1, numRow], [2, numRow]); 
+PointR = linemeetpoint( lineR.point1, lineR.point2, [1, numRow], [2, numRow]);
 
 % 绘图 先划线
 % left and right boundary line
