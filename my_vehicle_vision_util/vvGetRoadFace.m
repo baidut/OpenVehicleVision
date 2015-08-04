@@ -61,12 +61,37 @@ S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 imwrite(S_modified, 'results/vvGetRoadFace/S_modified.jpg');
 
 % road boundary detection
-S_bw = S_modified > 0.3*max(S_modified(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
+% 阈值要足够高 0.3
+% 改进：左侧，右侧独立进行阈值化，防止单边的影响！确保两侧都有！
+
+S_L = S_modified(:,1:floor(numColumn/2));
+S_R = S_modified(:,floor(numColumn/2)+1:end); % 注意不能写ceil ceil可能等于floor
+
+% function BW = extractBoundaries(Gray)
+
+S_bw_L = S_L > 0.4*max(S_L(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
+imwrite(S_bw_L, 'results/vvGetRoadFace/S_bw_L.jpg');
+S_bw_L = imclose(S_bw_L, strel('square',3)); %imdilate imclose imopen
+imwrite(S_bw_L, 'results/vvGetRoadFace/S_bw_L_imclose.jpg');
+S_bw_L = bwareaopen(S_bw_L, 200); % 车道线可能成为干扰
+imwrite(S_bw_L, 'results/vvGetRoadFace/S_bw_L_areaopen.jpg');
+
+S_bw_R = S_R > 0.4*max(S_R(:));
+imwrite(S_bw_R, 'results/vvGetRoadFace/S_bw_R.jpg');
+S_bw_R = imclose(S_bw_R, strel('square',3));
+imwrite(S_bw_R, 'results/vvGetRoadFace/S_bw_R_imclose.jpg');
+S_bw_R = bwareaopen(S_bw_R, 200);
+imwrite(S_bw_R, 'results/vvGetRoadFace/S_bw_R_areaopen.jpg');
+
+S_bw = [S_bw_L, S_bw_R];
 imwrite(S_bw, 'results/vvGetRoadFace/S_bw.jpg');
-S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
-imwrite(S_bw, 'results/vvGetRoadFace/S_bw_imclose.jpg');
-S_bw = bwareaopen(S_bw, 500); % 车道线可能成为干扰
-imwrite(S_bw, 'results/vvGetRoadFace/S_bw_areaopen.jpg');
+
+% S_bw = S_modified > 0.5*max(S_modified(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
+% imwrite(S_bw, 'results/vvGetRoadFace/S_bw.jpg');
+% S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
+% imwrite(S_bw, 'results/vvGetRoadFace/S_bw_imclose.jpg');
+% S_bw = bwareaopen(S_bw, 500); % 车道线可能成为干扰
+% imwrite(S_bw, 'results/vvGetRoadFace/S_bw_areaopen.jpg');
 
 [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw);
 RemovedRegion = zeros(horizon-1, numColumn); % 为了正确显示直线，补上去掉的区域
@@ -237,14 +262,14 @@ for c = 1 : numColumn
 	end
 end 
 for r = numRow : -1 : 1
-	for c = (numColumn/2) : -1 : 1
+	for c = ceil(numColumn/2) : -1 : 1
 		if 1 == Boundary_candidate(r, c)
 			BoundaryL(r, c) = 1;
 			break;
 		end
 		ScanL(r, c) = 1;
 	end
-	for c = (numColumn/2) : numColumn
+	for c = floor(numColumn/2) : numColumn
 		if 1 == Boundary_candidate(r, c)
 			BoundaryR(r, c) = 1;
 			break;
