@@ -58,11 +58,15 @@ ROI = image( horizon:end,:,:);
 RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
 RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
 S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
+imwrite(S_modified, 'results/vvGetRoadFace/S_modified.jpg');
 
 % road boundary detection
-S_bw = S_modified > 0.3; %  0.3 0.2 % 用histeq和graythresh效果不好
+S_bw = S_modified > 0.3*max(S_modified(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
+imwrite(S_bw, 'results/vvGetRoadFace/S_bw.jpg');
 S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
-S_bw = bwareaopen(S_bw, 50); % 车道线可能成为干扰
+imwrite(S_bw, 'results/vvGetRoadFace/S_bw_imclose.jpg');
+S_bw = bwareaopen(S_bw, 500); % 车道线可能成为干扰
+imwrite(S_bw, 'results/vvGetRoadFace/S_bw_areaopen.jpg');
 
 [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw);
 RemovedRegion = zeros(horizon-1, numColumn); % 为了正确显示直线，补上去掉的区域
