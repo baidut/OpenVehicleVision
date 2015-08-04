@@ -1,98 +1,202 @@
 function RoadRegion = vvGetRoadFace(image)
-%VVGETROADFACE extract the road face by the saturate
-% USAGE:
-% vvGetLine('pictures/road/wide_unstructured.jpg', 'hough', ...
-%               @VVGETROADFACE);
+% 降低分辨率便于处理，提高处理效果。检测精度问题？
+% 用低分辨率处理，
+% 得到路面区域再回到高分辨率 注意图像回到高分辨率会出现锯齿，但参数不会，所以在低分辨率提取参数是可行的
+% 或者变化分辨率
 
-% 不处理分辨率
-% 处理分辨率，恢复高分辨率时会出现锯齿现象。直接提取边界，根据边界细化
-
-NUMROWS = 50;
-NUMCOLS = 50;
-doresize = 0;
-
-% foreach_file_do('dataset\roma\LRAlargeur26032003\', 'jpg', @main);
-% 'dataset\roma\LRAlargeur26032003\IMG00579.jpg'
-% 阴影问题 IMG00946 'dataset\roma\LRAlargeur26032003\IMG01542.jpg'
-
-% 先调整尺寸，便于处理，选择合适的分辨率
 if isstr(image)
 	image = imread(image);
 end 
 
-[height, width, nchannel] = size(image);
+isresize = false;
+% 改为处理边界时用resize的图，resize放到边界处理内部，得出参数后进行投射变换
+if isresize == true
+	numRow = 150;
+	numColumn = 200;
+	image = imresize(image, [numRow, numColumn]);
+else
+	[numRow, numColumn, nchannel] = size(image);
+end 
+
 
 if nchannel ~= 3
 	error('input must be a colour image.');
 end
 
-% 
-if doresize
-	image = imresize(image, [NUMROWS NUMCOLS]);
-else
-	NUMROWS = height;
-	NUMCOLS = width;
-end
-
-HSV = rgb2hsv(image);
-HSV_S = HSV(:, :, 2);
-
-% LAB = applycform(Resized, makecform('srgb2lab'));
-% LAB_A = double(LAB(:,:,2));
-
-% 灰度膨胀还是二值膨胀？ 本质是分割成几部分
-% se = strel('ball',3,3);%se = strel('ball',5,5);
-% Gray__dilate = imdilate(Saturate,se);
-
-% implot(Raw, Resized, Saturate, Gray__dilate);
-% return;
-% Gray = LAB_A/2.0 + HSV_S/2;
-
-% se = strel('disk',5);
-% Gray = imopen(HSV_S, se); % 后续再改进 开运算效果更差
-Gray = HSV_S;
-
-threshold = graythresh(Gray); % Otsu方法效果最好 % 均衡化效果差 Saturate = histeq(Saturate);
-% threshold = 0.244; %graythresh(Saturate);%0.12; % 越小，剩下的越少
-Binary = ~im2bw(Gray, threshold); %注意取反 提取出路面区域
-
-%  %[1;1;1]; %线型结构元素 
-% 问题1： 和天空区域连成一片
-% 问题2： 大片阴影还是有干扰
-RoadRegion = bwareaopen(Binary, ceil(NUMROWS*NUMCOLS/3)); % 或者求最大联通也行
-
-if doresize
-	RoadRegion = imresize(RoadRegion, [height width]);
-end 
-
-% if debug % global
 figure;
-implot(image, Gray, Binary, RoadRegion);
+imshow(image); 
+hold on;% 供描点划线，中间结果写入文件
 
-return;
+[horizon, left, right, theta] = detectRoadBoundary(image);
 
+%-------------------------------------------------------------------%
+function [horizon, left, right, theta] = detectRoadBoundary(RGB) 
+numRow = size(RGB, 1);
+numColumn = size(RGB, 2);
+horizon =  ceil(numRow /3); % numRow/2;
+left = zeros(horizon);
+right = numColumn * ones(horizon);
+theta = [-89:89];
 
-% 计算地平线
-% 需要先截掉上部分
-% 通过腐蚀封闭 防止天空
+%% image preprocessing
+% 很有可能下半部分全是阴影，使得检测无法进行
+ROI = RGB( horizon:end,:,:);
+% ROI = RGB;
 
-% 先腐蚀膨胀一下，去除杂点 也可以在前面灰度膨胀
+[RGB_R, RGB_G, RGB_B] = getChannel(ROI);
+RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
+RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
+S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 
-% 对于结构化道路，道路部分可能被车道线拆分开，所以这种方法会跪掉 除非使劲膨胀 把车道线也淹没
-% 找出最大的连通分量即为路面区域。 或采用膨胀腐蚀算法消去噪点
-[L, num] = bwlabel(SaturateMap, 4); % TODO 4连通对比
-x=zeros(1,num);
-for idx=1:num
-   x(idx)=sum(sum(L == idx));
+% road boundary detection
+S_bw = S_modified > 0.3; %  0.3 0.2 % 用histeq和graythresh效果不好
+S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
+S_bw = bwareaopen(S_bw, 50); % 车道线可能成为干扰
+
+[BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw);
+RemovedRegion = zeros(horizon-1, numColumn); % 为了正确显示直线，补上去掉的区域
+lineL = bwFitLine([RemovedRegion; BoundaryL], [0:89]);
+lineR = bwFitLine([RemovedRegion; BoundaryR], [-89:0]);
+
+% lineL = bwFitLine(BoundaryL);
+% lineR = bwFitLine(BoundaryR);
+
+try
+	thetaL = lineL.theta;
+	thetaR = lineR.theta;
+	theta = [ceil(min(thetaL, thetaR)):floor(max(thetaL, thetaR))];
+catch ME
+% 直线没有找到的情形
+    % debug
+	lineL
+	lineR
+	% close all;
+	figure;
+	implot(RGB, S_modified, S_bw, BoundaryL, BoundaryR);
+	error(['Sorry, no boundary is found!']);
+	return;
 end
-[m, idx] = max(x);
-Connected = (L == idx);
+	
+PointO = linemeetpoint( lineL.point1, lineL.point2, lineR(1).point1, lineR.point2 ); 
+PointL = linemeetpoint( lineL.point1, lineL.point2, [1, numRow], [2, numRow]); 
+PointR = linemeetpoint( lineR.point1, lineR.point2, [1, numRow], [2, numRow]);
 
-se=strel('line',20,0); 
-Road = imdilate(Connected,se); 
-Edge = edge(Road,'sobel', 'vertical');
-BW = Edge;
+% 绘图 先划线
+% left and right boundary line
+plotline(PointO, PointL,'LineWidth',3,'Color','yellow');
+plotline(PointO, PointR,'LineWidth',3,'Color','green');
+% horizon line
+plotline([1, PointO(2)], [numColumn, PointO(2)], 'LineWidth',3,'Color','blue');
+% vanishing point
+plot(PointO(1), PointO(2), 'ro', 'markersize', 10);
+% 水平线horizon  把消失点所在的水平位置设为地平线
+plot(PointL(1), PointL(2), 'r*');
+plot(PointR(1), PointR(2), 'r*');
+% feature points
+for r = horizon : numRow % 1 : (numRow/2) 
+	for c = 1 : numColumn
+		if 1 == BoundaryL(r - horizon + 1, c)
+			plot(c, r, 'y+');
+		end
+		if 1 == BoundaryR(r - horizon + 1, c)
+			plot(c, r, 'g+');
+		end
+	end
+end 
+% 等前面 horizon 用完
+horizon = floor(PointO(2)); % Notice: 特殊图片: horizon为负数 消失点在图像外
+numRow = size(RGB, 1);
+h = numRow - horizon + 1; % horizon : numRow
+for r = 1 : numRow
+	left(r) = ceil( PointO(1) - (PointO(1) - PointL(1))* r / h);
+	right(r) = ceil( PointO(1) + (PointR(1) - PointO(1))* r / h);
+end
 
-implot(I, Saturate, SaturateMap, Connected, Road, Edge);
-%return;
-% DLD提取的为内部，而Canny为边界，求点乘就没有了。。。
+% return;
+
+% 透视变换
+PointLU = PointO/2 + PointL/2;
+PointRU = PointO/2 + PointR/2;
+plot(PointLU(1), PointLU(2), 'yo', 'markersize', 10);
+plot(PointRU(1), PointRU(2), 'bo', 'markersize', 10);
+
+B = [PointLU;PointRU; PointL;PointR];% 源图像中的点的坐标矩阵为： 点在图像外
+% 透视结果仅仅是拉伸
+A = [1, 1;numColumn,1;1,numRow;numColumn, numRow];% 目标图像中对应的顶点坐标为：
+% % 求变换矩阵：
+% TForm = cp2tform(B,A,'projective');
+% round(tformfwd(TForm,[400 240]));% 每个点对应到新的位置
+A
+B
+I = RGB;
+
+udata = [0 numColumn];  vdata = [0 numRow];  % input coordinate system
+tform = maketform('projective',B,A);
+[B,xdata,ydata] = imtransform(I,tform,'bicubic','udata',udata,...
+                                                'vdata',vdata,...
+                                                'size',size(I),...
+                                                'fill',128);
+imshow(I,'XData',udata,'YData',vdata), axis on
+figure, imshow(B,'XData',xdata,'YData',ydata), axis on
+
+%-------------------------------------------------------------------%
+function line = bwFitLine(BW, Theta)
+%Hough Transform
+if nargin < 2
+	[H,theta,rho] = hough(BW);
+else 
+	[H,theta,rho] = hough(BW, 'Theta', Theta);
+end
+
+% Finding the Hough peaks
+P = houghpeaks(H, 1);
+x = theta(P(:,2));
+y = rho(P(:,1));
+
+%Fill the gaps of Edges and set the Minimum length of a line
+lines = houghlines(BW,theta,rho,P, 'MinLength',10, 'FillGap',570);
+line = lines(1);
+
+% figure;
+% imshow(H,[],'XData',theta,'YData',rho,'InitialMagnification','fit');
+% xlabel('\theta'), ylabel('\rho');
+% axis on, axis normal, hold on;
+% plot(theta(P(:,2)),rho(P(:,1)),'s','color','white');
+% figure;
+
+%-------------------------------------------------------------------%
+function [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(BW)
+[numRow, numColumn] = size(BW);
+
+Boundary_candidate = zeros(numRow, numColumn);
+BoundaryL = zeros(numRow, numColumn);
+BoundaryR = zeros(numRow, numColumn);
+ScanB = zeros(numRow, numColumn);
+ScanL = zeros(numRow, numColumn);
+ScanR = zeros(numRow, numColumn);
+
+for c = 1 : numColumn
+	for r = numRow : -1 : 1
+		if 1 == BW(r, c)
+			Boundary_candidate(r, c) = 1;
+			break;
+		end
+		ScanB(r, c) = 1;
+	end
+end 
+for r = numRow : -1 : 1
+	for c = (numColumn/2) : -1 : 1
+		if 1 == Boundary_candidate(r, c)
+			BoundaryL(r, c) = 1;
+			break;
+		end
+		ScanL(r, c) = 1;
+	end
+	for c = (numColumn/2) : numColumn
+		if 1 == Boundary_candidate(r, c)
+			BoundaryR(r, c) = 1;
+			break;
+		end
+		ScanR(r, c) = 1;
+	end
+end
