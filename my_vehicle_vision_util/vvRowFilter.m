@@ -10,13 +10,21 @@ end
 I = im2gray(I); % 确保图像为灰度图
 [numRow, numColumn] = size(I); % 注意：如果I不是灰度图像会出错
 
+method = upper(method);
+
+switch method
+case 'DLD'
+	I = double(I); % 含有负数
+end
+
 Filtered = I; % 均值滤波去除掉车道标记
 
 for r = 1 : numRow
 	% horizon - 5  numColumn - 512
-	s = ceil(5 + r*250/numColumn); % 100过滤不掉，300可以
+	% s = ceil(5 + r*250/numColumn); % 100过滤不掉，300可以
+	s = ceil(5 + r*50/numColumn); % DLD使用
 	
-	switch upper(method)
+	switch method
 	% 每一行独立地进行滤波，滤波器的大小跟随透视效应改变
 	% 使用一维的滤波方式
 	case 'LT' % 均值滤波
@@ -31,7 +39,14 @@ for r = 1 : numRow
 		Middle = medfilt2(I(r,:), [1, s]);
 		Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
 		Filtered(r,:) = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
-		
+
+	case 'DLD' % -1-1 1 1 1 1 -1 -1
+		half_s = ceil(s/2);
+		template_DLD = ones(1, s*2);
+		template_DLD(1:half_s) = -1;
+		template_DLD(half_s*3:s*2) = -1;
+		Filtered(r,:) = imfilter(I(r,:), template_DLD, 'corr', 'replicate');
+
 	case '%TEST' % for testing
 		Mean = imfilter(I(r,:), ones(1, s)/s , 'corr', 'replicate');
 		Middle = medfilt2(I(r,:), [1, s]);

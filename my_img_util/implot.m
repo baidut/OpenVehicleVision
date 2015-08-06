@@ -31,7 +31,8 @@ for i = 1: nargin
 		imshow(image);
 	else
 		if ismatrix(image)  % grey
-			imshow(image, []); % imshow(mat2gray(image));
+			% imshow(image);% imshow(image, []); % 
+			imshow(mat2gray(image));
 		else % color image
 			imshow(image);
 		end

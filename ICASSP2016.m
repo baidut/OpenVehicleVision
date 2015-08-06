@@ -21,24 +21,33 @@
 % RGB = imresize(RGB, [numRow, numColumn]);
 
 % 读取某个数据库，某张图片
-folder = 'IRC041500';
-no = '00010';
+% 简单
+% folder = 'IRC041500';
+% no = '00010';
+
+% 利用颜色特征和未用颜色特征的差别
+
+folder = 'LRAlargeur13032003';
+no = '02210';
 
 folder = ['dataset\roma\', folder];
-Orignal = imread([folder, '\IMG', no, '.jpg']);
+Original = imread([folder, '\IMG', no, '.jpg']);
 GroundTruth = imread([folder, '\RIMG', no, '.pgm']);
 
-numRow = size(Orignal, 1);
-numColumn = size(Orignal, 2);
+numRow = size(Original, 1);
+numColumn = size(Original, 2);
 horizon = 310; % param.cal
 
-Preprocessed = vvPreprocess(Orignal, horizon); % ROI: [horizon, numRow; 1, numColumn]
+Preprocessed = vvPreprocess(Original, horizon); % ROI: [horizon, numRow; 1, numColumn]
 
 % vvRowFilter(Preprocessed, '%TEST'); 
-Filtered = vvRowFilter(Preprocessed, 'SMLT'); 
-Binary = (Preprocessed-Filtered)>30;
-Binary = bwareaopen(Binary, 50); % 滤去孤立点
-implot(Orignal, GroundTruth, Preprocessed, Filtered, Preprocessed-Filtered, Binary);
+% Filtered = vvRowFilter(Preprocessed, 'SMLT'); 
+% Binary = (Preprocessed-Filtered)>30;
+% Binary = bwareaopen(Binary, 50); % 滤去孤立点
+% implot(Original, GroundTruth, Preprocessed, Filtered, Preprocessed-Filtered, Binary);
+
+Filtered = vvRowFilter(Preprocessed, 'DLD'); 
+implot(Original, GroundTruth, Preprocessed, Filtered);
 
 return;
 
@@ -47,7 +56,24 @@ MLT = vvGetFeature(Preprocessed, 'MLT');
 MLT = vvGetFeature(Preprocessed, 'SLT');
 MLT = vvGetFeature(Preprocessed, 'SMLT');
 
-implot(Orignal, GroundTruth, Preprocessed, LT, MLT, SLT, SMLT);
+implot(Original, GroundTruth, Preprocessed, LT, MLT, SLT, SMLT);
 return;
 
+
+% 需要明确：
 % 特征提取一步不允许进行假设验证，不能利用高级信息
+% 单个特征肯定效果不好，多特征融合！
+
+% 利用横向的DLD特征和纵向的连贯性
+% 人的主观认识：白色，矩形，连贯
+% 需要能够自动修补漏洞，去除噪声
+
+
+% TODO：
+% 测试新的模板滤波，寻找跳变边缘特征点并纵向跟踪
+% 关键在于抓突变
+
+% 遍历每一行，找突变特征点
+
+
+% 思路1：先预处理去阴影，思路2：抗阴影的方法 

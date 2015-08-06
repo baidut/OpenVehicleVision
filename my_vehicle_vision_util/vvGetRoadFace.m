@@ -62,7 +62,7 @@ imwrite(S_modified, 'results/vvGetRoadFace/S_modified.jpg');
 
 % road boundary detection
 % 阈值要足够高 0.3
-% 改进：左侧，右侧独立进行阈值化，防止单边的影响！确保两侧都有！
+% 改进：左侧，右侧独立进行阈值化，防止单边的影响！确保两侧都有！可以处理图像左右光照不对称的情形
 
 S_L = S_modified(:,1:floor(numColumn/2));
 S_R = S_modified(:,floor(numColumn/2)+1:end); % 注意不能写ceil ceil可能等于floor
@@ -117,7 +117,7 @@ catch ME
 	return;
 end
 	
-PointO = linemeetpoint( lineL.point1, lineL.point2, lineR(1).point1, lineR.point2 ); 
+PointO = linemeetpoint( lineL.point1, lineL.point2, lineR.point1, lineR.point2 ); 
 PointL = linemeetpoint( lineL.point1, lineL.point2, [1, numRow], [2, numRow]); 
 PointR = linemeetpoint( lineR.point1, lineR.point2, [1, numRow], [2, numRow]);
 
