@@ -35,9 +35,35 @@ theta = 180 - (lineL.theta + lineR.theta)/2; % 90 - theta
 thetaL = 180 - lineL.theta;
 thetaR = 180 - lineR.theta;
 Gray = rgb2gray(I);
-[J,H] = steerGauss(Gray,theta,3,true);
+
+sigma = 3;
+Wx = floor((5/2)*sigma);
+%x = [-Wx:Wx];
+x = [Wx:-1:1, 0 1:Wx];
+% 自定义的滤波模板
+% h.g = exp(-(x.^2)/(2*sigma^2));
+% h.gp = -(x/sigma).*h.g;% -(x/sigma).*exp(-(x.^2)/(2*sigma^2));
+% h.gp = -(x/(sigma^2)).*h.g;% -(x/sigma).*exp(-(x.^2)/(2*sigma^2));
+% h.theta = theta; %-theta*(180/pi);
+% h.sigma = sigma;
+% DLD
+% y = 0 退化成一维
+% h.g = ( (16*x.^4)/(sigma^8) - (48*x.^2)/(sigma^6) - 12/(sigma^4) ) .* exp(-(x.^2)/(sigma^2));
+% h.gp = ( (64*x.^3)/(sigma^8) - (96*x)/(sigma^6) ) .* exp(-(x.^2)/(sigma^2)) + ...
+ % h.g .* (-2*x/(sigma^2)); % -(x/sigma).*exp(-(x.^2)/(2*sigma^2));
+% h.g = ( (4*x.^2)/(sigma^4) - 2/(sigma^2) ) .* exp(-(x.^2)/(sigma^2));
+% h.gp = ( (8*x)/(sigma^8) ) .* exp(-(x.^2)/(sigma^2)) + ...
+ % h.g .* (-2*x/(sigma^2)); 
+h.g = ( (4*x)/(sigma^4) ) .* exp(-(x.^2)/(sigma^2));
+h.gp = ( 4/(sigma^4) ) .* exp(-(x.^2)/(sigma^2))  ...
+	+ h.g .* (-2*x/(sigma^2));  
+h.theta = theta; %0; %-theta*(180/pi); 0
+h.sigma = sigma;
+
+% [J,H] = steerGauss(Gray,theta,3,true);
+J = steerGauss(Gray,h,true);
 figure;
-implot(I, J, J>0.2d*max(J(:)));
+implot(I, J, J>0.2*max(J(:)));
 
 % function J = steerGauss(I,Wsize,sigma,theta)
 % % USAGE:

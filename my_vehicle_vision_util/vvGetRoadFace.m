@@ -205,15 +205,10 @@ B = [PointLU;PointRU; PointL;PointR];% 源图像中的点的坐标矩阵为： �
 % 透视结果仅仅是拉伸
 A = [1, 1;numColumn,1;1,numRow;numColumn, numRow];% 目标图像中对应的顶点坐标为：
 
-udata = [0 numColumn];  vdata = [0 numRow];  % input coordinate system
-tform = maketform('projective',B,A);
+tform = fitgeotrans(B, A, 'projective');
 % tform = cp2tform(B,A,'projective');
-[Transformed,xdata,ydata] = imtransform(I,tform,'bicubic','udata',udata,...
-                                                'vdata',vdata,...
-                                                'size',size(I),...
-                                                'fill',128);
-% imshow(I,'XData',udata,'YData',vdata), axis on
-subplot(1,2,2), imshow(Transformed,'XData',xdata,'YData',ydata), axis on
+Transformed = imwarp(I,tform);
+subplot(1,2,2), imshow(Transformed) %, axis on
 title('Inverse perspective mapping');
 
 %-------------------------------------------------------------------%
