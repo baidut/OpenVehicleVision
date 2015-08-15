@@ -169,11 +169,11 @@ function perspectiveTrans(image, horizon, PointO, PointL, PointR)
 % RoadFace为水平线以下的区域
 % 三个特征点还原到大图的水平线以下
 
-ischop = false; % 裁剪得越多，可用的数据越少?
+ischop = false; % 裁剪得越多，可用的数据越少? true; %
 
 if ischop
 	% 裁剪掉水平线以上部分
-	horizon = 300;
+	% horizon = 300;
 	I = image(horizon:end,:,:);
 	% 点的坐标调整
 	PointO(2) = PointO(2) - horizon;
@@ -203,13 +203,20 @@ PointRU = PointO/2 + PointR/2;
 
 B = [PointLU;PointRU; PointL;PointR];% 源图像中的点的坐标矩阵为： 点在图像外
 % 透视结果仅仅是拉伸
-A = [1, 1;numColumn,1;1,numRow;numColumn, numRow];% 目标图像中对应的顶点坐标为：
+% 还原成大小 50*100 150*200
+outCols = 100;
+outRows = 50;
+% TODO：改为仅对所选区域变换
+A = [1, 1;outCols,1;1,outRows;outCols, outRows];
+% 太大了，造成响应慢 生成更大的空间 7988*6241 A = [1, 1;numColumn,1;1,numRow;numColumn, numRow];% 目标图像中对应的顶点坐标为：
 
 tform = fitgeotrans(B, A, 'projective');
 % tform = cp2tform(B,A,'projective');
-Transformed = imwarp(I,tform);
+Transformed = imwarp(I,tform, 'OutputView', imref2d([outRows, outCols]));
 subplot(1,2,2), imshow(Transformed) %, axis on
 title('Inverse perspective mapping');
+
+size(Transformed)
 
 %-------------------------------------------------------------------%
 function line = bwFitLine(BW, Theta)
