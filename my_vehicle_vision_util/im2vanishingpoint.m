@@ -1,4 +1,4 @@
-function pointVP = im2vanishingpoint(ori1, ori2)
+function [pointVP, vx, vy] = im2vanishingpoint(im1, im2)
 % im2vanishingpoint(imread('dataset\dataset4\sequence\04562.jpg'),imread('dataset\dataset4\sequence\04563.jpg'));
 % im2vanishingpoint(imread('dataset\dataset4\sequence\04564.jpg'),imread('dataset\dataset4\sequence\04565.jpg'));
 
@@ -6,14 +6,9 @@ function pointVP = im2vanishingpoint(ori1, ori2)
 % % load the two frames
 % ori1 = imread([folder '04562.jpg']);
 % ori2 = imread([folder '04563.jpg']);
+% resize 交给外部来做
 
 % =============================================== %
-
-nCols = 200;
-nRows = 100;
-
-im1 = im2double(imresize(ori1, [nRows, nCols]));
-im2 = im2double(imresize(ori2, [nRows, nCols]));
 
 % set optical flow parameters (see Coarse2FineTwoFrames.m for the definition of the parameters)
 alpha = 0.012;
