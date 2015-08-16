@@ -1,4 +1,5 @@
 function RoadRegion = vvGetRoadFace(image)
+% 返回近视野路面的鸟瞰灰度图（颜色信息用不上）
 % 降低分辨率便于处理，提高处理效果。检测精度问题？
 % 用低分辨率处理，
 % 得到路面区域再回到高分辨率 注意图像回到高分辨率会出现锯齿，但参数不会，所以在低分辨率提取参数是可行的
@@ -30,7 +31,8 @@ if nchannel ~= 3
 end
 
 [horizon, PointO, PointL, PointR] = detectRoadBoundary(image);
-perspectiveTrans(image, horizon, PointO, PointL, PointR);
+image = rgb2gray(image);
+RoadRegion = perspectiveTrans(image, horizon, PointO, PointL, PointR);
 
 %-------------------------------------------------------------------%
 % ISM2015 中为提取左右边界，这里只提取三个特殊点，从而进行投影变换
@@ -58,40 +60,31 @@ ROI = image( horizon:end,:,:);
 RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
 RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
 S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
-imwrite(S_modified, 'results/vvGetRoadFace/S_modified.jpg');
 
 % road boundary detection
 % 阈值要足够高 0.3
 % 改进：左侧，右侧独立进行阈值化，防止单边的影响！确保两侧都有！可以处理图像左右光照不对称的情形
+% S_bw = S_modified > 0.5*max(S_modified(:));
+% S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
+% S_bw = bwareaopen(S_bw, 500);
 
 S_L = S_modified(:,1:floor(numColumn/2));
 S_R = S_modified(:,floor(numColumn/2)+1:end); % 注意不能写ceil ceil可能等于floor
 
-% function BW = extractBoundaries(Gray)
+S_bw_L = S_L > 0.45*max(S_L(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
+S_bw_L_imclose = imclose(S_bw_L, strel('square',3)); %imdilate imclose imopen
+S_bw_L_areaopen = bwareaopen(S_bw_L_imclose, 200); % 去除车道线
 
-S_bw_L = S_L > 0.4*max(S_L(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
-imwrite(S_bw_L, 'results/vvGetRoadFace/S_bw_L.jpg');
-S_bw_L = imclose(S_bw_L, strel('square',3)); %imdilate imclose imopen
-imwrite(S_bw_L, 'results/vvGetRoadFace/S_bw_L_imclose.jpg');
-S_bw_L = bwareaopen(S_bw_L, 200); % 车道线可能成为干扰
-imwrite(S_bw_L, 'results/vvGetRoadFace/S_bw_L_areaopen.jpg');
+S_bw_R = S_R > 0.45*max(S_R(:));
+S_bw_R_imclose = imclose(S_bw_R, strel('square',3));
+S_bw_R_areaopen = bwareaopen(S_bw_R_imclose, 200);
 
-S_bw_R = S_R > 0.4*max(S_R(:));
-imwrite(S_bw_R, 'results/vvGetRoadFace/S_bw_R.jpg');
-S_bw_R = imclose(S_bw_R, strel('square',3));
-imwrite(S_bw_R, 'results/vvGetRoadFace/S_bw_R_imclose.jpg');
-S_bw_R = bwareaopen(S_bw_R, 200);
-imwrite(S_bw_R, 'results/vvGetRoadFace/S_bw_R_areaopen.jpg');
+S_bw = [S_bw_L_areaopen, S_bw_R_areaopen];
 
-S_bw = [S_bw_L, S_bw_R];
-imwrite(S_bw, 'results/vvGetRoadFace/S_bw.jpg');
+imdump(S_modified, S_bw,...
+	S_bw_L, S_bw_L_imclose, S_bw_L_areaopen,...
+	S_bw_R, S_bw_R_imclose, S_bw_R_areaopen);
 
-% S_bw = S_modified > 0.5*max(S_modified(:)); %  0.3 0.2 % 用histeq和graythresh效果不好
-% imwrite(S_bw, 'results/vvGetRoadFace/S_bw.jpg');
-% S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
-% imwrite(S_bw, 'results/vvGetRoadFace/S_bw_imclose.jpg');
-% S_bw = bwareaopen(S_bw, 500); % 车道线可能成为干扰
-% imwrite(S_bw, 'results/vvGetRoadFace/S_bw_areaopen.jpg');
 
 [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw);
 RemovedRegion = zeros(horizon-1, numColumn); % 为了正确显示直线，补上去掉的区域
@@ -165,7 +158,7 @@ PointL(2) = PointL(2)*height/numRow;
 PointR(1) = PointR(1)*width/numColumn;
 PointR(2) = PointR(2)*height/numRow;
 
-function perspectiveTrans(image, horizon, PointO, PointL, PointR)
+function Transformed = perspectiveTrans(image, horizon, PointO, PointL, PointR)
 % RoadFace为水平线以下的区域
 % 三个特征点还原到大图的水平线以下
 
@@ -204,8 +197,10 @@ PointRU = PointO/2 + PointR/2;
 B = [PointLU;PointRU; PointL;PointR];% 源图像中的点的坐标矩阵为： 点在图像外
 % 透视结果仅仅是拉伸
 % 还原成大小 50*100 150*200
-outCols = 100;
-outRows = 50;
+% outCols = 100; outRows = 50;
+outCols = 80; outRows = 60; % 三个像素宽度
+% outCols = 40; outRows = 30; % 一个像素宽度
+
 % TODO：改为仅对所选区域变换
 A = [1, 1;outCols,1;1,outRows;outCols, outRows];
 % 太大了，造成响应慢 生成更大的空间 7988*6241 A = [1, 1;numColumn,1;1,numRow;numColumn, numRow];% 目标图像中对应的顶点坐标为：
@@ -213,10 +208,8 @@ A = [1, 1;outCols,1;1,outRows;outCols, outRows];
 tform = fitgeotrans(B, A, 'projective');
 % tform = cp2tform(B,A,'projective');
 Transformed = imwarp(I,tform, 'OutputView', imref2d([outRows, outCols]));
-subplot(1,2,2), imshow(Transformed) %, axis on
+subplot(1,2,2), imshow(Transformed); %, axis on
 title('Inverse perspective mapping');
-
-size(Transformed)
 
 %-------------------------------------------------------------------%
 function line = bwFitLine(BW, Theta)
@@ -279,3 +272,5 @@ for r = numRow : -1 : 1
 		ScanR(r, c) = 1;
 	end
 end
+
+imdump(Boundary_candidate, BoundaryL, BoundaryR);

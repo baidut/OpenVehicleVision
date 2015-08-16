@@ -27,8 +27,10 @@
 
 % 利用颜色特征和未用颜色特征的差别
 
-folder = 'LRAlargeur13032003';
-no = '02210';
+% folder = 'LRAlargeur13032003';
+% no = '02210';
+folder = 'BDXD54';
+no = '00002';
 
 folder = ['dataset\roma\', folder];
 Original = imread([folder, '\IMG', no, '.jpg']);
@@ -37,6 +39,25 @@ GroundTruth = imread([folder, '\RIMG', no, '.pgm']);
 numRow = size(Original, 1);
 numColumn = size(Original, 2);
 horizon = 310; % param.cal
+
+RoadRegion = vvGetRoadFace(Original);
+
+% 还原到原图很简单，知道了列的位置，得到占整个列的百分比，
+% 再对原来的各行找该位置即可进行验证标定工作
+
+% 需要先进行DLD滤波 采用带掩码的滤波器
+mask = ( RoadRegion ~= 0 );
+implot(Original, RoadRegion, mask);
+
+%三条相互平行间隔相同的线应该可以进行三维重建工作 (假设不成立，车道标记不一定在中间)
+% 这样每个点的位置，像素宽度的实际宽度都可以求解出来
+% 如果可以再绘制到建模的三维空间里就更强大了
+% 根据近视野参数构建3D，再将远视野映射到3D
+% 第一次IPM不准确，只是为了车道标记位于一条直线。可以不通过IPM做
+% 车和道路方向的夹角没考虑
+
+return;
+% ============================================= %
 
 Preprocessed = vvPreprocess(Original, horizon); % ROI: [horizon, numRow; 1, numColumn]
 
