@@ -1,11 +1,13 @@
-function im2vanishingpoint(ori1, ori2)
+function pointVP = im2vanishingpoint(ori1, ori2)
+% im2vanishingpoint(imread('dataset\dataset4\sequence\04562.jpg'),imread('dataset\dataset4\sequence\04563.jpg'));
+% im2vanishingpoint(imread('dataset\dataset4\sequence\04564.jpg'),imread('dataset\dataset4\sequence\04565.jpg'));
 
 % folder = 'D:\Users\zqying\Documents\Github\OpenVehicleVision\dataset\dataset4\sequence\';
-% example = 'roadscene';
-
 % % load the two frames
 % ori1 = imread([folder '04562.jpg']);
 % ori2 = imread([folder '04563.jpg']);
+
+% =============================================== %
 
 nCols = 200;
 nRows = 100;
@@ -33,26 +35,59 @@ toc
 
 % plotFlow(vx, vy, im1, 10);
 % maxfig;
-rSize=10;%5;
-scale=3;
-u = vx;
-v = vy;
 
-% Enhance the quiver plot visually by showing one vector per region
-figure; imshow(im1,[0 255]); hold on;
-for i=1:size(u,1) %u的行数 u v 一样大小
-    for j=1:size(u,2) %u的列数
-        if floor(i/rSize)~=i/rSize || floor(j/rSize)~=j/rSize %判断不等 5的倍数出有点
-            u(i,j)=0;
-            v(i,j)=0;
-        end
-    end
+implot(vx, vy); 
+pointVP = getVP(vx, vy);
+
+if showVP
+	figure;imshow(im1,[0 255]); hold on;
+	plot(pointVP(1), pointVP(2), 'yo', 'markersize', 10);
+	text(pointVP(1), pointVP(2)+2, ['\color{yellow}', sprintf('%.2f, %.2f',pointVP(1), pointVP(2))]);
+	maxfig;
 end
-quiver(u, v, scale, 'color', 'r', 'linewidth', 2);%线宽是2，颜色是b，即蓝色，r是红色
-% set(gca,'YDir','reverse');%gca当前轴处理 
-quiver(u, zeros(size(v)), scale, 'color', 'g', 'linewidth', 2);%线宽是2，颜色是b，即蓝色，r是红色
-% set(gca,'YDir','reverse');%gca当前轴处理 
-quiver(zeros(size(u)), v, scale, 'color', 'b', 'linewidth', 2);%线宽是2，颜色是b，即蓝色，r是红色
 
+% 先按照0做阈值分割
+function pointVP = getVP(vx, vy)
 
-% 作用何在
+BW_vx = vx > 0;
+BW_vy = vy > 0;
+
+% figure; implot(BW_vx, BW_vy);
+
+% 初始VP为图像中心
+VPx = size(vx,2)/2.0;
+VPy = size(vx,1)/2.0;
+
+% 只考虑了图像中心区域
+for r = ceil(size(vx,1)/4) : ceil(size(vx,1)*3/4) 
+	for c = ceil(size(vx,2)/4) : ceil(size(vx,2)*3/4)
+		if BW_vx(r,c-1) == 0 && BW_vx(r,c) == 1
+			VPx = double(VPx + c)/2;
+			break;
+		end
+	end
+end 
+for r = ceil(size(vx,1)/4) : ceil(size(vx,1)*3/4) 
+	for c = ceil(size(vx,2)/4) : ceil(size(vx,2)*3/4)
+		if BW_vy(r-1,c) == 0 && BW_vy(r,c) == 1
+			VPy = double(VPy + r)/2;
+			break;
+		end
+	end
+end 
+
+pointVP = [VPx, VPy];
+
+% 注意vx为浮点数
+% 每行的绝对值最小值点做平均
+% 正负中间 左侧大于0，右侧小于0
+
+% 由于是渐变的，可以改成启发式地找中间值，二分法
+% 下一行从上一行附近找值
+
+% VPx = floor(VPx);
+% VPy = floor(VPy);
+
+% 1. set(gca,'YDir','reverse');作用何在?
+% 2. 消失点是图像中心- 画出中心点看有无变化
+% 3. x显示的图中横纵轴合成不正确
