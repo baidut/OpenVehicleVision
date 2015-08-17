@@ -46,8 +46,34 @@ RoadRegion = vvGetRoadFace(Original);
 % 再对原来的各行找该位置即可进行验证标定工作
 
 % 需要先进行DLD滤波 采用带掩码的滤波器
-mask = ( RoadRegion ~= 0 );
-implot(Original, RoadRegion, mask);
+mask = ( RoadRegion ~= 0 ); % 没作用 待解决mask_dilate腐蚀一下mask
+H = [-1, 0, 1, 0, -1;
+     -1, 0, 2, 0, -1;
+     -1, 0, 2, 0, -1;
+     -1, 0, 2, 0, -1;
+     -1, 0, 1, 0, -1];
+% 足够长的模板匹配效果较好 5 个像素长度
+
+% 效果较好
+% H = [-1, 0, 1, 0, -1;
+%      -2, 0, 4, 0, -2;
+%      -1, 0, 1, 0, -1];
+% RoadFiltered = roifilt2(H,RoadRegion,mask);
+% imfilter默认边界为0处理
+RoadFiltered = imfilter(RoadRegion,H,'replicate'); % & mask
+BW = im2bw( RoadFiltered, graythresh(RoadFiltered) );
+% 去除非四邻居连通域
+Markings = bwareaopen(BW,18,4);
+% 只检测中心的车道标记线？
+
+% 统计每一列的和值
+A = sum(Markings, 1);
+[maxValue index] = max(A);
+ratio = index / size(RoadRegion, 2); % 占的比例
+implot(Original, RoadRegion, mask, RoadFiltered, BW, Markings);
+
+% 验证区域，还原车道标记位置到图像中
+
 
 %三条相互平行间隔相同的线应该可以进行三维重建工作 (假设不成立，车道标记不一定在中间)
 % 这样每个点的位置，像素宽度的实际宽度都可以求解出来

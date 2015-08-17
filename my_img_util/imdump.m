@@ -5,20 +5,31 @@ function  imdump(varargin)
 % mfilename 返回的是最近一次调用的函数名，这里是imdump 所以不行，需要函数调用栈
 % 函数调用栈st存储了调用信息，这里st(1)是imdump, st(2)是调用imdump的函数
 st = dbstack;
-funcname = st(2).name;
-line = st(2).line;
+if length(st) > 1
+	n = 2;
+else
+	n = 1;
+end
+
+funcname = st(n).name;
+line = st(n).line;
 
 for i = 1:nargin
 	para = varargin{i};
-	filename = ['output/', inputname(i), ' @', funcname, num2str(line)];
-	if ishandle(para)
-		print(1, '-djpeg', filename);
+	filename = ['output/', inputname(i), ' @', funcname, '-', num2str(line)];
+	if 1 == length(para) && ishandle(para)
+		print(para, '-djpeg', filename);
 		close(para); % 关闭图像
 	else 
 		if ismatrix(para)  % grey
 			image = mat2gray(para);
 		% 文件夹浏览器显示时空格可以分行
-		imwrite(image, [filename, '.jpg']);
+		elseif 3 == length(para)
+			image = para;
+		else
+			error(['unkown input:', inputname(i)]);
+			dbstack
 		end
+		imwrite(image, [filename, '.jpg']);
 	end
 end
