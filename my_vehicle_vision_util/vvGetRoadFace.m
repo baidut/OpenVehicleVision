@@ -33,18 +33,19 @@ end
 [horizon, PointO, PointL, PointR] = detectRoadBoundary(image);
 image = rgb2gray(image);
 RoadRegion = perspectiveTrans(image, horizon, PointO, PointL, PointR);
+imdump(RoadRegion);
 
 %-------------------------------------------------------------------%
 % ISM2015 中为提取左右边界，这里只提取三个特殊点，从而进行投影变换
 % 其他参数可以通过这三个点求得
-function [horizon, PointO, PointL, PointR] = detectRoadBoundary(image) 
+function [horizon, PointO, PointL, PointR] = detectRoadBoundary(original) 
 
-[height, width, nchannel] = size(image);
+[height, width, nchannel] = size(original);
 
 numRow = 150; %min(height, 150);
 numColumn = 200; %min(width, 200);
 
-image = imresize(image, [numRow, numColumn]);
+image = imresize(original, [numRow, numColumn]);
 
 horizon =  ceil(numRow /3); % numRow/2;
 left = zeros(horizon);
@@ -115,8 +116,8 @@ PointL = linemeetpoint( lineL.point1, lineL.point2, [1, numRow], [2, numRow]);
 PointR = linemeetpoint( lineR.point1, lineR.point2, [1, numRow], [2, numRow]);
 
 % 绘图 先划线
-figure; subplot(1,2,1);
-imshow(image);title('Road face detection');
+h = implot(original, image);
+title('detected');
 % left and right boundary line
 plotline(PointO, PointL,'LineWidth',3,'Color','yellow');
 plotline(PointO, PointR,'LineWidth',3,'Color','green');
@@ -138,6 +139,8 @@ for r = horizon : numRow % 1 : (numRow/2)
 		end
 	end
 end 
+imdump(h);
+
 % 等前面 horizon 用完
 horizon = floor(PointO(2)); % Notice: 特殊图片: horizon为负数 消失点在图像外
 
@@ -208,8 +211,6 @@ A = [1, 1;outCols,1;1,outRows;outCols, outRows];
 tform = fitgeotrans(B, A, 'projective');
 % tform = cp2tform(B,A,'projective');
 Transformed = imwarp(I,tform, 'OutputView', imref2d([outRows, outCols]));
-subplot(1,2,2), imshow(Transformed); %, axis on
-title('Inverse perspective mapping');
 
 %-------------------------------------------------------------------%
 function line = bwFitLine(BW, Theta)
