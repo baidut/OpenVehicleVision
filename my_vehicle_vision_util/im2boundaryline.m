@@ -1,4 +1,5 @@
 function [lineL, lineR] = im2boundaryline(I) 
+% 不推荐使用该函数，已不再维护，建议使用BoundDetector
 % call bw2boundaries,bw2line
 
 [height, width, nchannel] = size(I);

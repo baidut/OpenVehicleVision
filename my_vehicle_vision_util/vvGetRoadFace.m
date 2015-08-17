@@ -1,4 +1,5 @@
 function RoadRegion = vvGetRoadFace(image)
+% 不再维护
 % 返回近视野路面的鸟瞰灰度图（颜色信息用不上）
 % 降低分辨率便于处理，提高处理效果。检测精度问题？
 % 用低分辨率处理，
