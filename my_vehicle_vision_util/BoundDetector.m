@@ -17,7 +17,7 @@ classdef BoundDetector
         pointO, pointL, pointR
         lineL, lineR
 
-        pointsL, pointsR % getPoints
+        % pointsL, pointsR % getPoints
         BoundL, BoundR
     end
  
@@ -97,11 +97,17 @@ classdef BoundDetector
         end
 
         function [pointsL, pointsR] = getPoints(obj)
+            % 注意处理的是水平线以下图片
             h = obj.nRow - obj.horizon + 1;
-            for r = 1 : numRow
-                left(r) = ceil( obj.pointO(1) - (obj.pointO(1) - obj.pointL(1))* r / h);
-                right(r) = ceil( obj.pointO(1) + (obj.pointR(1) - obj.pointO(1))* r / h);
+            for r = 1 : h
+                pointsL(r) = ceil( obj.pointO(1) - (obj.pointO(1) - obj.pointL(1))* r / h);
+                pointsR(r) = ceil( obj.pointO(1) + (obj.pointR(1) - obj.pointO(1))* r / h);
             end
+
+            % obj.pointsL = pointsL;
+            % obj.pointsR = pointsR;
+            % obj.pointsL
+            % obj.pointsR
         end
 
         function plotResults(obj)
