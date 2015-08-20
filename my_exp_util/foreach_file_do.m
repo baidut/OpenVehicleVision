@@ -11,6 +11,14 @@ function foreach_file_do(files, func, varargin)
 % 不处理子目录 处理子目录下文件http://blog.sina.com.cn/s/blog_520a99c00101dk41.html
 % 函数未定义的error没有弹出
 
+% matlab匿名函数 js http://cn.mathworks.com/help/matlab/matlab_prog/anonymous-functions.html
+% foreach_file_do(files, @(I) edge(I,'canny',[t1 t2]), I)
+% ```
+% figure=edge(I,'canny', [t1 t2]) 
+% edgecanny= @(I) edge(I,'canny',[t1 t2]);
+% figure = roifilt2(I, mask, edgecanny) 
+% ```
+
  % dir('pictures\*2.jpg')
  
  % dir('pictures\eas*2.jp*')
