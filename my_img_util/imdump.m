@@ -4,6 +4,17 @@ function  imdump(varargin)
 
 % mfilename 返回的是最近一次调用的函数名，这里是imdump 所以不行，需要函数调用栈
 % 函数调用栈st存储了调用信息，这里st(1)是imdump, st(2)是调用imdump的函数
+
+% 调试用对象，封装调试相关方法，
+% 初始化时声明调试输出目录
+% 注意imdump前提是有output文件夹
+
+global doimdump;
+
+if ~doimdump
+	return; % 默认不输出
+end
+
 st = dbstack;
 if length(st) > 1
 	n = 2;

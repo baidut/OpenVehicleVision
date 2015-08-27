@@ -28,12 +28,13 @@ numRow = 150;
 numColumn = 200;
 RGB = imresize(RGB, [numRow, numColumn]);
 
-figure;
+h = figure;
 imshow(RGB); 
 hold on;% 供描点划线，中间结果写入文件
 
 [horizon, left, right, theta] = detectRoadBoundary(RGB);
 detectLaneMarking(RGB, horizon, left, right, theta);
+saveeps(h);
 
 %-------------------------------------------------------------------%
 function detectLaneMarking(RGB, horizon, left, right, theta);
@@ -55,15 +56,22 @@ for r = 1 : h
 end 
 
 DldFeature = mat2gray(DldFeature); % 归一化
-Marking = (DldFeature > 0.6); % 0.7 DLD方法有缺陷 以后再说
+
+% 固定值0.6 - 0.5*max(DldFeature(:) - 
+Marking = (DldFeature > 0.1 + mean( DldFeature(end,:) )); % 统计最后一行 w:(end-w)
 % Marking = im2bw(DldFeature, graythresh(DldFeature));
 Marking = imclose(Marking, strel('square',3)); % imopen
 Marking = bwareaopen(Marking, 15);
-RemovedRegion = zeros(horizon-1, w);
-line = bwFitLine([RemovedRegion; Marking], theta);
 
-imwrite(ROI, 'results/ROI.jpg');
-imwrite(DldFeature, 'results/DldFeature.jpg');
+saveeps(ROI, DldFeature, Marking);
+
+RemovedRegion = zeros(horizon-1, w);
+
+houghM = figure;
+line = bwFitLine([RemovedRegion; Marking], theta);
+saveeps(houghM);
+close(houghM);
+
 % 对比
 % figure;
 % imwrite(Dld, 'results/Dld.jpg');
@@ -105,17 +113,21 @@ S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 
 % road boundary detection
 S_bw = S_modified > 0.3; %  0.3 0.2 % 用histeq和graythresh效果不好
-imwrite(S_bw, 'results/Fig5-a.jpg');
-S_bw = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
-imwrite(S_bw, 'results/Fig5-b.jpg');
-S_bw = bwareaopen(S_bw, 50); % 车道线可能成为干扰
-imwrite(S_bw, 'results/Fig5-c.jpg');
+S_bw_imclose = imclose(S_bw, strel('square',3)); %imdilate imclose imopen
+S_bw_areaopen = bwareaopen(S_bw_imclose, 50); % 车道线可能成为干扰
 
-[BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw);
+saveeps(S_bw, S_bw_imclose, S_bw_areaopen);
+
+[BoundaryL, BoundaryR] = bwExtractBoundaryPoints(S_bw_areaopen);
 RemovedRegion = zeros(horizon-1, numColumn); % 为了正确显示直线，补上去掉的区域
+
+houghL = figure;
 lineL = bwFitLine([RemovedRegion; BoundaryL], [0:89]);
+houghR = figure;
 lineR = bwFitLine([RemovedRegion; BoundaryR], [-89:0]);
 
+saveeps(houghL, houghR);
+close(houghL,houghR);
 % lineL = bwFitLine(BoundaryL);
 % lineR = bwFitLine(BoundaryR);
 
@@ -188,12 +200,10 @@ y = rho(P(:,1));
 lines = houghlines(BW,theta,rho,P, 'MinLength',10, 'FillGap',570);
 line = lines(1);
 
-% figure;
-% imshow(H,[],'XData',theta,'YData',rho,'InitialMagnification','fit');
-% xlabel('\theta'), ylabel('\rho');
-% axis on, axis normal, hold on;
-% plot(theta(P(:,2)),rho(P(:,1)),'s','color','white');
-% figure;
+imshow(H,[],'XData',theta,'YData',rho,'InitialMagnification','fit');
+xlabel('\theta'), ylabel('\rho');
+axis on, axis normal, hold on;
+plot(theta(P(:,2)),rho(P(:,1)),'s','color','white');
 
 %-------------------------------------------------------------------%
 function [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(BW)
@@ -202,9 +212,9 @@ function [BoundaryL, BoundaryR] = bwExtractBoundaryPoints(BW)
 Boundary_candidate = zeros(numRow, numColumn);
 BoundaryL = zeros(numRow, numColumn);
 BoundaryR = zeros(numRow, numColumn);
-ScanB = zeros(numRow, numColumn);
-ScanL = zeros(numRow, numColumn);
-ScanR = zeros(numRow, numColumn);
+% ScanB = zeros(numRow, numColumn);
+% ScanL = zeros(numRow, numColumn);
+% ScanR = zeros(numRow, numColumn);
 
 for c = 1 : numColumn
 	for r = numRow : -1 : 1
@@ -212,7 +222,7 @@ for c = 1 : numColumn
 			Boundary_candidate(r, c) = 1;
 			break;
 		end
-		ScanB(r, c) = 1;
+		% ScanB(r, c) = 1;
 	end
 end 
 for r = numRow : -1 : 1
@@ -221,21 +231,17 @@ for r = numRow : -1 : 1
 			BoundaryL(r, c) = 1;
 			break;
 		end
-		ScanL(r, c) = 1;
+		% ScanL(r, c) = 1;
 	end
 	for c = (numColumn/2) : numColumn
 		if 1 == Boundary_candidate(r, c)
 			BoundaryR(r, c) = 1;
 			break;
 		end
-		ScanR(r, c) = 1;
+		% ScanR(r, c) = 1;
 	end
 end
 
-% 论文中显示不清楚，用标记点的方式
-imwrite(Boundary_candidate, 'results/Fig6-a.jpg');
-imwrite(BoundaryL, 'results/Fig6-b.jpg');
-imwrite(BoundaryR, 'results/Fig6-c.jpg');
-imwrite(ScanB, 'results/Fig6-d.jpg');
-imwrite(ScanL, 'results/Fig6-e.jpg');
-imwrite(ScanR, 'results/Fig6-f.jpg');
+% 论文中显示不清楚，建议用标记点的方式
+saveeps(Boundary_candidate, BoundaryL, BoundaryR);
+
