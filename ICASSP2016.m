@@ -11,6 +11,72 @@
 % -
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+clear all;
+
+% ORI = imread('lab.jpg');
+% I = imresize(ORI, [200 300]);
+
+dataset = 'F:\Sync\dataset\caltech-lanes';
+subdataset = '/washington1';
+filename = '/f00000.png';
+
+Original = imread([dataset, subdataset, filename]);
+[nRow, nCol, nChannel] = size(Original);
+Gray = rgb2gray(Original);
+
+% % 颜色特征提取 阴影弱化
+% ROI = Original;
+% [RGB_R, RGB_G, RGB_B] = getChannel(ROI);
+% RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
+% RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
+% % S = double(RGB_max - RGB_min) ./ double(RGB_max + 1); 有阴影干扰
+% S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
+% S_modified2 = double(RGB_max - RGB_B) ./ double(RGB_min + 1);
+% Greenness = double(RGB_G - RGB_min) ./ double(RGB_max + 1); % double(RGB_B - max(RGB_R, RGB_G))
+
+% % 归一化为0-1后相加
+% Treeness = Greenness + S_modified;
+% implot(Original, S_modified, S_modified2); % Greenness, Treeness
+% return;
+
+% 初始化参数，后期调整跟踪
+VP = [floor(nCol/2), floor(nRow/2)];
+
+% ROI = Original(VP(2):end,:);
+RoadL = Gray(VP(2):end, 1:VP(1));
+RoadR = Gray(VP(2):end, VP(1)+1:end);
+
+% 提高梯度阈值可以减少阴影的干扰
+[edgeSegmentsL, noOfSegmentsL]= ED(RoadL, 80, 0, 1);
+[edgeSegmentsR, noOfSegmentsR]= ED(RoadR, 80, 0, 1);
+
+% 绘图
+Edge = Original(VP(2):end,:,:);
+for i = 1:noOfSegmentsL
+	% 根据斜率筛选
+	
+	for j = 1:size(edgeSegmentsL{i}, 1)
+		% plot(edgeSegments{i}(j, 1), edgeSegments{i}(j, 2),  'r*');
+		Edge(edgeSegmentsL{i}(j, 2), edgeSegmentsL{i}(j, 1), 1) = 255;
+		Edge(edgeSegmentsL{i}(j, 2), edgeSegmentsL{i}(j, 1), 2:3) = 0;
+	end
+end
+for i = 1:noOfSegmentsR
+	for j = 1:size(edgeSegmentsR{i}, 1)
+		% plot(edgeSegments{i}(j, 1), edgeSegments{i}(j, 2),  'r*');
+		Edge(edgeSegmentsR{i}(j, 2), VP(1)+edgeSegmentsR{i}(j, 1), 2) = 255;
+		Edge(edgeSegmentsR{i}(j, 2), VP(1)+edgeSegmentsR{i}(j, 1), [1,3]) = 0;
+	end
+end
+
+implot(Gray, Edge); % RoadL, RoadR,  Original, 
+
+% ED.m 已经做了修改 %function [edgeSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
+
+
+
+return;
+
 % 先完成水平线的提取，从而得到车道标记线的参数信息
 % 或者选择固定的水平线，计算车道标记宽度值
 % 宽度需要有一定的容忍能力
