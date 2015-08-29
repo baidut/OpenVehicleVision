@@ -72,8 +72,9 @@ hold on;
 % ED的输出是边缘，一个个边缘链条，EDlines的输出才是线段
 % linesL = [struct([])];
 % 精度100% 50% 10%
-precisionVP = 0.3; %0.1;
-VoteVP = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
+precisionVP = 1; %0.1;
+VoteVP_L = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
+VoteVP_R = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
 for i = 1:noOfSegmentsL
 	lineK = (lineSegmentsL(i).sx-lineSegmentsL(i).ex)/(lineSegmentsL(i).sy-lineSegmentsL(i).ey);
 	lineAngle = 180*atan(lineK)/pi;
@@ -89,7 +90,7 @@ for i = 1:noOfSegmentsL
 			else
 				y = ceil(y*precisionVP);
 				x = ceil(x*precisionVP);
-				VoteVP(y,x) = VoteVP(y,x) + 1; % abs( (lineSegmentsL(i).sy-lineSegmentsL(i).ey) / cos(lineAngle) ); % 太短的线段应当忽略？ 以线段长度加权
+				VoteVP_L(y,x) = VoteVP_L(y,x) + 1; % abs( (lineSegmentsL(i).sy-lineSegmentsL(i).ey) / cos(lineAngle) ); % 太短的线段应当忽略？ 以线段长度加权
 				% 投票时需要按照直线的可信度加权，直线长度可以作为一项指标，归一化到01之间
 			end
 		end
@@ -111,20 +112,22 @@ for i = 1:noOfSegmentsR
 			else
 				y = ceil(y*precisionVP);
 				x = ceil(x*precisionVP);
-				VoteVP(y,x) = VoteVP(y,x) + 1; % abs( (lineSegmentsR(i).sy-lineSegmentsR(i).ey) / cos(lineAngle) ); 
+				VoteVP_R(y,x) = VoteVP_R(y,x) + 1; % abs( (lineSegmentsR(i).sy-lineSegmentsR(i).ey) / cos(lineAngle) ); 
 			end
 		end
 	else
 		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'r');
 	end
 end
+
+VoteVP = VoteVP_L .* VoteVP_R;
 [maxVoteVP, index] = max(VoteVP(:)); 
 
 imdump(Step2_VPdetection);
-implot(ROI, VoteVP, VoteVP>2);
-selplot('VoteVP');
-hold on;
-plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo','markersize', 10);
+implot(ROI, VoteVP);
+hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo','markersize', 10);
+selplot('ROI');
+hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo','markersize', 10);
 return;
 
 % ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
