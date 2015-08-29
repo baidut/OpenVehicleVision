@@ -11,21 +11,38 @@
 % -
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear all;
+% 根据第一帧初始化参数
+% 先检测边缘，定位消失点
+% 根据消失点进一步筛选线段，定位当前车道线
+% 如果开启多车道识别模式，则执行IPM，进行多车道识别-根据当前车道向左右进行假设验证式的寻线，得到道路左右边界
+% 道路信息初始化完毕，后续跟踪
 
-% ORI = imread('lab.jpg');
-% I = imresize(ORI, [200 300]);
+% 关键是方法对比，在多个数据集上测试得出正确率，对比其他论文实现的准确率
+
+clear all;
 
 dataset = 'F:\Sync\dataset\caltech-lanes';
 subdataset = '/washington1';
 filename = '/f00000.png';
+% filename = '/f00004.png'; %shadowy
 
+
+%% Step1_Preprocess
 Original = imread([dataset, subdataset, filename]);
 [nRow, nCol, nChannel] = size(Original);
 Gray = rgb2gray(Original);
 
-% % 颜色特征提取 阴影弱化
-% ROI = Original;
+roiL = nCol/8; roiR = nCol*7/8;
+roiU = nRow/5; roiD = nRow*4/5;
+ROI = Original(roiU:roiD,roiL:roiR,:);
+
+Step1_Preprocess = implot(Original, ROI);
+selplot('Original');
+hold on; plot([roiL,roiR,roiR,roiL,roiL], [roiU,roiU,roiD,roiD,roiU]);
+imdump(Step1_Preprocess);
+
+%% 边界提取-图像分割
+%% 颜色特征提取 阴影弱化
 % [RGB_R, RGB_G, RGB_B] = getChannel(ROI);
 % RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
 % RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
@@ -33,68 +50,77 @@ Gray = rgb2gray(Original);
 % S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 % S_modified2 = double(RGB_max - RGB_B) ./ double(RGB_min + 1);
 % Greenness = double(RGB_G - RGB_min) ./ double(RGB_max + 1); % double(RGB_B - max(RGB_R, RGB_G))
-
 % % 归一化为0-1后相加
 % Treeness = Greenness + S_modified;
-% implot(Original, S_modified, S_modified2); % Greenness, Treeness
-% return;
+% implot(Original, S_modified, Treeness); % Greenness, Treeness
 
 % 初始化参数，后期调整跟踪
+
+%% Step2_VPdetection
+[nRow, nCol, nChannel] = size(ROI);
 VP = [floor(nCol/2), floor(nRow/2)];
-
-% ROI = Original(VP(2):end,:);
-RoadL = Gray(VP(2):end, 1:VP(1));
-RoadR = Gray(VP(2):end, VP(1)+1:end);
-
-% ED(RoadL, 80, 0, 1);提高梯度阈值可以减少阴影的干扰
-% EDLines不需要参数
+RoadL = ROI(VP(2):end, 1:VP(1));
+RoadR = ROI(VP(2):end, VP(1)+1:end);
+% % EDLines不需要参数; ED(RoadL, 80, 0, 1);提高梯度阈值可以减少阴影的干扰
 [lineSegmentsL, noOfSegmentsL]= EDLines(RoadL, 1);
 [lineSegmentsR, noOfSegmentsR]= EDLines(RoadR, 1);
-
 % 绘图
-Edge = Original(VP(2):end,:,:);
-
-implot(Edge);
+Lines = ROI(VP(2):end,:,:);
+Step2_VPdetection = implot(Lines);
 hold on;
-
 % i = 4; % 单个线段测试角度提取是否正确
 % ED的输出是边缘，一个个边缘链条，EDlines的输出才是线段
+% linesL = [struct([])];
+VoteVP = zeros(size(ROI,1),size(ROI,2));
 for i = 1:noOfSegmentsL
-	lineAngle = 180*atan((lineSegmentsL(i).sx-lineSegmentsL(i).ex)/(lineSegmentsL(i).sy-lineSegmentsL(i).ey))/pi;
+	lineK = (lineSegmentsL(i).sx-lineSegmentsL(i).ex)/(lineSegmentsL(i).sy-lineSegmentsL(i).ey);
+	lineAngle = 180*atan(lineK)/pi;
 	if lineAngle > -75 && lineAngle < -30
 		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'g');
+		% linesL(end+1) = lineSegmentsL(i);
+		% 绘制直线
+		for y = round(min(lineSegmentsL(i).ey, lineSegmentsL(i).sy)+1) : -1 : (1-VP(2))
+			x = round(lineK*(y-lineSegmentsL(i).sy)+lineSegmentsL(i).sx); % y坐标需要补偿
+			y = y + VP(2); % 补偿
+			if x > size(ROI,2) || x < 0
+				break;
+			else
+				VoteVP(y,x) = VoteVP(y,x) + 1; % abs( (lineSegmentsL(i).sy-lineSegmentsL(i).ey) / cos(lineAngle) ); % 太短的线段应当忽略？ 以线段长度加权
+				% 投票时需要按照直线的可信度加权，直线长度可以作为一项指标，归一化到01之间
+			end
+		end
 	else
 		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'r');
 	end
 end
-
 for i = 1:noOfSegmentsR
-	lineAngle = 180*atan((lineSegmentsR(i).sx-lineSegmentsR(i).ex)/(lineSegmentsR(i).sy-lineSegmentsR(i).ey))/pi;
+	lineK = (lineSegmentsR(i).sx-lineSegmentsR(i).ex)/(lineSegmentsR(i).sy-lineSegmentsR(i).ey);
+	lineAngle = 180*atan(lineK)/pi;
 	if lineAngle > 30 && lineAngle < 75
 		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'b');
+		% 绘制直线
+		for y = round(min(lineSegmentsR(i).ey, lineSegmentsR(i).sy)+1) : -1 : (1-VP(2))
+			x = round(lineK*(y-lineSegmentsR(i).sy)+lineSegmentsR(i).sx);
+			x = VP(1) + x; y = VP(2) + y;
+			if x > size(ROI,2) || x < 1
+				break;
+			else
+				VoteVP(y,x) = VoteVP(y,x) + 1; % abs( (lineSegmentsR(i).sy-lineSegmentsR(i).ey) / cos(lineAngle) ); 
+			end
+		end
 	else
 		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'r');
 	end
 end
-
-return;
-
-
-i = 2;
-for j = 1:size(lineSegmentsR{i}, 1)
-	% plot(lineSegments{i}(j, 1), lineSegments{i}(j, 2),  'r*');
-	Edge(lineSegmentsR{i}(j, 2), VP(1)+lineSegmentsR{i}(j, 1), 3) = 255;
-	Edge(lineSegmentsR{i}(j, 2), VP(1)+lineSegmentsR{i}(j, 1), [1,2]) = 0;
-end
-implot(Original, Edge);
-imdump(Edge);
+imdump(Step2_VPdetection);
+implot(ROI, VoteVP); % VoteVP>2
+hold on;
+[maxVoteVP, index] = max(VoteVP(:)); 
+plot(ceil(index/nRow),mod(index,nRow),'ro', 'markersize', 10);
 return;
 
 % ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
 % EDLines.m 也做了修改
-
-
-return;
 
 % 先完成水平线的提取，从而得到车道标记线的参数信息
 % 或者选择固定的水平线，计算车道标记宽度值
