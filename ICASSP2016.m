@@ -71,7 +71,9 @@ hold on;
 % i = 4; % 单个线段测试角度提取是否正确
 % ED的输出是边缘，一个个边缘链条，EDlines的输出才是线段
 % linesL = [struct([])];
-VoteVP = zeros(size(ROI,1),size(ROI,2));
+% 精度100% 50% 10%
+precisionVP = 0.3; %0.1;
+VoteVP = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
 for i = 1:noOfSegmentsL
 	lineK = (lineSegmentsL(i).sx-lineSegmentsL(i).ex)/(lineSegmentsL(i).sy-lineSegmentsL(i).ey);
 	lineAngle = 180*atan(lineK)/pi;
@@ -79,12 +81,14 @@ for i = 1:noOfSegmentsL
 		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'g');
 		% linesL(end+1) = lineSegmentsL(i);
 		% 绘制直线
-		for y = round(min(lineSegmentsL(i).ey, lineSegmentsL(i).sy)+1) : -1 : (1-VP(2))
+		for y = round(min(lineSegmentsL(i).ey, lineSegmentsL(i).sy)+1) : -ceil(1/precisionVP) : (1-VP(2))
 			x = round(lineK*(y-lineSegmentsL(i).sy)+lineSegmentsL(i).sx); % y坐标需要补偿
 			y = y + VP(2); % 补偿
 			if x > size(ROI,2) || x < 0
 				break;
 			else
+				y = ceil(y*precisionVP);
+				x = ceil(x*precisionVP);
 				VoteVP(y,x) = VoteVP(y,x) + 1; % abs( (lineSegmentsL(i).sy-lineSegmentsL(i).ey) / cos(lineAngle) ); % 太短的线段应当忽略？ 以线段长度加权
 				% 投票时需要按照直线的可信度加权，直线长度可以作为一项指标，归一化到01之间
 			end
@@ -99,12 +103,14 @@ for i = 1:noOfSegmentsR
 	if lineAngle > 30 && lineAngle < 75
 		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'b');
 		% 绘制直线
-		for y = round(min(lineSegmentsR(i).ey, lineSegmentsR(i).sy)+1) : -1 : (1-VP(2))
+		for y = round(min(lineSegmentsR(i).ey, lineSegmentsR(i).sy)+1) : -ceil(1/precisionVP) : (1-VP(2))
 			x = round(lineK*(y-lineSegmentsR(i).sy)+lineSegmentsR(i).sx);
 			x = VP(1) + x; y = VP(2) + y;
 			if x > size(ROI,2) || x < 1
 				break;
 			else
+				y = ceil(y*precisionVP);
+				x = ceil(x*precisionVP);
 				VoteVP(y,x) = VoteVP(y,x) + 1; % abs( (lineSegmentsR(i).sy-lineSegmentsR(i).ey) / cos(lineAngle) ); 
 			end
 		end
@@ -112,11 +118,13 @@ for i = 1:noOfSegmentsR
 		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'r');
 	end
 end
-imdump(Step2_VPdetection);
-implot(ROI, VoteVP); % VoteVP>2
-hold on;
 [maxVoteVP, index] = max(VoteVP(:)); 
-plot(ceil(index/nRow),mod(index,nRow),'ro', 'markersize', 10);
+
+imdump(Step2_VPdetection);
+implot(ROI, VoteVP, VoteVP>2);
+selplot('VoteVP');
+hold on;
+plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo','markersize', 10);
 return;
 
 % ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
