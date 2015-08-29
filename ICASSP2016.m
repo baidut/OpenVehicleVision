@@ -57,7 +57,7 @@ imdump(Step1_Preprocess);
 
 % 初始化参数，后期调整跟踪
 
-%% Step2_VPdetection
+%% Step2_LineDetection
 [nRow, nCol, nChannel] = size(ROI);
 VP = [floor(nCol/2), floor(nRow/2)];
 RoadL = ROI(VP(2):end, 1:VP(1));
@@ -65,23 +65,26 @@ RoadR = ROI(VP(2):end, VP(1)+1:end);
 % % EDLines不需要参数; ED(RoadL, 80, 0, 1);提高梯度阈值可以减少阴影的干扰
 [lineSegmentsL, noOfSegmentsL]= EDLines(RoadL, 1);
 [lineSegmentsR, noOfSegmentsR]= EDLines(RoadR, 1);
-% 绘图
-Lines = ROI(VP(2):end,:,:);
-Step2_VPdetection = implot(Lines);
-hold on;
-% i = 4; % 单个线段测试角度提取是否正确
 % ED的输出是边缘，一个个边缘链条，EDlines的输出才是线段
 % linesL = [struct([])];
 % 精度100% 50% 10%
 precisionVP = 0.4; %0.1;
 VoteVP_L = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
-VoteVP_R = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
+VoteVP_R = VoteVP_L; % 缩小，划分成格子
+VoteVP = VoteVP_L;
+% MapVP = zeros(nRow, nCol); % 计算量大
+
+% 绘图
+Lines = ROI(VP(2):end,:,:);
+Step2_LineDetection = implot(Lines);
+hold on;
 for i = 1:noOfSegmentsL
 	lineK = (lineSegmentsL(i).sx-lineSegmentsL(i).ex)/(lineSegmentsL(i).sy-lineSegmentsL(i).ey);
 	lineAngle = 180*atan(lineK)/pi;
 	if lineAngle > -75 && lineAngle < -30
 		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'g');
 		% linesL(end+1) = lineSegmentsL(i);
+		
 		% 绘制直线
 		for y = round(min(lineSegmentsL(i).ey, lineSegmentsL(i).sy)+1) : -ceil(1/precisionVP) : (1-VP(2))
 			x = round(lineK*(y-lineSegmentsL(i).sy)+lineSegmentsL(i).sx); % y坐标需要补偿
@@ -95,6 +98,13 @@ for i = 1:noOfSegmentsL
 				% 投票时需要按照直线的可信度加权，直线长度可以作为一项指标，归一化到01之间
 			end
 		end
+
+		% % 效率太低
+		% for r = 1:nRow
+		% 	for c = 1:nCol
+		% 		MapVP(r,c) = MapVP(r,c) + distanceP2L([r,c], [lineSegmentsL(i).ey+ VP(2), lineSegmentsL(i).ex], [lineSegmentsL(i).sy+ VP(2), lineSegmentsL(i).sx]);
+		% 	end
+		% end
 	else
 		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'r');
 	end
@@ -116,24 +126,32 @@ for i = 1:noOfSegmentsR
 				VoteVP_R(y,x) = VoteVP_R(y,x) + 1; % abs( (lineSegmentsR(i).sy-lineSegmentsR(i).ey) / cos(lineAngle) ); 
 			end
 		end
+
+		% % 效率太低
+		% for r = 1:nRow
+		% 	for c = 1:nCol
+		% 		MapVP(r,c) = MapVP(r,c) + distanceP2L([r,c], [lineSegmentsR(i).ey+ VP(2), VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy+ VP(2), VP(1)+lineSegmentsR(i).sx]);
+		% 	end
+		% end
 	else
 		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'r');
 	end
 end
+imdump(Step2_LineDetection);
 
+%% Step3_VPdetection
 VoteVP = VoteVP_L .* VoteVP_R;
 % VoteVP = (VoteVP_L>2) .* (VoteVP_R>2); % 条件太苛刻，高精度下得不到解
 [maxVoteVP, index] = max(VoteVP(:)); 
 
-imdump(Step2_VPdetection);
-implot(ROI, VoteVP);
+Step3_VPdetection = implot(ROI, VoteVP_L, VoteVP_R, VoteVP);
 hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'y+','markersize', 10);
 selplot('ROI');
 hold on; plot(ceil(index/size(VoteVP,1)/precisionVP),mod(index,size(VoteVP,1))/precisionVP,'yo','markersize', 10);
+imdump(VoteVP_R, VoteVP_L, VoteVP, Step3_VPdetection);
 
-imdump(VoteVP_R, VoteVP_L, VoteVP);
+% 可能性和距离并不成正比，建议采用高斯函数
 return;
-
 % ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
 % EDLines.m 也做了修改
 
