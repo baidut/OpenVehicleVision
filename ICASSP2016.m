@@ -23,7 +23,8 @@ clear all;
 
 dataset = 'F:\Sync\dataset\caltech-lanes';
 subdataset = '/washington1';
-filename = '/f00000.png';
+% filename = '/f00000.png';
+filename = '/f00001.png';
 % filename = '/f00004.png'; %shadowy
 
 
@@ -72,7 +73,7 @@ hold on;
 % ED的输出是边缘，一个个边缘链条，EDlines的输出才是线段
 % linesL = [struct([])];
 % 精度100% 50% 10%
-precisionVP = 1; %0.1;
+precisionVP = 0.4; %0.1;
 VoteVP_L = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
 VoteVP_R = zeros(ceil(nRow*precisionVP),ceil(nCol*precisionVP)); % 缩小，划分成格子
 for i = 1:noOfSegmentsL
@@ -121,13 +122,16 @@ for i = 1:noOfSegmentsR
 end
 
 VoteVP = VoteVP_L .* VoteVP_R;
+% VoteVP = (VoteVP_L>2) .* (VoteVP_R>2); % 条件太苛刻，高精度下得不到解
 [maxVoteVP, index] = max(VoteVP(:)); 
 
 imdump(Step2_VPdetection);
 implot(ROI, VoteVP);
-hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo','markersize', 10);
+hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'y+','markersize', 10);
 selplot('ROI');
-hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo','markersize', 10);
+hold on; plot(ceil(index/size(VoteVP,1)/precisionVP),mod(index,size(VoteVP,1))/precisionVP,'yo','markersize', 10);
+
+imdump(VoteVP_R, VoteVP_L, VoteVP);
 return;
 
 % ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
