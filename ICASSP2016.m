@@ -46,33 +46,52 @@ VP = [floor(nCol/2), floor(nRow/2)];
 RoadL = Gray(VP(2):end, 1:VP(1));
 RoadR = Gray(VP(2):end, VP(1)+1:end);
 
-% 提高梯度阈值可以减少阴影的干扰
-[edgeSegmentsL, noOfSegmentsL]= ED(RoadL, 80, 0, 1);
-[edgeSegmentsR, noOfSegmentsR]= ED(RoadR, 80, 0, 1);
+% ED(RoadL, 80, 0, 1);提高梯度阈值可以减少阴影的干扰
+% EDLines不需要参数
+[lineSegmentsL, noOfSegmentsL]= EDLines(RoadL, 1);
+[lineSegmentsR, noOfSegmentsR]= EDLines(RoadR, 1);
 
 % 绘图
 Edge = Original(VP(2):end,:,:);
+
+implot(Edge);
+hold on;
+
+% i = 4; % 单个线段测试角度提取是否正确
+% ED的输出是边缘，一个个边缘链条，EDlines的输出才是线段
 for i = 1:noOfSegmentsL
-	% 根据斜率筛选
-	
-	for j = 1:size(edgeSegmentsL{i}, 1)
-		% plot(edgeSegments{i}(j, 1), edgeSegments{i}(j, 2),  'r*');
-		Edge(edgeSegmentsL{i}(j, 2), edgeSegmentsL{i}(j, 1), 1) = 255;
-		Edge(edgeSegmentsL{i}(j, 2), edgeSegmentsL{i}(j, 1), 2:3) = 0;
+	lineAngle = 180*atan((lineSegmentsL(i).sx-lineSegmentsL(i).ex)/(lineSegmentsL(i).sy-lineSegmentsL(i).ey))/pi;
+	if lineAngle > -75 && lineAngle < -30
+		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'g');
+	else
+		plot([lineSegmentsL(i).sx lineSegmentsL(i).ex], [lineSegmentsL(i).sy lineSegmentsL(i).ey], 'r');
 	end
 end
+
 for i = 1:noOfSegmentsR
-	for j = 1:size(edgeSegmentsR{i}, 1)
-		% plot(edgeSegments{i}(j, 1), edgeSegments{i}(j, 2),  'r*');
-		Edge(edgeSegmentsR{i}(j, 2), VP(1)+edgeSegmentsR{i}(j, 1), 2) = 255;
-		Edge(edgeSegmentsR{i}(j, 2), VP(1)+edgeSegmentsR{i}(j, 1), [1,3]) = 0;
+	lineAngle = 180*atan((lineSegmentsR(i).sx-lineSegmentsR(i).ex)/(lineSegmentsR(i).sy-lineSegmentsR(i).ey))/pi;
+	if lineAngle > 30 && lineAngle < 75
+		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'b');
+	else
+		plot([VP(1)+lineSegmentsR(i).sx VP(1)+lineSegmentsR(i).ex], [lineSegmentsR(i).sy lineSegmentsR(i).ey], 'r');
 	end
 end
 
-implot(Gray, Edge); % RoadL, RoadR,  Original, 
+return;
 
-% ED.m 已经做了修改 %function [edgeSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
 
+i = 2;
+for j = 1:size(lineSegmentsR{i}, 1)
+	% plot(lineSegments{i}(j, 1), lineSegments{i}(j, 2),  'r*');
+	Edge(lineSegmentsR{i}(j, 2), VP(1)+lineSegmentsR{i}(j, 1), 3) = 255;
+	Edge(lineSegmentsR{i}(j, 2), VP(1)+lineSegmentsR{i}(j, 1), [1,2]) = 0;
+end
+implot(Original, Edge);
+imdump(Edge);
+return;
+
+% ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
+% EDLines.m 也做了修改
 
 
 return;

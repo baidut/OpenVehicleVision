@@ -35,7 +35,7 @@ for i = 1:nargin
 		if ismatrix(para)  % grey
 			image = mat2gray(para);
 		% 文件夹浏览器显示时空格可以分行
-		elseif 3 == length(para)
+		elseif 3 == size(para, 3)
 			image = para;
 		else
 			error(['unkown input:', inputname(i)]);
@@ -44,3 +44,5 @@ for i = 1:nargin
 		imwrite(image, [filename, '.jpg']);
 	end
 end
+
+% 注意改写程序后，可能原图片生成对应的行号发生变化
