@@ -23,7 +23,7 @@ handles = zeros(1,nargin);
 for i = 1:nargin
 	obj = varargin{i};
 	name{i} = inputname(i);
-	if length(obj)~= 1
+	if length(obj)> 1
 		for ii = 1:length(obj)
 			tmp = obj(ii).plot('color', c(i,:)); % plotobj(obj); % recursive
 		end

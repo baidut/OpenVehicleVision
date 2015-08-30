@@ -6,32 +6,49 @@ classdef LineObj<handle
 
     %% Public properties
     properties
-    	p1, p2 % point 1,2
-    	a % angle (-90,90]
+        p1, p2 % point 1,2
+        a % angle (-90,90]
+        k % ratio of delta c to delta r
     end
  
     %% Public methods
     methods
         function obj = LineObj(endPoint1, endPoint2) % Pi:(ri, ci)
-        	obj.p1 = endPoint1;
-        	obj.p2 = endPoint2;
+            obj.p1 = endPoint1;
+            obj.p2 = endPoint2;
         end
 
         function a = get.a(obj)
-        	delta = obj.p1 - obj.p2;
-        	k = delta(2)/delta(1); % delta c / delta r
-			a = 180*atan(k)/pi;
-		end
+            a = 180*atan(obj.k)/pi;
+        end
 
-		function h = plot(obj, varargin)
-			xy = [obj.p1; obj.p2];
-			hold on;
-			h = plot(xy(:,2),xy(:,1), varargin{:});
-		end
+        function k = get.k(obj)
+            delta = obj.p1 - obj.p2;
+            k = delta(2)/delta(1); % delta c / delta r
+        end
+
+        function h = plot(obj, varargin)
+            xy = [obj.p1; obj.p2];
+            hold on;
+            h = plot(xy(:,2),xy(:,1), varargin{:});
+        end
 
         function move(obj, vector) % translation
             obj.p1 = obj.p1 + vector; 
             obj.p2 = obj.p2 + vector; 
+        end
+
+        function bw = path(obj, sizeOfImage, sizeOfGrid)
+        % generates the path of walking along the straight line at a gridded image
+            bw = zeros(sizeOfGrid);
+            for r = 1:sizeOfGrid(1)
+                R = r * sizeOfImage(1) / sizeOfGrid(1);
+                C = obj.k*(R-obj.p1(1))+obj.p1(2);
+                c = round(C * sizeOfGrid(2) / sizeOfImage(2));
+                if (c>1) && (c<sizeOfGrid(2))
+                    bw(r,c) = 1;
+                end
+            end
         end
     end% methods
 end% classdef
