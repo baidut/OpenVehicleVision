@@ -18,20 +18,21 @@ function h = plotobj(varargin)
 h = gcf;
 c = jet(nargin); % color
 name = cell(1,nargin);
+handles = zeros(1,nargin);
 
 for i = 1:nargin
 	obj = varargin{i};
 	name{i} = inputname(i);
 	if length(obj)~= 1
 		for ii = 1:length(obj)
-			h_obj = obj(ii).plot('color', c(i,:)); % plotobj(obj); % recursive
+			tmp = obj(ii).plot('color', c(i,:)); % plotobj(obj); % recursive
 		end
+		handles(i) = tmp;
 	elseif isobject(obj)
-		h_obj = obj.plot('color', c(i,:));
+		handles(i) = obj.plot('color', c(i,:));
 	else
 		error('unexpected inputs.');
 	end
 end
 
-legend(name{:});
-
+legend(handles, name{:});

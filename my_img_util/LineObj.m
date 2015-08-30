@@ -1,9 +1,11 @@
-classdef LineObj
+classdef LineObj<handle
+% How to modify properties of a Matlab Object http://stackoverflow.com/questions/272618/how-to-modify-properties-of-a-matlab-object
+% OR l = l.move([r, c])
 
 % point( which row, which column);
 
     %% Public properties
-    properties (GetAccess = public, SetAccess = private)
+    properties
     	p1, p2 % point 1,2
     	a % angle (-90,90]
     end
@@ -26,6 +28,11 @@ classdef LineObj
 			hold on;
 			h = plot(xy(:,2),xy(:,1), varargin{:});
 		end
+
+        function move(obj, vector) % translation
+            obj.p1 = obj.p1 + vector; 
+            obj.p2 = obj.p2 + vector; 
+        end
     end% methods
 end% classdef
 
