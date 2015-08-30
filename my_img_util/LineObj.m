@@ -21,10 +21,10 @@ classdef LineObj
 			a = 180*atan(k)/pi;
 		end
 
-		function plot(obj, varargin)
+		function h = plot(obj, varargin)
 			xy = [obj.p1; obj.p2];
 			hold on;
-			plot(xy(:,2),xy(:,1), varargin{:});
+			h = plot(xy(:,2),xy(:,1), varargin{:});
 		end
     end% methods
 end% classdef
