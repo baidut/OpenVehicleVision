@@ -1,6 +1,7 @@
 function foreach_file_do(files, func, varargin)
 % filePath, fileType
 % USAGE:
+% TIPS: watch a movie by showing pictures! foreach_file_do('SLD2011\dataset3\sequence\01*.jpg', @imshow) 
 %  	foreach_file_do('pictures/*', @disp)
 %  	foreach_file_do('pictures/*.jpg', @disp)
 %  	foreach_file_do('pictures/lanemarking/*.picture', @disp)
@@ -33,6 +34,9 @@ end
 
 for ii = 1 : size(files, 2)% 修改 注意 length 返回的是行数和列数的最大值
 	file = files{1, ii};
+	if iscell(file)
+		file = cell2mat(file);
+	end
 	func( file, varargin{:} );
 end
 

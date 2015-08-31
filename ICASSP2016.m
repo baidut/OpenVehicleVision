@@ -1,5 +1,6 @@
-% function ICASSP2016(folder, no)
+function ICASSP2016(filename)
 %USAGE
+% foreach_file_do('F:\Sync\dataset\SLD2011\dataset3\sequence\0164*.jpg', @ICASSP2016);
 % ICASSP2016('IRC041500','00010');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % doc: https://github.com/baidut/ITS/issues/50
@@ -19,7 +20,7 @@
 
 % 关键是方法对比，在多个数据集上测试得出正确率，对比其他论文实现的准确率
 
-clear all;
+
 
 % dataset = 'F:\Sync\dataset\caltech-lanes';
 % subdataset = '/washington1';
@@ -28,12 +29,17 @@ clear all;
 % filename = '/f00004.png'; %shadowy
 
 
-dataset = 'F:\Sync\dataset\SLD2011'; 
-subdataset = '/dataset3\sequence'; % dataset4 为多车道线识别，暂不支持
-filename = '/01640.jpg';
+% dataset = 'F:\Sync\dataset\SLD2011'; 
+% subdataset = '/dataset3\sequence'; % dataset4 为多车道线识别，暂不支持
+% filename = '/01640.jpg';
+
+global doimdump;
+
+doimdump = false;
 
 %% Step1_Preprocess
-Original = imread([dataset, subdataset, filename]);
+% Original = imread([dataset, subdataset, filename]);
+Original = imread(filename);
 [nRow, nCol, nChannel] = size(Original);
 Gray = rgb2gray(Original);
 
@@ -43,6 +49,7 @@ ROI = Original(roiU:roiD,roiL:roiR,:);
 % ROI = imresize( Original(roiU:roiD,roiL:roiR,:) , [150, 200]);
 bound = BoundDetector(ROI);
 mk = MarkDetector(ROI, bound);
+figure;
 implot(mk.roadBirdView, ROI);
 bound.plotResults;
 mk.drawLine;

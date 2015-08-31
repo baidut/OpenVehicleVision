@@ -73,15 +73,13 @@ classdef MarkDetector
 			% 注意需要先plotlane
 			[pointsL, pointsR]  = obj.Bound.getPoints(); % Bound.horizon : Bound.nRow
 			labeled = obj.OriIm;
-			figure;
-			imshow(labeled); hold on;
 			h = obj.Bound.nRow - obj.Bound.horizon + 1;
 			for r = 1 : h
 				pointsM(r) = ceil( pointsL(r) + ratio* (pointsR(r) - pointsL(r)) );
 				row = r+obj.Bound.horizon;
 				plot(pointsM(r), row, 'ro');
-				plot(pointsL(r), row, 'g+');
-				plot(pointsR(r), row, 'b+');
+				% plot(pointsL(r), row, 'g+');
+				% plot(pointsR(r), row, 'b+');
 				% labeled(row, pointsM(r));
 			end
 		end
