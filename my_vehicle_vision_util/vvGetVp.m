@@ -69,4 +69,21 @@ selplot('im');
 hold on; plot(VP(2), VP(1), 'y+');
 imdump(VoteVP_R, VoteVP_L, VoteVP, VpDetection);
 
-%% TODO: LaneDetection according to the orientation of lines.
+%% LaneDetection according to the orientation of lines.
+lineFilterPassVpL = [LineObj([0 0],[0 0])];
+lineFilterPassVpR = [LineObj([0 0],[0 0])];
+for i = 1:length(lineFilterAngleL)
+	if lineFilterAngleL(i).distance2point(VP) < 1/precisionVP
+		lineFilterPassVpL(end+1) = lineFilterAngleL(i);
+	end
+end
+for i = 1:length(lineFilterAngleR)
+	if lineFilterAngleR(i).distance2point(VP) < 1/precisionVP
+		lineFilterPassVpR(end+1) = lineFilterAngleR(i);
+	end
+end
+
+% plot candidate line segments.
+LaneDetection = implot(im);
+plotobj(lineFilterAngleL, lineFilterAngleR, lineFilterPassVpL, lineFilterPassVpR);
+imdump(LaneDetection);

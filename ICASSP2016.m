@@ -21,12 +21,16 @@
 
 clear all;
 
-dataset = 'F:\Sync\dataset\caltech-lanes';
-subdataset = '/washington1';
-% filename = '/f00000.png';
-% filename = '/f00001.png';
-filename = '/f00004.png'; %shadowy
+% dataset = 'F:\Sync\dataset\caltech-lanes';
+% subdataset = '/washington1';
+% % filename = '/f00000.png';
+% % filename = '/f00001.png';
+% filename = '/f00004.png'; %shadowy
 
+
+dataset = 'F:\Sync\dataset\SLD2011'; 
+subdataset = '/dataset3\sequence'; % dataset4 为多车道线识别，暂不支持
+filename = '/01640.jpg';
 
 %% Step1_Preprocess
 Original = imread([dataset, subdataset, filename]);
@@ -35,7 +39,9 @@ Gray = rgb2gray(Original);
 
 roiL = nCol/8; roiR = nCol*7/8;
 roiU = nRow/5; roiD = nRow*4/5;
-ROI = Original(roiU:roiD,roiL:roiR,:);
+% ROI = Original(roiU:roiD,roiL:roiR,:);
+ROI = imresize( Original(roiU:roiD,roiL:roiR,:) , [150, 200]);
+
 
 % Display results.
 % Step1_Preprocess = implot(Original, ROI);
@@ -46,20 +52,28 @@ ROI = Original(roiU:roiD,roiL:roiR,:);
 VP = vvGetVp(ROI);
 VP,
 % VP = [75, 239];
-vvRowFilterTest(ROI, VP(1));
+% vvRowFilterTest(ROI, VP(1));
 
-%% 边界提取-图像分割
+return;
+
+%% 边界提取-图像分割-有进一步研究的价值
 %% 颜色特征提取 阴影弱化
 % [RGB_R, RGB_G, RGB_B] = getChannel(ROI);
 % RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
 % RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
 % % S = double(RGB_max - RGB_min) ./ double(RGB_max + 1); 有阴影干扰
+
 % S_modified = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 % S_modified2 = double(RGB_max - RGB_B) ./ double(RGB_min + 1);
-% Greenness = double(RGB_G - RGB_min) ./ double(RGB_max + 1); % double(RGB_B - max(RGB_R, RGB_G))
+
+% doubleRGB_R = im2double(RGB_R);
+% doubleRGB_G = im2double(RGB_G);
+% doubleRGB_B = im2double(RGB_B);
+% Greenness = (doubleRGB_G - max(doubleRGB_R, doubleRGB_B)) ./ (doubleRGB_R+doubleRGB_G+doubleRGB_B); %./ double(RGB_max + 1); % double(RGB_B - max(RGB_R, RGB_G))
 % % 归一化为0-1后相加
-% Treeness = Greenness + S_modified;
-% implot(Original, S_modified, Treeness); % Greenness, Treeness
+% % Treeness = Greenness + S_modified;
+% Treeness = mat2gray( (Greenness>0) .* Greenness );
+% implot(ROI, S_modified, Greenness, Greenness> 0, Treeness); % Greenness, Treeness
 
 % 初始化参数，后期调整跟踪
 return;

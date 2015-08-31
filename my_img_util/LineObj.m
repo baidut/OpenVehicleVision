@@ -50,6 +50,15 @@ classdef LineObj<handle
                 end
             end
         end
+
+        function d = distance2point(obj, point)
+            d = abs(det([obj.p2-obj.p1 ; point-obj.p1])) / norm(obj.p2-obj.p1);
+        end
+
+        function bool = pass(obj, point, err)
+        % check if the line pass given point.
+            bool = abs( (point(2)-obj.p1(2))/(point(1)-obj.p1(1)) - obj.k ) < err;
+        end
     end% methods
 end% classdef
 
