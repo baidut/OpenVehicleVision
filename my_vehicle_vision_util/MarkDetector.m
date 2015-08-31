@@ -54,7 +54,7 @@ classdef MarkDetector
 			%      -1, 0, 1, 0, -1];
 			% RoadFiltered = roifilt2(H,RoadRegion,mask);
 			% imfilter默认边界为0处理
-			RoadFiltered = imfilter(obj.roadBirdView,H,'replicate'); % & mask
+			RoadFiltered = imfilter(obj.roadBirdView(:,(end/3):(end*2/3),:),H,'replicate'); % & mask
 			BW = im2bw( RoadFiltered, graythresh(RoadFiltered) );
 			% 去除非四邻居连通域
 			Markings = bwareaopen(BW,18,4);
@@ -63,12 +63,13 @@ classdef MarkDetector
 			% 统计每一列的和值
 			A = sum(Markings, 1);
 			[maxValue index] = max(A);
-			ratio = index / 80, % 占的比例 outCols
-			implot(BW, Markings);
+			ratio = (index+80/3-1) / 80, % 占的比例 outCols
+			% implot(BW, Markings);
 			% 验证区域，还原车道标记位置到图像中
 		end
 
-		function [pointsM, labeled] = drawLine(obj, ratio)
+		function [pointsM, labeled] = drawLine(obj)
+			ratio = plotLane(obj);
 			% 注意需要先plotlane
 			[pointsL, pointsR]  = obj.Bound.getPoints(); % Bound.horizon : Bound.nRow
 			labeled = obj.OriIm;
@@ -81,7 +82,7 @@ classdef MarkDetector
 				plot(pointsM(r), row, 'ro');
 				plot(pointsL(r), row, 'g+');
 				plot(pointsR(r), row, 'b+');
-				labeled(row, pointsM(r));
+				% labeled(row, pointsM(r));
 			end
 		end
 

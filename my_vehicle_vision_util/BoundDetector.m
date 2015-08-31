@@ -60,7 +60,8 @@ classdef BoundDetector
             S_bw_R_imclose = imclose(S_bw_R, strel('square',3));
             S_bw_R_areaopen = bwareaopen(S_bw_R_imclose, 200);
 
-            S_bw = [S_bw_L_areaopen, S_bw_R_areaopen];
+            S_bw = [S_bw_L_imclose, S_bw_R_imclose]; % 可配置关闭areaopen
+            % S_bw = [S_bw_L_areaopen, S_bw_R_areaopen];
 
             imdump(S_modified, S_bw,...
                 S_bw_L, S_bw_L_imclose, S_bw_L_areaopen,...

@@ -39,8 +39,14 @@ Gray = rgb2gray(Original);
 
 roiL = nCol/8; roiR = nCol*7/8;
 roiU = nRow/5; roiD = nRow*4/5;
-% ROI = Original(roiU:roiD,roiL:roiR,:);
-ROI = imresize( Original(roiU:roiD,roiL:roiR,:) , [150, 200]);
+ROI = Original(roiU:roiD,roiL:roiR,:);
+% ROI = imresize( Original(roiU:roiD,roiL:roiR,:) , [150, 200]);
+bound = BoundDetector(ROI);
+mk = MarkDetector(ROI, bound);
+implot(mk.roadBirdView, ROI);
+bound.plotResults;
+mk.drawLine;
+return;
 
 
 % Display results.
@@ -49,12 +55,10 @@ ROI = imresize( Original(roiU:roiD,roiL:roiR,:) , [150, 200]);
 % hold on; plot([roiL,roiR,roiR,roiL,roiL], [roiU,roiU,roiD,roiD,roiU]);
 % imdump(Step1_Preprocess);
 
-VP = vvGetVp(ROI);
-VP,
+% VP = vvGetVp(ROI);
+% VP,
 % VP = [75, 239];
 % vvRowFilterTest(ROI, VP(1));
-
-return;
 
 %% 边界提取-图像分割-有进一步研究的价值
 %% 颜色特征提取 阴影弱化
@@ -76,7 +80,6 @@ return;
 % implot(ROI, S_modified, Greenness, Greenness> 0, Treeness); % Greenness, Treeness
 
 % 初始化参数，后期调整跟踪
-return;
 % ED.m 已经做了修改 %function [lineSegments, noOfSegments] = ED(image, gradientThreshold, anchorThreshold, smoothingSigma)
 % EDLines.m 也做了修改
 
@@ -98,16 +101,16 @@ return;
 
 % folder = 'LRAlargeur13032003';
 % no = '02210';
-folder = 'BDXD54';
-no = '00002';
+% folder = 'BDXD54';
+% no = '00002';
 
-folder = ['dataset\roma\', folder];
-Original = imread([folder, '\IMG', no, '.jpg']);
-GroundTruth = imread([folder, '\RIMG', no, '.pgm']);
+% folder = ['dataset\roma\', folder];
+% Original = imread([folder, '\IMG', no, '.jpg']);
+% GroundTruth = imread([folder, '\RIMG', no, '.pgm']);
 
-numRow = size(Original, 1);
-numColumn = size(Original, 2);
-horizon = 310; % param.cal
+% numRow = size(Original, 1);
+% numColumn = size(Original, 2);
+% horizon = 310; % param.cal
 
 RoadRegion = vvGetRoadFace(Original);
 
