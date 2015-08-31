@@ -24,8 +24,8 @@ clear all;
 dataset = 'F:\Sync\dataset\caltech-lanes';
 subdataset = '/washington1';
 % filename = '/f00000.png';
-filename = '/f00001.png';
-% filename = '/f00004.png'; %shadowy
+% filename = '/f00001.png';
+filename = '/f00004.png'; %shadowy
 
 
 %% Step1_Preprocess
@@ -37,13 +37,16 @@ roiL = nCol/8; roiR = nCol*7/8;
 roiU = nRow/5; roiD = nRow*4/5;
 ROI = Original(roiU:roiD,roiL:roiR,:);
 
-Step1_Preprocess = implot(Original, ROI);
-selplot('Original');
-hold on; plot([roiL,roiR,roiR,roiL,roiL], [roiU,roiU,roiD,roiD,roiU]);
-imdump(Step1_Preprocess);
+% Display results.
+% Step1_Preprocess = implot(Original, ROI);
+% selplot('Original');
+% hold on; plot([roiL,roiR,roiR,roiL,roiL], [roiU,roiU,roiD,roiD,roiU]);
+% imdump(Step1_Preprocess);
 
 VP = vvGetVp(ROI);
-VP
+VP,
+% VP = [75, 239];
+vvRowFilterTest(ROI, VP(1));
 
 %% 边界提取-图像分割
 %% 颜色特征提取 阴影弱化

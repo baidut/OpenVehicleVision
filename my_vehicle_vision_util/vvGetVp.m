@@ -61,12 +61,12 @@ end
 % plot vote results.
 VoteVP = VoteVP_L .* VoteVP_R; 
 [maxVoteVP, index] = max(VoteVP(:)); 
-VP = [ ceil(index/size(VoteVP,1)/precisionVP), mod(index,size(VoteVP,1))/precisionVP ];
+VP = [ mod(index,size(VoteVP,1))/precisionVP, ceil(index/size(VoteVP,1)/precisionVP) ];
 
 VpDetection = implot(im, VoteVP_L, VoteVP_R, VoteVP);
 hold on; plot(ceil(index/size(VoteVP,1)),mod(index,size(VoteVP,1)),'yo');
 selplot('im');
-hold on; plot(VP(1), VP(2), 'y+');
+hold on; plot(VP(2), VP(1), 'y+');
 imdump(VoteVP_R, VoteVP_L, VoteVP, VpDetection);
 
 %% TODO: LaneDetection according to the orientation of lines.

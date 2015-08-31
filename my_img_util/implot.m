@@ -16,7 +16,7 @@ function h = implot(varargin)
 % 
 %   Example 2
 %   ---------
-%   Plot the images of given folder. 
+%   Plot the images of a given folder. 
 %
 %      files = str2files('dataset/lane detection/*.picture');
 %      implot(files{:});
