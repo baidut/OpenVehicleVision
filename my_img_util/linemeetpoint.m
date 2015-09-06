@@ -1,7 +1,11 @@
 function point = linemeetpoint( X1,Y1,X2,Y2 )
-% X1, Y1, X2, Y2 ,point 都是点
-% Matlab求四个点确定的两条直线的交点http://blog.sina.com.cn/s/blog_60b9b8890100t2b9.html
+%LINEMEETPOINT compute the intersection point of two straight lines represented by end points.
+% LINEMEETPOINT is going to be removedd. Use LINEOBJ instead.
+% 
+% line1: X1, Y1, line2: X2, Y2 
+% See also LINEOBJ LINEOBJ/CROSS.
 
+% Ref: http://blog.sina.com.cn/s/blog_60b9b8890100t2b9.html
 if X1(1)==Y1(1)
     X=X1(1);
     k2=(Y2(2)-X2(2))/(Y2(1)-X2(1));

@@ -1,7 +1,4 @@
 classdef LineObj<handle
-% How to modify properties of a Matlab Object http://stackoverflow.com/questions/272618/how-to-modify-properties-of-a-matlab-object
-% OR l = l.move([r, c])
-
 % point( which row, which column);
 
     %% Public properties
@@ -58,6 +55,47 @@ classdef LineObj<handle
         function bool = pass(obj, point, err)
         % check if the line pass given point.
             bool = abs( (point(2)-obj.p1(2))/(point(1)-obj.p1(1)) - obj.k ) < err;
+        end
+
+        function c = row(obj, r)
+            c = obj.p1(2) + obj.k*(r -obj.p1(1));
+        end
+
+        function point = cross(obj, line2)
+        % compute the intersection point with another lineObj.
+
+            X1 = obj.p1;
+            Y1 = obj.p2;
+
+            X2 = line2.p1;
+            Y2 = line2.p2;
+
+            if X1(1)==Y1(1)
+                X=X1(1);
+                k2=(Y2(2)-X2(2))/(Y2(1)-X2(1));
+                b2=X2(2)-k2*X2(1); 
+                Y=k2*X+b2;
+            end
+            if X2(1)==Y2(1)
+                X=X2(1);
+                k1=(Y1(2)-X1(2))/(Y1(1)-X1(1));
+                b1=X1(2)-k1*X1(1);
+                Y=k1*X+b1;
+            end
+            if X1(1)~=Y1(1)&X2(1)~=Y2(1)
+                k1=(Y1(2)-X1(2))/(Y1(1)-X1(1));
+                k2=(Y2(2)-X2(2))/(Y2(1)-X2(1));
+                b1=X1(2)-k1*X1(1);
+                b2=X2(2)-k2*X2(1);
+                if k1==k2
+                   X=[];
+                   Y=[];
+                else
+                X=(b2-b1)/(k1-k2);
+                Y=k1*X+b1;
+                end
+            end
+            point = [X Y];
         end
     end% methods
 end% classdef
