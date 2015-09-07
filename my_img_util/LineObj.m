@@ -10,7 +10,7 @@ classdef LineObj<handle
  
     %% Public methods
     methods
-        function obj = LineObj(endPoint1, endPoint2) % Pi:(ri, ci)
+        function obj = LineObj(endPoint1, endPoint2) % Pi:(ci, ri) Notice!
             obj.p1 = endPoint1;
             obj.p2 = endPoint2;
         end
@@ -21,13 +21,13 @@ classdef LineObj<handle
 
         function k = get.k(obj)
             delta = obj.p1 - obj.p2;
-            k = delta(2)/delta(1); % delta c / delta r
+            k = delta(1)/delta(2); % delta c / delta r
         end
 
         function h = plot(obj, varargin)
             xy = [obj.p1; obj.p2];
             hold on;
-            h = plot(xy(:,2),xy(:,1), varargin{:});
+            h = plot(xy(:,1),xy(:,2), varargin{:});
         end
 
         function move(obj, vector) % translation
@@ -40,7 +40,7 @@ classdef LineObj<handle
             bw = zeros(sizeOfGrid);
             for r = 1:sizeOfGrid(1)
                 R = r * sizeOfImage(1) / sizeOfGrid(1);
-                C = obj.k*(R-obj.p1(1))+obj.p1(2);
+                C = obj.k*(R-obj.p1(2))+obj.p1(1);
                 c = round(C * sizeOfGrid(2) / sizeOfImage(2));
                 if (c>1) && (c<sizeOfGrid(2))
                     bw(r,c) = 1;
@@ -54,11 +54,11 @@ classdef LineObj<handle
 
         function bool = pass(obj, point, err)
         % check if the line pass given point.
-            bool = abs( (point(2)-obj.p1(2))/(point(1)-obj.p1(1)) - obj.k ) < err;
+            bool = abs( (point(1)-obj.p1(1))/(point(2)-obj.p1(2)) - obj.k ) < err;
         end
 
         function c = row(obj, r)
-            c = obj.p1(2) + obj.k*(r -obj.p1(1));
+            c = obj.p1(1) + obj.k*(r -obj.p1(2));
         end
 
         function point = cross(obj, line2)

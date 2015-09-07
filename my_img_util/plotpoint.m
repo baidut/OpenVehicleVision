@@ -11,8 +11,8 @@ for i = 1:nargin
 	name = inputname(i);
 	if length(obj) == 2 
 		% points
-		plot(obj(2), obj(1), 'yo', 'markersize', 10);
-		text(obj(2)+10, obj(1)-10, ['\color{black}', sprintf([name, '(%.2f, %.2f)'], obj(1), obj(2))]);
+		plot(obj(1), obj(2), 'yo', 'markersize', 10);
+		text(obj(1)+10, obj(2)-10, ['\color{black}', sprintf([name, '(%.2f, %.2f)'], obj(1), obj(2))]);
 	elseif length(size(obj)) == 2 % isbw(obj) Function ISBW has been removed.
 		% plot positive points of a binary image.
         [nRow, nCol] = size(obj);

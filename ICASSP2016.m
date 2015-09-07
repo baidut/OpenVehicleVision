@@ -2,10 +2,12 @@ function ICASSP2016(filename)
 
 % function from OpenVehiclelVision: getChannel, implot, plotpoint, plotobj
 
-	Img = imread(filename);
+% the main framework, the modules which can be improved are listed as sub function.
 
-	[nRow, nCol, ~] = size(Img);
-	featureMap = featureExtraction(Img);
+	RawImg = imread(filename);
+
+	[nRow, nCol, ~] = size(RawImg);
+	featureMap = featureExtraction(RawImg);
 
 	nSplit = floor(nCol/2);
 	roadSegL = segment(featureMap(:,1:nSplit,:));
@@ -19,25 +21,51 @@ function ICASSP2016(filename)
 
 	roadBoundLineL = fitLine(roadBoundPointsL, [0:89]);
 	roadBoundLineR = fitLine(roadBoundPointsR, [-89:0]);
-	roadBoundLineR.move([0, nSplit]);
+	roadBoundLineR.move([nSplit, 0]); % x - nSplit, y - 0
 
-	endRowPointL = roadBoundLineL.row(nRow);
-	endRowPointR = roadBoundLineR.row(nRow);
+	endRowPointL = [roadBoundLineL.row(nRow), nRow];
+	endRowPointR = [roadBoundLineR.row(nRow), nRow];
 
 	vanishingPoint = roadBoundLineL.cross(roadBoundLineR);
-    nHorizon = vanishingPoint(1);
-	horizonLine = LineObj([nHorizon, 1], [nHorizon, nCol]);
+    nHorizon = vanishingPoint(2);
+	horizonLine = LineObj([1, nHorizon], [nCol, nHorizon]);
 
-	% plot results.
+	pointLU = vanishingPoint/2 + endRowPointL/2;
+	pointRU = vanishingPoint/2 + endRowPointR/2;
+
+	movingPoints = [pointLU; pointRU; endRowPointL; endRowPointR];
+	nOutCol = 80; nOutRow = 60; % size of map where the lane-making points locate in one column.
+	fixedPoints = [1, 1; nOutCol,1; 1,nOutRow; nOutCol, nOutRow];
+	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
+
+	GrayImg = rgb2gray(RawImg);
+	BirdView_ROI = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]));
+
+	LaneMark = laneMarkFilter(BirdView_ROI);
+
+	ColPixelSum = sum(LaneMark, 1);
+	[maxValue index] = max(ColPixelSum);
+	ratio = index / nOutCol;
+
+	endRowPointM = [(1-ratio) * roadBoundLineL.row(nRow) + ratio * roadBoundLineR.row(nRow), nRow];
+	roadMidLine = LineObj(vanishingPoint, endRowPointM);
+
+	%% plot results.
 	roadSeg = [roadSegL, roadSegR];
 	roadBoudPoints = [roadBoundPointsL, roadBoundPointsR];
+	BirdView = imwarp(RawImg, tform);
 
-	Initalize = implot(Img); hold on;
+	figure, Initalize = implot(RawImg, BirdView, BirdView_ROI); 
+	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
-	plotobj(horizonLine, roadBoundLineL, roadBoundLineR);
+	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
+
+	selplot(3); hold on;
+	plot([1:nOutCol], ColPixelSum);
+	maxfig;
 
 	% write results to file.
-    imdump(Img, featureMap, roadSeg, roadBoudPoints);
+    imdump(RawImg, featureMap, roadSeg, roadBoudPoints);
 
 	% nested function
 
@@ -114,5 +142,22 @@ function line = fitLine(BW, Theta)
 		error('Fail in fitLine.');
 	end
 
-	line = LineObj([lines.point1(2), lines.point1(1)], [lines.point2(2), lines.point2(1)]);
+	% line = LineObj([lines.point1(2), lines.point1(1)], [lines.point2(2), lines.point2(1)]);
+	line = LineObj(lines.point1, lines.point2);
+end
+
+function laneMark = laneMarkFilter(GrayImg)
+	ROI = GrayImg(:,(end/3):(end*2/3));
+	H = [-1, 0, 1, 0, -1;
+	     -1, 0, 2, 0, -1;
+	     -1, 0, 2, 0, -1;
+	     -1, 0, 2, 0, -1;
+	     -1, 0, 1, 0, -1];
+	RoadFiltered = imfilter(ROI,H,'replicate'); % & mask
+	BW = im2bw( RoadFiltered, graythresh(RoadFiltered) );
+	BW_areaopen = bwareaopen(BW,18,4);
+	laneMark = zeros(size(GrayImg));
+	laneMark(:,(end/3):(end*2/3)) = BW_areaopen;
+
+	% imdump(GrayImg, BW, BW_areaopen, laneMark);
 end
