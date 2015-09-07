@@ -51,11 +51,16 @@ function ICASSP2016(filename)
 	roadMidLine = LineObj(vanishingPoint, endRowPointM);
 
 	%% plot results.
+
+	h = figure('NumberTitle', 'off');
+	h.Name = filename;
+
+	% in detail
 	roadSeg = [roadSegL, roadSegR];
 	roadBoudPoints = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
 
-	figure, Initalize = implot(RawImg, BirdView, BirdView_ROI); 
+	Initalize = implot(RawImg, BirdView, BirdView_ROI); 
 	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
@@ -63,9 +68,22 @@ function ICASSP2016(filename)
 	selplot(3); hold on;
 	plot([1:nOutCol], ColPixelSum);
 	maxfig;
-
 	% write results to file.
-    imdump(RawImg, featureMap, roadSeg, roadBoudPoints);
+ 	imdump(RawImg, featureMap, roadSeg, roadBoudPoints);
+
+    % in brief
+
+	% Initalize = implot(RawImg, BirdView_ROI); 
+	% selplot(1); hold on;
+	% l1 = LineObj(vanishingPoint, endRowPointL);
+	% l2 = LineObj(vanishingPoint, endRowPointR);
+	% l1.plot('r');
+	% l2.plot('g');
+	% roadMidLine.plot('b');
+	% maxfig;
+	% pause(0.5);
+
+	
 
 	% nested function
 
@@ -84,8 +102,8 @@ end
 function BW_Filtered = segment(Gray)
     BW = Gray > 0.45 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2 % 用histeq和graythresh效果不好
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
-    % BW_areaopen = bwareaopen(BW_imclose, 200); % 去除车道线
-	BW_Filtered = BW_imclose;   
+    BW_areaopen = bwareaopen(BW_imclose, 40); % 去除车道线
+	BW_Filtered = BW_areaopen;   
 end
 
 function Boundary = boundPoints(BW, isleft)
