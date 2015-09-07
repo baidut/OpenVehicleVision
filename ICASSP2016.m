@@ -30,8 +30,9 @@ function ICASSP2016(filename)
     nHorizon = vanishingPoint(2);
 	horizonLine = LineObj([1, nHorizon], [nCol, nHorizon]);
 
-	pointLU = vanishingPoint/2 + endRowPointL/2;
-	pointRU = vanishingPoint/2 + endRowPointR/2;
+	ratioNearField = 0.6; % r% of roadface will be considered as near field.
+	pointLU = vanishingPoint*ratioNearField + endRowPointL*(1-ratioNearField);
+	pointRU = vanishingPoint*ratioNearField + endRowPointR*(1-ratioNearField);
 
 	movingPoints = [pointLU; pointRU; endRowPointL; endRowPointR];
 	nOutCol = 80; nOutRow = 60; % size of map where the lane-making points locate in one column.
@@ -173,9 +174,9 @@ function laneMark = laneMarkFilter(GrayImg)
 	     -1, 0, 1, 0, -1];
 	RoadFiltered = imfilter(ROI,H,'replicate'); % & mask
 	BW = im2bw( RoadFiltered, graythresh(RoadFiltered) );
-	BW_areaopen = bwareaopen(BW,18,4);
+	BW_areaopen = bwareaopen(BW,8,4);
 	laneMark = zeros(size(GrayImg));
 	laneMark(:,(end/3):(end*2/3)) = BW_areaopen;
 
-	% imdump(GrayImg, BW, BW_areaopen, laneMark);
+	imdump(BW, BW_areaopen, laneMark);
 end
