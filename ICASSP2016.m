@@ -167,16 +167,16 @@ end
 
 function laneMark = laneMarkFilter(GrayImg)
 	ROI = GrayImg(:,(end/3):(end*2/3));
-	H = [-1, 0, 1, 0, -1;
+	H = [-1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
-	     -1, 0, 1, 0, -1];
-	RoadFiltered = imfilter(ROI,H,'replicate'); % & mask
-	BW = im2bw( RoadFiltered, graythresh(RoadFiltered) );
+	     -1, 0, 2, 0, -1];
+	Filtered = imfilter(ROI,H,'replicate'); % & mask
+	BW = im2bw( Filtered, graythresh(Filtered) );
 	BW_areaopen = bwareaopen(BW,8,4);
 	laneMark = zeros(size(GrayImg));
 	laneMark(:,(end/3):(end*2/3)) = BW_areaopen;
 
-	imdump(BW, BW_areaopen, laneMark);
+	imdump(Filtered, BW, BW_areaopen, laneMark);
 end
