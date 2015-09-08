@@ -16,8 +16,11 @@ function ICASSP2016(filename)
 	roadBoundPointsL = boundPoints(roadSegL, true);
 	roadBoundPointsR = boundPoints(roadSegR, false);
 
-	% implot(roadSegL,roadSegR,roadBoundPointsL,roadBoundPointsR);
-	% return;
+	% implot(roadSegL,roadSegR,roadBoundPointsL,roadBoundPointsR); return;
+
+	% roadSeg = [roadSegL, roadSegR];
+	% Gray = rgb2gray(RawImg);
+	% implot(roadSeg, edge(Gray,'canny'), edge(roadSeg,'canny'), edge(featureMap,'canny'));return;
 
 	roadBoundLineL = fitLine(roadBoundPointsL, [0:89]);
 	roadBoundLineR = fitLine(roadBoundPointsR, [-89:0]);
@@ -57,11 +60,12 @@ function ICASSP2016(filename)
 	h.Name = filename;
 
 	% in detail
+
 	roadSeg = [roadSegL, roadSegR];
 	roadBoudPoints = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
 
-	Initalize = implot(RawImg, BirdView, BirdView_ROI); 
+	Initalize = implot(RawImg);  % , BirdView, BirdView_ROI
 	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
@@ -103,7 +107,7 @@ end
 function BW_Filtered = segment(Gray)
     BW = Gray > 0.45 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2 % 用histeq和graythresh效果不好
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
-    BW_areaopen = bwareaopen(BW_imclose, 40); % 去除车道线
+    BW_areaopen = bwareaopen(BW_imclose, 60); % 去除车道线 固定参数鲁棒性差
 	BW_Filtered = BW_areaopen;   
 end
 
@@ -122,21 +126,13 @@ function Boundary = boundPoints(BW, isleft)
 	end 
 	if isleft
 		for r = 1 : nRow
-			for c = nCol : -1 : 1
-				if 1 == Candidate(r, c)
-					Boundary(r, c) = 1;
-					break;
-				end
-			end
+			c = find(Candidate(r,:),1,'last')
+			Boundary(r, c) = 1;
 		end
 	else 
 		for r = 1 : nRow
-			for c = 1 : nCol
-				if 1 == Candidate(r, c)
-					Boundary(r, c) = 1;
-					break;
-				end
-			end
+			c = find(Candidate(r,:),1,'first')
+			Boundary(r, c) = 1;
 		end
 	end
 end
