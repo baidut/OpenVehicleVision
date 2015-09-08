@@ -10,6 +10,7 @@ function  imdump(varargin)
 % 注意imdump前提是有output文件夹
 
 global doimdump;
+global dumppathstr;
 
 if ~doimdump
 	return; % 默认不输出
@@ -27,7 +28,7 @@ line = st(n).line;
 
 for i = 1:nargin
 	para = varargin{i};
-	filename = ['output/', inputname(i), ' @', funcname, '-', num2str(line)];
+	filename = [inputname(i), ' @', funcname, '-', num2str(line)];
 	if 1 == length(para) && ishandle(para)
 		print(para, '-djpeg', filename);
 		close(para); % 关闭图像
@@ -41,7 +42,7 @@ for i = 1:nargin
 			error(['unkown input:', inputname(i)]);
 			dbstack
 		end
-		imwrite(image, [filename, '.jpg']);
+		imwrite(image, [dumppathstr filename, '.jpg']);
 	end
 end
 
