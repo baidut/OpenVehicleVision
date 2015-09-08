@@ -31,6 +31,7 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 		nColSplit = floor(lastVanishingPoint(1));
 		nRowSplit = floor(lastVanishingPoint(2));
 
+		ratioLaneMark = trackinfo.ratioLaneMark;
 		if nargin > 2
 			% learninfo is provided
 		end
@@ -68,26 +69,36 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 
 	% road boundary line is extracted, output "ground truth" for learning.
 
-
 	ratioNearField = 0.6; % r% of roadface will be considered as near field.
-	pointLU = vanishingPoint*ratioNearField + endRowPointL*(1-ratioNearField);
-	pointRU = vanishingPoint*ratioNearField + endRowPointR*(1-ratioNearField);
+	pointLeftUp = vanishingPoint*ratioNearField + endRowPointL*(1-ratioNearField);
+	pointRightUp = vanishingPoint*ratioNearField + endRowPointR*(1-ratioNearField);
+	movingPoints = [pointLeftUp; pointRightUp; endRowPointL; endRowPointR];
 
-	movingPoints = [pointLU; pointRU; endRowPointL; endRowPointR];
 	nOutCol = 80; nOutRow = 60; % size of map where the lane-making points locate in one column.
 	fixedPoints = [1, 1; nOutCol,1; 1,nOutRow; nOutCol, nOutRow];
 	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
+	
+	GrayImg = RawImg(:,:,1);
+	RoadFaceIPM = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]));
 
-	GrayImg = rgb2gray(RawImg);
-	BirdView_ROI = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]));
+	% if track on, then just focus the near field of last detected lane-marking.
+	if ~exist('ratioLaneMark')
+		ratioLaneMark = 0.5;
+		halfSearchRange = nOutCol/4;
+	else
+		halfSearchRange = 5;
+	end
 
-	LaneMark = laneMarkFilter(BirdView_ROI);
+	leftLimit = floor(ratioLaneMark*nOutCol-halfSearchRange);
+	rightLimit = floor(ratioLaneMark*nOutCol+halfSearchRange);
 
-	ColPixelSum = sum(LaneMark, 1);
+	laneMark = laneMarkFilter(RoadFaceIPM(:,leftLimit:rightLimit));
+	ColPixelSum = sum(laneMark, 1);
 	[maxValue index] = max(ColPixelSum);
-	ratio = index / nOutCol;
 
-	endRowPointM = [(1-ratio) * roadBoundLineL.row(nRow) + ratio * roadBoundLineR.row(nRow), nRow];
+	ratioLaneMark = (leftLimit + index) / nOutCol;
+
+	endRowPointM = [(1-ratioLaneMark) * roadBoundLineL.row(nRow) + ratioLaneMark * roadBoundLineR.row(nRow), nRow];
 	roadMidLine = LineObj(vanishingPoint, endRowPointM);
 
 	%% plot results.
@@ -102,19 +113,19 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 	roadBoudPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
 
-	Initalize = implot(RawImg);  % , BirdView, BirdView_ROI
+	Initalize = implot(RawImg, BirdView);  % , BirdView, BirdView_ROI
 	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
 
-	selplot(3); hold on;
-	plot([1:nOutCol], ColPixelSum);
-	% maxfig;
+	% selplot(3); hold on;
+	% plot([1:nOutCol], ColPixelSum);
+	maxfig;
 
 	% write results to file.
  global dumppathstr;
  	dumppathstr = 'F:/Documents/MATLAB/output/';
- 	imdump(RawImg, featureMap, roadSeg, roadBoudPoints);
+ 	imdump(RawImg, featureMap, roadSeg, roadBoudPoints, RoadFaceIPM, laneMark);
 
     % in brief
 
@@ -136,6 +147,7 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 		% trackinfo
 		trackinfo = struct;
 		trackinfo.vanishingPoint = vanishingPoint;
+		trackinfo.ratioLaneMark = ratioLaneMark;
 
 		if nargout > 2
 			learninfo = 'learninfo: not support now';
@@ -214,17 +226,13 @@ function line = fitLine(BW, Theta)
 end
 
 function laneMark = laneMarkFilter(GrayImg)
-	ROI = GrayImg(:,(end/3):(end*2/3));
 	H = [-1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1];
-	Filtered = imfilter(ROI,H,'replicate'); % & mask
-	BW = im2bw( Filtered, graythresh(Filtered) );
-	BW_areaopen = bwareaopen(BW,8,4);
-	laneMark = zeros(size(GrayImg));
-	laneMark(:,(end/3):(end*2/3)) = BW_areaopen;
-
-	imdump(Filtered, BW, BW_areaopen, laneMark);
+	Filtered = imfilter(GrayImg,H,'replicate'); % & mask
+	BW = Filtered > 0.8*max(Filtered(:));
+	laneMark = bwareaopen(BW,8,4);
+	% imdump(Filtered, BW, BW_areaopen, laneMark);
 end

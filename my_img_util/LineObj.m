@@ -61,6 +61,10 @@ classdef LineObj<handle
             c = obj.p1(1) + obj.k*(r -obj.p1(2));
         end
 
+       function point = PointAtRow(obj, r)
+            point = [obj.p1(1) + obj.k*(r -obj.p1(2)), r];
+        end
+
         function point = cross(obj, line2)
         % compute the intersection point with another lineObj.
 
