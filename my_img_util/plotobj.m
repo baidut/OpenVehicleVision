@@ -15,6 +15,8 @@ function h = plotobj(varargin)
 % 	
 %   See also IMPLOT.
 
+% plot lines and add legend
+
 h = gcf;
 c = jet(nargin); % color
 name = cell(1,nargin);
@@ -35,4 +37,4 @@ for i = 1:nargin
 	end
 end
 
-legend(handles, name{:});
+legend(handles, name{:}); % 如果生成论文的图片，则可以再关闭标注或覆盖标注

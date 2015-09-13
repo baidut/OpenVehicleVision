@@ -1,49 +1,118 @@
-function ICASSP2016(files)
+function ICASSP2016(files, isvideo, istracking)
 
 % function from OpenVehiclelVision: getChannel, implot, imdump, plotpoint, plotobj
 
 % the main framework, the modules which can be improved are listed as sub function.
 
-	ok = 0;
-	index = 1;
-
-	for i = index : length(files) 
-		if ok
-			[ok, trackinfo, learninfo] = roadDetection(files{index}, trackinfo, learninfo);
+	if ~istracking
+		if ~isvideo
+			% test files, no tracking
+			foreach_file_do(files, @(file) roadDetection(imread(file)));
 		else
-			[ok, trackinfo, learninfo] = roadDetection(files{index});
+			% test a video, no tracking
+			foreach_frame_do(files, @(file) roadDetection(file));
 		end
-
-		index = index + 1;
+	else % tracking
+		if ~isvideo
+			% test files, tracking
+			ok = 0;
+			index = 1;
+			for i = index : length(files) 
+                filename = files{index};
+				RawImg = imread(filename);
+                
+                h = figure('NumberTitle', 'off');
+                h.Name = filename;
+                
+				if ok
+					[ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo);
+				else
+					[ok, trackinfo, learninfo] = roadDetection(RawImg);
+				end
+				index = index + 1;
+			end
+		else
+			% to be added
+		end
 	end
-
 end
 
 
-function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learninfo)
-
-	RawImg = imread(filename);
+function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo)
+	% road detection
 	[nRow, nCol, ~] = size(RawImg);
 
 	if nargin > 1
 		% trackinfo is provided
-		lastVanishingPoint = trackinfo.vanishingPoint;
-		nColSplit = floor(lastVanishingPoint(1));
-		nRowSplit = floor(lastVanishingPoint(2));
-
+		vanishingPoint = trackinfo.vanishingPoint;
+		endRowPointL = trackinfo.endRowPointL;
+		endRowPointR = trackinfo.endRowPointR;
 		ratioLaneMark = trackinfo.ratioLaneMark;
+
 		if nargin > 2
-			% learninfo is provided
+			% RoadFaceClassifier = learninfo.RoadFaceClassifier;
 		end
 	else
-		nColSplit = floor(nCol/2);
-		nRowSplit = floor(nRow/3);
+		vanishingPoint = [nCol/2, nRow/3];
+		% endRowPointL = [0, nRow];
+		% endRowPointR = [nCol, nRow];
 	end
 
-	featureMap = featureExtraction(RawImg);
+	nColSplit = floor(vanishingPoint(1));
+	nRowSplit = floor(vanishingPoint(2));
+	nHorizon = floor(vanishingPoint(2));
 
-	roadSegL = segment(featureMap(nRowSplit:end, 1:nColSplit,:));
-	roadSegR = segment(featureMap(nRowSplit:end, nColSplit+1:end,:));
+	% seed
+	MaskRoadFace = false(nRow-nHorizon+1, nCol);
+	MaskRoadFace(A(2):end, A(1):B(1)) = true;
+
+	if exist('endRowPointL', 'var')
+		A = floor(vanishingPoint + endRowPointL)/2 + [0, -nHorizon+1];
+		B = floor(vanishingPoint + endRowPointR)/2 + [0, -nHorizon+1];
+
+		MaskRoadFace = false(nRow-nHorizon+1, nCol);
+		MaskRoadFace(A(2):end, A(1):B(1)) = true;
+		A, B
+		MaskRoadBound = false(nRow-nHorizon+1, nCol);
+		MaskRoadBound(1:A(2)-1, [1:A(1),B(1):end]) = true; % -1 to avoid overlapping
+
+		% imseggeodesic RGB image
+		[Label, ~] = imseggeodesic(RawImg(nHorizon:end,:,:),MaskRoadFace,MaskRoadBound);
+		RoadBound = (Label == 2); % label 1 - RoadFace, 2 - RoadBound
+		roadSegL = RoadBound(:, 1:nColSplit);
+		roadSegR = RoadBound(:, nColSplit+1:end);
+
+	else
+
+		featureMap = featureExtraction(RawImg);
+		roadSegL = segment(featureMap(nRowSplit:end, 1:nColSplit,:));
+		roadSegR = segment(featureMap(nRowSplit:end, nColSplit+1:end,:));
+ 	end
+	% segment2(RawImg(nHorizon+1:end,:,:),MaskRoadFace, MaskRoadBound);
+
+	% function segment2(img, mask1, mask2)
+		% [L,P] = imseggeodesic(img,mask1,mask2);
+
+		% implot(mask1, mask2, img); hold on;
+		% visboundaries(mask1,'Color','r');
+		% visboundaries(mask2,'Color','b');
+
+		% figure
+		% imshow(label2rgb(L),'InitialMagnification', 50)
+		% title('Segmented image')
+
+		% figure
+		% imshow(P(:,:,1),'InitialMagnification', 50)
+		% title('Probability that a pixel belongs to the foreground')
+	% end
+
+	%% segmentation 
+
+	% if RoadFaceClassifier is provided, then reject featureMap and use the classifier.
+	% if exist('RoadFaceClassifier', 'var')
+	% 	theclass = predict(RoadFaceClassifier, computeFeatureVector());
+	% 	featureMap = reshape(theclass, nRow-nHorizon, nCol);
+	% end
 
 	roadBoundPointsL = boundPoints(roadSegL, true);
 	roadBoundPointsR = boundPoints(roadSegR, false);
@@ -54,8 +123,8 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 	% Gray = rgb2gray(RawImg);
 	% implot(roadSeg, edge(Gray,'canny'), edge(roadSeg,'canny'), edge(featureMap,'canny'));return;
 
-	roadBoundLineL = fitLine(roadBoundPointsL, [0:89]);
-	roadBoundLineR = fitLine(roadBoundPointsR, [-89:0]);
+	roadBoundLineL = fitLine(roadBoundPointsL, 0:89);
+	roadBoundLineR = fitLine(roadBoundPointsR, -89:0);
 
 	roadBoundLineL.move([0, nRowSplit]);
 	roadBoundLineR.move([nColSplit, nRowSplit]);
@@ -64,15 +133,27 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 	endRowPointR = [roadBoundLineR.row(nRow), nRow];
 
 	vanishingPoint = roadBoundLineL.cross(roadBoundLineR);
-    nHorizon = vanishingPoint(2);
+    nHorizon = floor(vanishingPoint(2));
 	horizonLine = LineObj([1, nHorizon], [nCol, nHorizon]);
 
+
 	% road boundary line is extracted, output "ground truth" for learning.
+	%% trainModel();
+	% data = computeFeatureVector();
+
+	% cl = ones(nRow - nHorizon, nCol);
+	% for r = 1:(nRow-nHorizon)
+	% 	cl(r,[1:floor(roadBoundLineL.row(r+nHorizon)), ceil(roadBoundLineR.row(r+nHorizon):end)]) = -1;
+	% end
+
+	% theclass = cl(:);
+
+	% RoadFaceClassifier = fitcsvm(data,theclass);
 
 	ratioNearField = 0.6; % r% of roadface will be considered as near field.
-	pointLeftUp = vanishingPoint*ratioNearField + endRowPointL*(1-ratioNearField);
-	pointRightUp = vanishingPoint*ratioNearField + endRowPointR*(1-ratioNearField);
-	movingPoints = [pointLeftUp; pointRightUp; endRowPointL; endRowPointR];
+	pointLeftTop = vanishingPoint*ratioNearField + endRowPointL*(1-ratioNearField);
+	pointRightTop = vanishingPoint*ratioNearField + endRowPointR*(1-ratioNearField);
+	movingPoints = [pointLeftTop; pointRightTop; endRowPointL; endRowPointR];
 
 	nOutCol = 80; nOutRow = 60; % size of map where the lane-making points locate in one column.
 	fixedPoints = [1, 1; nOutCol,1; 1,nOutRow; nOutCol, nOutRow];
@@ -82,7 +163,7 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 	RoadFaceIPM = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]));
 
 	% if track on, then just focus the near field of last detected lane-marking.
-	if ~exist('ratioLaneMark')
+	if ~exist('ratioLaneMark', 'var')
 		ratioLaneMark = 0.5;
 		halfSearchRange = nOutCol/4;
 	else
@@ -94,7 +175,7 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 
 	laneMark = laneMarkFilter(RoadFaceIPM(:,leftLimit:rightLimit));
 	ColPixelSum = sum(laneMark, 1);
-	[maxValue index] = max(ColPixelSum);
+	[~, index] = max(ColPixelSum);
 
 	ratioLaneMark = (leftLimit + index) / nOutCol;
 
@@ -102,10 +183,6 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 	roadMidLine = LineObj(vanishingPoint, endRowPointM);
 
 	%% plot results.
-
-	h = figure('NumberTitle', 'off');
-	h.Name = filename;
-
 	% in detail
 
 	roadSeg = [roadSegL, roadSegR];
@@ -113,7 +190,7 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 	roadBoudPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
 
-	Initalize = implot(RawImg, BirdView);  % , BirdView, BirdView_ROI
+	implot(RawImg, BirdView);  % , BirdView, BirdView_ROI
 	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
@@ -148,14 +225,31 @@ function [ok, trackinfo, learninfo] = roadDetection(filename, trackinfo, learnin
 		trackinfo = struct;
 		trackinfo.vanishingPoint = vanishingPoint;
 		trackinfo.ratioLaneMark = ratioLaneMark;
+		trackinfo.endRowPointL = endRowPointL;
+		trackinfo.endRowPointR = endRowPointR;
 
 		if nargout > 2
 			learninfo = 'learninfo: not support now';
+			% learninfo.RoadFaceClassifier = RoadFaceClassifier;
 		end
 	end
 
+
+
 	% nested function
 
+	function data = computeFeatureVector()
+		% resize the data for training
+		nRow2 = nRow-nHorizon;
+		nFeature = 2;
+		data = zeros( nRow2*nCol, nFeature); % 1 index, num of training pixels. % 4 features.
+		% r, c, v, s2
+		% data(:, 3) = repmat(1:nRow2, 1, nCol);
+		% data(:, 4) = repmat((1:nCol)', nRow2, 1);
+		f1 = featureMap(nHorizon+1:end,:); % S2 component
+		f2 = RawImg(nHorizon+1:end,:,2); % G component
+		data = cat(nFeature, f1(:), double(f2(:)));
+	end
 	% end nested function
 end
 
@@ -163,7 +257,7 @@ end
 
 function FeatureMap = featureExtraction(Rgb)
 	[RGB_R, RGB_G, RGB_B] = getChannel(Rgb);
-	RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
+	% RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
 	RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
 	FeatureMap = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 end
@@ -171,7 +265,7 @@ end
 function BW_Filtered = segment(Gray)
     BW = Gray > 0.45 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2 % 用histeq和graythresh效果不好
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
-    BW_areaopen = bwareaopen(BW_imclose, 60); % 去除车道线 固定参数鲁棒性差
+    BW_areaopen = bwareaopen(BW_imclose, 60); % 去除车道�?固定参数鲁棒性差
 	BW_Filtered = BW_areaopen;   
 end
 
@@ -207,8 +301,8 @@ function line = fitLine(BW, Theta)
 
 	% Finding the Hough peaks
 	P = houghpeaks(H, 1);
-	x = theta(P(:,2));
-	y = rho(P(:,1));
+	%x = theta(P(:,2));
+	%y = rho(P(:,1));
 
 	%Fill the gaps of Edges and set the Minimum length of a line
 	lines = houghlines(BW,theta,rho,P, 'MinLength',10, 'FillGap',570);

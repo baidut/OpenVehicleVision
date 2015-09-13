@@ -23,7 +23,7 @@ fileExt = fileExt(2:end);
 
 switch lower(fileExt)
 case {'picture', 'img', 'image'};
-	ext = {'jpg', 'jpeg', 'png', 'tif', 'bmp', 'pgm', 'ppm'};
+	ext = {'jpg', 'jpeg', 'png', 'tif', 'bmp', 'pgm', 'ppm', 'pnm'};
 	for ii = 1:length(ext)
 		files = dir([filePath '\' fileName '.' ext{ii}]);
 		fileList = {fileList{:}  files(:).name};

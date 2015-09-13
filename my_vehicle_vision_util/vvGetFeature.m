@@ -1,5 +1,5 @@
 function FeatureMap = vvGetFeature(I, feature, preprocess, varargin)
-%GETFEATURE
+%VVGETFEATURE
 % USAGE:
 % vvGetFeature('pictures/lanemarking/light_singlelane.jpg', 'light');
 % 可添加预处理

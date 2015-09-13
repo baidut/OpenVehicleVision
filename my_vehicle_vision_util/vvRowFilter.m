@@ -8,7 +8,7 @@ if nargin > 2
 end
 
 I = im2gray(I); % 确保图像为灰度图
-[numRow, numColumn] = size(I); % 注意：如果I不是灰度图像会出错
+[numRow, numColumn, ~] = size(I);
 
 method = upper(method);
 
@@ -67,12 +67,12 @@ end
 
 switch upper(method)
 case '%TEST'
-	figure;
-	implot(LT, MLT, SLT, SMLT);
-	LT = I - LT;
-	MLT = I - MLT;
-	SLT = I - SLT;
-	SMLT = I - SMLT;
-	figure;
-	implot(LT, MLT, SLT, SMLT);
+figure;
+implot(LT, MLT, SLT, SMLT);
+LT = I - LT;
+MLT = I - MLT;
+SLT = I - SLT;
+SMLT = I - SMLT;
+figure;
+implot(LT, MLT, SLT, SMLT);
 end

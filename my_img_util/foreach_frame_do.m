@@ -1,7 +1,8 @@
-function ok = foreach_frame_do(file, func, varargin)
+function ok = foreach_frame_do(file, func)
 %FOREACH_FRAME_DO batch processing each frame of video
 % USAGE:
-%  foreach_frame_do('videos/road.avi', @imshow)
+%  foreach_frame_do('./ronda42_mpeg4.avi', @imshow)
+%  foreach_frame_do('./ronda42_mpeg4.avi', @(frame, index) imwrite(frame, num2str(index, 'ronda42_mpeg4/%05d.jpg')))
 %  foreach_frame_do('videos/road.avi', @imdetectlane)
 % Probelme to be solved(7.14.0.739 (R2012a))
 % 	Error using VideoReader/init (line 447)
@@ -16,14 +17,14 @@ if verLessThan('matlab', '7.11')
 	mov = mmreader(file);
 	frames = read(mov);
 	for i = 1 : size(frames, 4)
-		image = frames(:,:,:,i);%i表示要读取的第几帧
+		image = frames(:,:,:,i);
 		func(image, varargin{:});
 	end
 else
 	vidObj = VideoReader(file);
 	while hasFrame(vidObj)
 		vidFrame = readFrame(vidObj);
-		func(vidFrame, varargin{:});
+		func(vidFrame, index);
 	end
 end
 

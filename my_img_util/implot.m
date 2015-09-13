@@ -18,7 +18,8 @@ function h = implot(varargin)
 %   ---------
 %   Plot the images of a given folder. 
 %
-%      files = str2files('dataset/lane detection/*.picture');
+%      files = str2files('dataset/lane detection/*.picture'); 
+%      % files = str2files('./*.jpg'); % current folder
 %      implot(files{:});
 % 	
 %   See also SELPLOT, MAXFIG, STR2FILES.

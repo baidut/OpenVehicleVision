@@ -9,6 +9,7 @@ function foreach_file_do(files, func, varargin)
 %  	foreach_file_do('*m', @disp)
 %	foreach_file_do('dataset\roma\LRAlargeur26032003\*.jpg', @imshowcolor, 'hsv')
 % 'pictures\*.jpg
+
 % 不处理子目录 处理子目录下文件http://blog.sina.com.cn/s/blog_520a99c00101dk41.html
 % 函数未定义的error没有弹出
 
