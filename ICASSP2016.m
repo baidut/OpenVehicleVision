@@ -62,10 +62,6 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	nRowSplit = floor(vanishingPoint(2));
 	nHorizon = floor(vanishingPoint(2));
 
-	% seed
-	MaskRoadFace = false(nRow-nHorizon+1, nCol);
-	MaskRoadFace(A(2):end, A(1):B(1)) = true;
-
 	if exist('endRowPointL', 'var')
 		A = floor(vanishingPoint + endRowPointL)/2 + [0, -nHorizon+1];
 		B = floor(vanishingPoint + endRowPointR)/2 + [0, -nHorizon+1];
@@ -160,20 +156,26 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
 	
 	GrayImg = RawImg(:,:,1);
-	RoadFaceIPM = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]));
+	RoadFaceIPM = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]), 'FillValues', 0.8*median(GrayImg(nRow,:)));
 
 	% if track on, then just focus the near field of last detected lane-marking.
-	if ~exist('ratioLaneMark', 'var')
-		ratioLaneMark = 0.5;
-		halfSearchRange = nOutCol/4;
+	multiLaneMode = true;
+
+	if ~multiLaneMode
+		if ~exist('ratioLaneMark', 'var')
+			ratioLaneMark = 0.5;
+			halfSearchRange = nOutCol/4;
+		else
+			halfSearchRange = 5;
+		end
+		leftLimit = floor(ratioLaneMark*nOutCol-halfSearchRange);
+		rightLimit = floor(ratioLaneMark*nOutCol+halfSearchRange);
+		laneMark = laneMarkFilter(RoadFaceIPM(:,leftLimit:rightLimit));
 	else
-		halfSearchRange = 5;
+		laneMark = laneMarkFilter(RoadFaceIPM);
+		leftLimit = 0;
 	end
-
-	leftLimit = floor(ratioLaneMark*nOutCol-halfSearchRange);
-	rightLimit = floor(ratioLaneMark*nOutCol+halfSearchRange);
-
-	laneMark = laneMarkFilter(RoadFaceIPM(:,leftLimit:rightLimit));
+	
 	ColPixelSum = sum(laneMark, 1);
 	[~, index] = max(ColPixelSum);
 
@@ -190,7 +192,10 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	roadBoudPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
 
-	implot(RawImg, BirdView);  % , BirdView, BirdView_ROI
+	GroundTruth = imread('RIMG00021.pgm');
+	GTBirdView = imwarp(GroundTruth, tform);
+
+	implot(RawImg, BirdView, GTBirdView);  % , BirdView, BirdView_ROI
 	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
@@ -263,9 +268,9 @@ function FeatureMap = featureExtraction(Rgb)
 end
 
 function BW_Filtered = segment(Gray)
-    BW = Gray > 0.45 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2 % 用histeq和graythresh效果不好
+    BW = Gray > 0.45 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
-    BW_areaopen = bwareaopen(BW_imclose, 60); % 去除车道�?固定参数鲁棒性差
+    BW_areaopen = bwareaopen(BW_imclose, 60); 
 	BW_Filtered = BW_areaopen;   
 end
 
