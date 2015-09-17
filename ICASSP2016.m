@@ -119,8 +119,8 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	% Gray = rgb2gray(RawImg);
 	% implot(roadSeg, edge(Gray,'canny'), edge(roadSeg,'canny'), edge(featureMap,'canny'));return;
 
-	roadBoundLineL = fitLine(roadBoundPointsL, 0:89);
-	roadBoundLineR = fitLine(roadBoundPointsR, -89:0);
+	roadBoundLineL = fitStraightLineByRansac(roadBoundPointsL, 0:89);
+	roadBoundLineR = fitStraightLineByRansac(roadBoundPointsR, -89:0);
 
 	roadBoundLineL.move([0, nRowSplit]);
 	roadBoundLineR.move([nColSplit, nRowSplit]);
@@ -192,10 +192,10 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	roadBoudPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
 
-	GroundTruth = imread('RIMG00021.pgm');
-	GTBirdView = imwarp(GroundTruth, tform);
+	% GroundTruth = imread('RIMG00021.pgm');
+	% GTBirdView = imwarp(GroundTruth, tform);
 
-	implot(RawImg, BirdView, GTBirdView);  % , BirdView, BirdView_ROI
+	implot(RawImg, BirdView);  % , GTBirdView, BirdView_ROI
 	selplot(1); hold on;
 	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
@@ -206,7 +206,7 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 
 	% write results to file.
  global dumppathstr;
- 	dumppathstr = 'F:/Documents/MATLAB/output/';
+ 	dumppathstr = 'F:/Documents/MATLAB/Temp/';
  	imdump(RawImg, featureMap, roadSeg, roadBoudPoints, RoadFaceIPM, laneMark);
 
     % in brief
@@ -268,7 +268,7 @@ function FeatureMap = featureExtraction(Rgb)
 end
 
 function BW_Filtered = segment(Gray)
-    BW = Gray > 0.45 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2
+    BW = Gray > 0.3 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
     BW_areaopen = bwareaopen(BW_imclose, 60); 
 	BW_Filtered = BW_areaopen;   
@@ -300,7 +300,7 @@ function Boundary = boundPoints(BW, isleft)
 	end
 end
 
-function line = fitLine(BW, Theta)
+function line = fitStraightLineByHough(BW, Theta)
 	%Hough Transform
 	[H,theta,rho] = hough(BW, 'Theta', Theta);
 
@@ -322,6 +322,21 @@ function line = fitLine(BW, Theta)
 
 	% line = LineObj([lines.point1(2), lines.point1(1)], [lines.point2(2), lines.point2(1)]);
 	line = LineObj(lines.point1, lines.point2);
+end
+
+function line = fitStraightLineByRansac(BW, Theta)
+% 直接采用边界点进行Ransac直线检测效果很差
+% 需要支持曲线提取
+	[X,Y] = find(BW == 1);
+	pts = [X';Y'];
+	iterNum = 300;
+	thDist = 2;
+	thInlrRatio = .1;
+	[t,r] = ransac(pts,iterNum,thDist,thInlrRatio);
+	k1 = -tan(t);
+	b1 = r/cos(t);
+	Y = k1*X+b1;
+	line = LineObj([X(1), Y(1)], [X(end), Y(end)]);
 end
 
 function laneMark = laneMarkFilter(GrayImg)
