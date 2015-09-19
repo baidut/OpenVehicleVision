@@ -81,8 +81,8 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	else
 
 		featureMap = featureExtraction(RawImg);
-		roadSegL = segment(featureMap(nRowSplit:end, 1:nColSplit,:));
-		roadSegR = segment(featureMap(nRowSplit:end, nColSplit+1:end,:));
+		roadSegL = segmentByEdge(featureMap(nRowSplit:end, 1:nColSplit,:), true);
+		roadSegR = segmentByEdge(featureMap(nRowSplit:end, nColSplit+1:end,:), false);
  	end
 	% segment2(RawImg(nHorizon+1:end,:,:),MaskRoadFace, MaskRoadBound);
 
@@ -119,8 +119,8 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	% Gray = rgb2gray(RawImg);
 	% implot(roadSeg, edge(Gray,'canny'), edge(roadSeg,'canny'), edge(featureMap,'canny'));return;
 
-	roadBoundLineL = fitStraightLineByRansac(roadBoundPointsL, 0:89);
-	roadBoundLineR = fitStraightLineByRansac(roadBoundPointsR, -89:0);
+	roadBoundLineL = fitStraightLineByHough(roadBoundPointsL, 0:89);
+	roadBoundLineR = fitStraightLineByHough(roadBoundPointsR, -89:0);
 
 	roadBoundLineL.move([0, nRowSplit]);
 	roadBoundLineR.move([nColSplit, nRowSplit]);
@@ -205,7 +205,7 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	maxfig;
 
 	% write results to file.
- global dumppathstr;
+global dumppathstr;
  	dumppathstr = 'F:/Documents/MATLAB/Temp/';
  	imdump(RawImg, featureMap, roadSeg, roadBoudPoints, RoadFaceIPM, laneMark);
 
@@ -272,6 +272,27 @@ function BW_Filtered = segment(Gray)
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
     BW_areaopen = bwareaopen(BW_imclose, 60); 
 	BW_Filtered = BW_areaopen;   
+end
+
+function BW = segmentByOtsu(GrayImg, isleft)
+	EdgeFeature = imfilter(GrayImg,H,'replicate');
+    BW = im2bw(EdgeFeature,graythresh(EdgeFeature));
+    imdump(BW,EdgeFeature);
+end
+
+function BW = segmentByEdge(GrayImg, isleft)
+	H = [ 1,  0,  0,  0, -1;
+		  1,  0,  0,  0, -1;
+		  4,  2,  0, -2, -4;
+		  1,  0,  0,  0, -1;
+		  1,  0,  0,  0, -1];
+
+	if ~isleft
+		H = -H;
+	end
+	EdgeFeature = imfilter(GrayImg,H,'replicate');
+    BW = im2bw(EdgeFeature,graythresh(EdgeFeature));
+    imdump(BW,EdgeFeature);
 end
 
 function Boundary = boundPoints(BW, isleft)

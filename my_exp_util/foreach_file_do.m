@@ -1,7 +1,8 @@
-function foreach_file_do(files, func, varargin)
+function results = foreach_file_do(files, func, varargin)
 % filePath, fileType
 % USAGE:
 % TIPS: watch a movie by showing pictures! foreach_file_do('SLD2011\dataset3\sequence\01*.jpg', @imshow) 
+% TIPS2: res = foreach_file_do('./*.jpg', @(x) vvSegBound(imread(x)));implot(res{:});
 %  	foreach_file_do('pictures/*', @disp)
 %  	foreach_file_do('pictures/*.jpg', @disp)
 %  	foreach_file_do('pictures/lanemarking/*.picture', @disp)
@@ -25,25 +26,28 @@ function foreach_file_do(files, func, varargin)
  
  % dir('pictures\eas*2.jp*')
   
- % 支持矩阵输入和字符串输入两种方式！
+ % 支持矩阵输入和字符串输入两种方式�?
  % jp*g
  % bmp
 
 if isstr(files)
 	files = str2files(files);
-end 
+end
 
-for ii = 1 : size(files, 2)% 修改 注意 length 返回的是行数和列数的最大值
+len = size(files, 2);% 修改 注意 length 返回的是行数和列数的�?���?
+results = cell(1, len);
+
+for ii = 1 : len
 	file = files{1, ii};
 	if iscell(file)
 		file = cell2mat(file);
 	end
-	func( file, varargin{:} );
+	results{ii} = func( file, varargin{:} );
 end
 
 return;
 
-% 以下为旧版代码
+% 以下为旧版代�?
 % function foreach_file_do(filePath, fileType, func, varargin)
 %  	foreach_file_do('./','', @disp)
 %	foreach_file_do('./pictures/','png', @disp)
