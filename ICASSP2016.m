@@ -7,7 +7,7 @@ function ICASSP2016(files, isvideo, istracking)
 	if ~istracking
 		if ~isvideo
 			% test files, no tracking
-			foreach_file_do(files, @(file) roadDetection(imread(file)));
+			foreach_file_do(files, @(file) {figure,roadDetection(imread(file))} );
 		else
 			% test a video, no tracking
 			foreach_frame_do(files, @(file) roadDetection(file));
@@ -39,7 +39,11 @@ end
 
 
 function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo)
-	% road detection
+    %% set output fold.
+global dumppathstr;
+ 	dumppathstr = 'F:/Documents/MATLAB/Temp/';
+    
+	%% road detection
 	[nRow, nCol, ~] = size(RawImg);
 
 	if nargin > 1
@@ -68,7 +72,6 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 
 		MaskRoadFace = false(nRow-nHorizon+1, nCol);
 		MaskRoadFace(A(2):end, A(1):B(1)) = true;
-		A, B
 		MaskRoadBound = false(nRow-nHorizon+1, nCol);
 		MaskRoadBound(1:A(2)-1, [1:A(1),B(1):end]) = true; % -1 to avoid overlapping
 
@@ -80,51 +83,55 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 
 	else
 
-		featureMap = featureExtraction(RawImg);
-		roadSegL = segmentByEdge(featureMap(nRowSplit:end, 1:nColSplit,:), true);
-		roadSegR = segmentByEdge(featureMap(nRowSplit:end, nColSplit+1:end,:), false);
- 	end
-	% segment2(RawImg(nHorizon+1:end,:,:),MaskRoadFace, MaskRoadBound);
+		featureMap = featureExtractionByRpGm2B(RawImg); % featureExtractionByRpGm2B
+		roadSegL = segmentByOtsu(featureMap(nRowSplit:end, 1:nColSplit,:));
+		roadSegR = segmentByOtsu(featureMap(nRowSplit:end, nColSplit+1:end,:));
 
-	% function segment2(img, mask1, mask2)
-		% [L,P] = imseggeodesic(img,mask1,mask2);
-
-		% implot(mask1, mask2, img); hold on;
-		% visboundaries(mask1,'Color','r');
-		% visboundaries(mask2,'Color','b');
-
-		% figure
-		% imshow(label2rgb(L),'InitialMagnification', 50)
-		% title('Segmented image')
-
-		% figure
-		% imshow(P(:,:,1),'InitialMagnification', 50)
-		% title('Probability that a pixel belongs to the foreground')
-	% end
-
-	%% segmentation 
-
-	% if RoadFaceClassifier is provided, then reject featureMap and use the classifier.
-	% if exist('RoadFaceClassifier', 'var')
-	% 	theclass = predict(RoadFaceClassifier, computeFeatureVector());
-	% 	featureMap = reshape(theclass, nRow-nHorizon, nCol);
-	% end
+% 		roadSegL = isBound(RawImg(nRowSplit:end, 1:nColSplit,:));
+% 		roadSegR = isBound(RawImg(nRowSplit:end, nColSplit+1:end,:));
+    end
 
 	roadBoundPointsL = boundPoints(roadSegL, true);
 	roadBoundPointsR = boundPoints(roadSegR, false);
+    
+    %% Refine boundary points
+%     [RGB_R, RGB_G, RGB_B] = getChannel(RawImg);
+% 	RGB_max = max(max(RGB_R, RGB_G) , RGB_B);   
+% 	Shadow = RGB_B == RGB_max;
+%     ShadowMask = imdilate(Shadow, strel('square',15));
+%     
+%     roadBoundPointsL = roadBoundPointsCandidateL .* ~ShadowMask(nRowSplit:end, 1:nColSplit,:);
+%     roadBoundPointsR = roadBoundPointsCandidateR .* ~ShadowMask(nRowSplit:end, nColSplit+1:end,:);
+    
+    %% dump results of stage 1.
+%     roadBoundPointsCandidate = zeros(nRow, nCol);
+%     roadBoundPointsCandidate(nRowSplit:end,:) = [roadBoundPointsCandidateL, roadBoundPointsCandidateR];
+    
+	roadBoundPoints = zeros(nRow, nCol);
+    roadBoundPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
+    
+    roadSeg = [roadSegL, roadSegR];
+    implot(RawImg, featureMap, roadSeg);
+    selplot(1); hold on;
+%     [X, Y] = find(roadBoundPointsCandidate == 1);
+%     plot(Y, X,'y*');
+    [X, Y] = find(roadBoundPoints == 1);
+    plot(Y, X,'r*');
+    imdump(featureMap, roadBoundPoints);
+    
+    roadBoundAngleLimit = 80;
 
-	% implot(roadSegL,roadSegR,roadBoundPointsL,roadBoundPointsR); return;
+    if nargin == 1 % no tracking 
+        roadBoundLineL = fitStraightLineByHough(roadBoundPoints, 0:roadBoundAngleLimit); % 0:89
+        roadBoundLineR = fitStraightLineByHough(roadBoundPoints, -roadBoundAngleLimit:0); % -89:0
+    else
+        roadBoundLineL = fitStraightLineByHough(roadBoundPointsL, 0:roadBoundAngleLimit); % 0:89
+        roadBoundLineR = fitStraightLineByHough(roadBoundPointsR, -roadBoundAngleLimit:0); % -89:0
 
-	% roadSeg = [roadSegL, roadSegR];
-	% Gray = rgb2gray(RawImg);
-	% implot(roadSeg, edge(Gray,'canny'), edge(roadSeg,'canny'), edge(featureMap,'canny'));return;
-
-	roadBoundLineL = fitStraightLineByHough(roadBoundPointsL, 0:89);
-	roadBoundLineR = fitStraightLineByHough(roadBoundPointsR, -89:0);
-
-	roadBoundLineL.move([0, nRowSplit]);
-	roadBoundLineR.move([nColSplit, nRowSplit]);
-
+        roadBoundLineL.move([0, nRowSplit]);
+        roadBoundLineR.move([nColSplit, nRowSplit]);
+    end
+    
 	endRowPointL = [roadBoundLineL.row(nRow), nRow];
 	endRowPointR = [roadBoundLineR.row(nRow), nRow];
 
@@ -186,18 +193,22 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 
 	%% plot results.
 	% in detail
-
-	roadSeg = [roadSegL, roadSegR];
-	roadBoudPoints = zeros(nRow, nCol);
-	roadBoudPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
 	BirdView = imwarp(RawImg, tform);
+    %nOutCol = 600; nOutRow = 450; 
+    %fixedPoints = [1, 1; nOutCol,1; 1,nOutRow; nOutCol, nOutRow];
+	%tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
+    invtform = invert(tform);
+    AllRoad = imwarp(RawImg, tform, 'OutputView', imref2d([6*nOutRow, nOutCol],[1 nOutCol], [-5*nOutRow, nOutRow]) ); % 'OutputView', imref2d([nOutRow, nOutCol])
+    % imref2d([nOutRow, nOutCol],[1 4*nOutRow],[1 nOutCol])
+    % imref2d(imageSize,xWorldLimits,yWorldLimits)
+
 
 	% GroundTruth = imread('RIMG00021.pgm');
 	% GTBirdView = imwarp(GroundTruth, tform);
 
-	implot(RawImg, BirdView);  % , GTBirdView, BirdView_ROI
+	implot(RawImg, BirdView, AllRoad);  % , GTBirdView, BirdView_ROI
 	selplot(1); hold on;
-	plotpoint(roadBoudPoints, vanishingPoint, endRowPointL, endRowPointR);
+	plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
 	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
 
 	% selplot(3); hold on;
@@ -205,9 +216,7 @@ function [ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo
 	maxfig;
 
 	% write results to file.
-global dumppathstr;
- 	dumppathstr = 'F:/Documents/MATLAB/Temp/';
- 	imdump(RawImg, featureMap, roadSeg, roadBoudPoints, RoadFaceIPM, laneMark);
+ 	imdump(RawImg, roadSeg, roadBoundPoints, RoadFaceIPM, laneMark, BirdView, AllRoad); % featureMap 
 
     % in brief
 
@@ -260,24 +269,56 @@ end
 
 % independent function
 
-function FeatureMap = featureExtraction(Rgb)
+function BW_Filtered = isBound(RawImg)
+% check if a pixel is boundary point
+    [RGB_R, RGB_G, RGB_B] = getChannel(RawImg);
+    RGB_max = max(max(RGB_R, RGB_G) , RGB_B);   
+	FeatureMap = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
+
+%     BW = vvCreateMask(RawImg); 
+    I = rgb2hsv(RawImg);
+    channel1Min = 0.828;
+    channel1Max = 0.469;
+    % BW = ( (I(:,:,1) >= channel1Min) | (I(:,:,1) <= channel1Max) ) & ...
+    BW = (FeatureMap >= 0.1 +graythresh(FeatureMap)) ;
+
+    BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
+    BW_areaopen = bwareaopen(BW_imclose, 100);  % 60 % size should be adaptive 
+	BW_Filtered = BW_areaopen;   
+    return;
+
+    Seg = segment(FeatureMap);
+%% Refine boundary points
+% Remove shadows
+    Shadow = RGB_B == RGB_max;
+    BW = Seg .* ~Shadow;
+    imdump(Seg, BW, Shadow);
+end
+
+function FeatureMap = featureExtractionByS2(Rgb)
 	[RGB_R, RGB_G, RGB_B] = getChannel(Rgb);
 	% RGB_min = min(min(RGB_R, RGB_G) , RGB_B);
 	RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
 	FeatureMap = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
 end
 
+function FeatureMap = featureExtractionByRpGm2B(Rgb)
+    [RGB_R, RGB_G, RGB_B] = getChannel(Rgb);
+    FeatureMap = RGB_R + RGB_G - 2 * RGB_B;
+end
+
 function BW_Filtered = segment(Gray)
-    BW = Gray > 0.3 * max(Gray(:)); % 2.5 * mean(Gray(:))  0.3 0.2
+    BW = Gray > 2 * mean(Gray(:)); % 2.5 * mean(Gray(end,:));0.15 * max(Gray(:));0.3 0.2
     BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
-    BW_areaopen = bwareaopen(BW_imclose, 60); 
+    BW_areaopen = bwareaopen(BW_imclose, 60, 4);  % 60
 	BW_Filtered = BW_areaopen;   
 end
 
-function BW = segmentByOtsu(GrayImg, isleft)
-	EdgeFeature = imfilter(GrayImg,H,'replicate');
-    BW = im2bw(EdgeFeature,graythresh(EdgeFeature));
-    imdump(BW,EdgeFeature);
+function BW_Filtered = segmentByOtsu(GrayImg)
+    BW = im2bw(GrayImg, 0.06 + graythresh(GrayImg));
+    %BW_imclose = imclose(BW, strel('square', 5)); %imdilate imclose imopen
+    BW_areaopen = bwareaopen(BW, 100, 4); 
+	BW_Filtered = BW_areaopen; 
 end
 
 function BW = segmentByEdge(GrayImg, isleft)
@@ -300,25 +341,23 @@ function Boundary = boundPoints(BW, isleft)
 	Candidate = zeros(nRow, nCol);
 	Boundary = zeros(nRow, nCol);
 
-	for c = 1 : nCol % for each column
-		for r = nRow : -1 : 1 % up-down scan
-			if 1 == BW(r, c)
-				Candidate(r, c) = 1;
-				break;
-			end
-		end
-	end 
-	if isleft
+    for c = 1 : nCol % for each column
+        r = find(BW(:,c),1,'last');% up-down scan
+        Candidate(r, c) = 1;
+    end
+
+    if isleft
 		for r = 1 : nRow
-			c = find(Candidate(r,:),1,'last');
-			Boundary(r, c) = 1;
+			c = find(Candidate(r,:),1,'last');      
+            Boundary(r, c) = 1;
 		end
 	else 
 		for r = 1 : nRow
 			c = find(Candidate(r,:),1,'first');
-			Boundary(r, c) = 1;
+            Boundary(r, c) = 1;
 		end
-	end
+    end
+    
 end
 
 function line = fitStraightLineByHough(BW, Theta)
@@ -346,8 +385,8 @@ function line = fitStraightLineByHough(BW, Theta)
 end
 
 function line = fitStraightLineByRansac(BW, Theta)
-% 直接采用边界点进行Ransac直线检测效果很差
-% 需要支持曲线提取
+% 直接采用边界点进行Ransac直线�?��效果很差
+% �?��支持曲线提取
 	[X,Y] = find(BW == 1);
 	pts = [X';Y'];
 	iterNum = 300;
