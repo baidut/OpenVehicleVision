@@ -1,6 +1,6 @@
 function  saveeps(varargin)
 
-% 和imdump重复率很高
+% 和imdump重复率很�?
 
 % if nargin == 1 && isstr(varargin{1})
 %  	print(varargin{1},'-depsc');
@@ -8,9 +8,9 @@ function  saveeps(varargin)
 
 for i = 1:nargin
 	para = varargin{i};
-	filename = ['output/', inputname(i), '.eps'];
+	filename = ['F:\Documents\MATLAB\Temp/', inputname(i), '.eps'];
 	if 1 == length(para) && ishandle(para)
-		figure(para); % 设置为当前图像
+		figure(para); % 设置为当前图�?
 		print(filename,'-depsc');
 		% close(para); % 关闭图像交给外部
 	else 

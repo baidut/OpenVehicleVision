@@ -93,16 +93,7 @@ global dumppathstr;
 
 	roadBoundPointsL = boundPoints(roadSegL, true);
 	roadBoundPointsR = boundPoints(roadSegR, false);
-    
-    %% Refine boundary points
-%     [RGB_R, RGB_G, RGB_B] = getChannel(RawImg);
-% 	RGB_max = max(max(RGB_R, RGB_G) , RGB_B);   
-% 	Shadow = RGB_B == RGB_max;
-%     ShadowMask = imdilate(Shadow, strel('square',15));
-%     
-%     roadBoundPointsL = roadBoundPointsCandidateL .* ~ShadowMask(nRowSplit:end, 1:nColSplit,:);
-%     roadBoundPointsR = roadBoundPointsCandidateR .* ~ShadowMask(nRowSplit:end, nColSplit+1:end,:);
-    
+      
     %% dump results of stage 1.
 %     roadBoundPointsCandidate = zeros(nRow, nCol);
 %     roadBoundPointsCandidate(nRowSplit:end,:) = [roadBoundPointsCandidateL, roadBoundPointsCandidateR];
@@ -139,32 +130,23 @@ global dumppathstr;
     nHorizon = floor(vanishingPoint(2));
 	horizonLine = LineObj([1, nHorizon], [nCol, nHorizon]);
 
-
-	% road boundary line is extracted, output "ground truth" for learning.
-	%% trainModel();
-	% data = computeFeatureVector();
-
-	% cl = ones(nRow - nHorizon, nCol);
-	% for r = 1:(nRow-nHorizon)
-	% 	cl(r,[1:floor(roadBoundLineL.row(r+nHorizon)), ceil(roadBoundLineR.row(r+nHorizon):end)]) = -1;
-	% end
-
-	% theclass = cl(:);
-
-	% RoadFaceClassifier = fitcsvm(data,theclass);
-
 	ratioNearField = 0.6; % r% of roadface will be considered as near field.
 	pointLeftTop = vanishingPoint*ratioNearField + endRowPointL*(1-ratioNearField);
 	pointRightTop = vanishingPoint*ratioNearField + endRowPointR*(1-ratioNearField);
-	movingPoints = [pointLeftTop; pointRightTop; endRowPointL; endRowPointR];
+	movingPoints = [pointLeftTop; pointRightTop; endRowPointR; endRowPointL];
 
 	nOutCol = 80; nOutRow = 60; % size of map where the lane-making points locate in one column.
-	fixedPoints = [1, 1; nOutCol,1; 1,nOutRow; nOutCol, nOutRow];
+	fixedPoints = [1, 1; nOutCol,1; nOutCol, nOutRow; 1,nOutRow];
 	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
 	
 	GrayImg = RawImg(:,:,1);
 	RoadFaceIPM = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]), 'FillValues', 0.8*median(GrayImg(nRow,:)));
 
+    MovingPointsSelection = figure;imshow(RawImg);impoly(gca, movingPoints);
+    axis auto;%axis([endRowPointL(1) endRowPointR(1) 1 nRow]);
+    saveeps(MovingPointsSelection, RoadFaceIPM);
+    
+    
 	% if track on, then just focus the near field of last detected lane-marking.
 	multiLaneMode = true;
 
@@ -194,10 +176,10 @@ global dumppathstr;
 	%% plot results.
 	% in detail
 	BirdView = imwarp(RawImg, tform);
-    %nOutCol = 600; nOutRow = 450; 
-    %fixedPoints = [1, 1; nOutCol,1; 1,nOutRow; nOutCol, nOutRow];
-	%tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
-    invtform = invert(tform);
+    nOutCol = 600; nOutRow = 450; 
+    fixedPoints = [1, 1; nOutCol,1; nOutCol, nOutRow; 1,nOutRow];
+	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
+    
     AllRoad = imwarp(RawImg, tform, 'OutputView', imref2d([6*nOutRow, nOutCol],[1 nOutCol], [-5*nOutRow, nOutRow]) ); % 'OutputView', imref2d([nOutRow, nOutCol])
     % imref2d([nOutRow, nOutCol],[1 4*nOutRow],[1 nOutCol])
     % imref2d(imageSize,xWorldLimits,yWorldLimits)
@@ -205,7 +187,23 @@ global dumppathstr;
 
 	% GroundTruth = imread('RIMG00021.pgm');
 	% GTBirdView = imwarp(GroundTruth, tform);
-
+    
+    %% plot paper figures.
+%     sizeGrid = 50;% choose size of length of one lanemarking. 300
+% 
+%     %invtform = invert(tform);
+%     fixedPoints = movingPoints;
+%     movingPoints = [1, 5*nOutRow; size(AllRoad, 2), 5*nOutRow; 1,size(AllRoad, 1); size(AllRoad, 2), size(AllRoad, 1)];
+%     
+% 	invtform = fitgeotrans(movingPoints, fixedPoints, 'projective');
+%     
+% %     u = 1:sizeGrid:size(AllRoad, 2);
+% %     v = ones(size(u));
+% %      = [u, v, 1] * invtform.T ;
+% %     [x, y, ~]
+%     
+%     GridRaw = imwarp(AllRoad, invtform, 'OutputView', imref2d([nRow, nCol]));
+    
 	implot(RawImg, BirdView, AllRoad);  % , GTBirdView, BirdView_ROI
 	selplot(1); hold on;
 	plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
