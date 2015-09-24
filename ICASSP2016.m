@@ -1,4 +1,9 @@
 function ICASSP2016(files, isvideo, istracking)
+% show results: 
+% foreach_file_do('F:\Documents\MATLAB\capture\ICASSP\results\*.jpg', @imshow);
+% show dataset:
+% foreach_file_do('F:\dataset\SLD2011\dataset3\sequence\*.jpg', @imshow);
+
 
 % function from OpenVehiclelVision: getChannel, implot, imdump, plotpoint, plotobj
 
@@ -194,28 +199,15 @@ global dumppathstr;
 	% GroundTruth = imread('RIMG00021.pgm');
 	% GTBirdView = imwarp(GroundTruth, tform);
     
-    %% plot paper figures.
-%     sizeGrid = 50;% choose size of length of one lanemarking. 300
-% 
-%     %invtform = invert(tform);
-%     fixedPoints = movingPoints;
-%     movingPoints = [1, 5*nOutRow; size(AllRoad, 2), 5*nOutRow; 1,size(AllRoad, 1); size(AllRoad, 2), size(AllRoad, 1)];
-%     
-% 	invtform = fitgeotrans(movingPoints, fixedPoints, 'projective');
-%     
-% %     u = 1:sizeGrid:size(AllRoad, 2);
-% %     v = ones(size(u));
-% %      = [u, v, 1] * invtform.T ;
-% %     [x, y, ~]
-%     
-%     GridRaw = imwarp(AllRoad, invtform, 'OutputView', imref2d([nRow, nCol]));
+    %% plot.
 
-    subplot(2,3,1);imshow(RawImg);title('Raw image');hold on;
-    	l1 = LineObj(vanishingPoint, endRowPointL);
-        l2 = LineObj(vanishingPoint, endRowPointR);
-        l1.plot('r');
-        l2.plot('g');
-        roadMidLine.plot('b');
+    subplot(2,3,1);
+    imshow(RawImg);title('Raw image');hold on;
+    l1 = LineObj(vanishingPoint, endRowPointL);
+    l2 = LineObj(vanishingPoint, endRowPointR);
+    l1.plot('r');
+    l2.plot('g');
+    roadMidLine.plot('b');
     subplot(2,3,2);
     imshow(RoadFace_ROI);title('Near field roadface');
     
@@ -235,7 +227,7 @@ global dumppathstr;
 
 	%maxfig;
     set(gcf,'outerposition',get(0,'screensize'));
-    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 30 20]); % [0 0 30 20]
+    %set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 30 20]); % [0 0 30 20]
 
 	% write results to file.
  	imdump(RoadFace_ROI, BirdView, RoadFace_All);
@@ -245,7 +237,7 @@ global dumppathstr;
     % saveas(h, ['F:\Documents\MATLAB\Temp/', name, '.png']); cannot handle
     % maximized figure.
     print(name, '-djpeg', '-r300'); % ['F:\Documents\MATLAB\Temp/'
-    close(h);
+    %close(h);
 
 	%% check if the detection result is ok. 
 	% if not, reject the trackinfo and redetect.
@@ -332,7 +324,7 @@ function BW_Filtered = segment(Gray)
 end
 
 function BW_Filtered = segmentByOtsu(GrayImg)
-    BW = im2bw(GrayImg, graythresh(GrayImg)); % 0.06 + 
+    BW = im2bw(GrayImg, graythresh(GrayImg)-0.03); % 0.06 + 
     %BW_imclose = imclose(BW, strel('square', 5)); %imdilate imclose imopen
     BW_areaopen = bwareaopen(BW, 230, 4); 
 	BW_Filtered = BW_areaopen; 
