@@ -37,4 +37,8 @@ for i = 1:nargin
 	end
 end
 
-legend(handles, name{:}); % 如果生成论文的图片，则可以再关闭标注或覆盖标注
+global isAnnotate
+
+if isAnnotate
+    legend(handles, name{:}); %'Location', 'SouthEastOutside'% 如果生成论文的图片，则可以再关闭标注或覆盖标�?
+end

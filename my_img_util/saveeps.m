@@ -6,6 +6,13 @@ function  saveeps(varargin)
 %  	print(varargin{1},'-depsc');
 % end
 
+if nargin == 0
+    h = gcf;
+    [~,name,~] = fileparts(h.Name);
+    print(['F:\Documents\MATLAB\Temp/', name, '.eps'],'-depsc');
+    close(h);
+end
+
 for i = 1:nargin
 	para = varargin{i};
 	filename = ['F:\Documents\MATLAB\Temp/', inputname(i), '.eps'];

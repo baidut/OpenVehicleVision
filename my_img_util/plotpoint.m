@@ -12,8 +12,11 @@ for i = 1:nargin
 	if length(obj) == 2 
 		% points
 		plot(obj(1), obj(2), 'yo', 'markersize', 10);
-		text(obj(1)+10, obj(2)-10, ['\color{black}', sprintf([name, '(%.2f, %.2f)'], obj(1), obj(2))]);
-	elseif length(size(obj)) == 2 % isbw(obj) Function ISBW has been removed.
+global isAnnotate
+        if isAnnotate
+            text(obj(1)+10, obj(2)-10, ['\color{black}', sprintf([name, '(%.2f, %.2f)'], obj(1), obj(2))]);
+        end
+    elseif length(size(obj)) == 2 % isbw(obj) Function ISBW has been removed.
 		% plot positive points of a binary image.
         [nRow, nCol] = size(obj);
         for r = 1:nRow

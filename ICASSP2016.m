@@ -7,7 +7,7 @@ function ICASSP2016(files, isvideo, istracking)
 	if ~istracking
 		if ~isvideo
 			% test files, no tracking
-			foreach_file_do(files, @(file) {roadDetection(imread(file))} );
+			foreach_file_do(files, @(file) {figure('NumberTitle', 'off', 'Name', file), roadDetection(imread(file))} );
 		else
 			% test a video, no tracking
 			foreach_frame_do(files, @(file) roadDetection(file));
@@ -21,8 +21,7 @@ function ICASSP2016(files, isvideo, istracking)
                 filename = files{index};
 				RawImg = imread(filename);
                 
-                h = figure('NumberTitle', 'off');
-                h.Name = filename;
+                h = figure('NumberTitle', 'off', 'Name', filename);
                 
 				if ok
 					[ok, trackinfo, learninfo] = roadDetection(RawImg, trackinfo, learninfo);
@@ -104,25 +103,26 @@ global dumppathstr;
 	roadBoundPoints = zeros(nRow, nCol);
     roadBoundPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
     
-    roadSeg = [roadSegL, roadSegR];
-    implot(RawImg, BlurImg, featureMap, roadSeg);
-    selplot(1); hold on;
-%     [X, Y] = find(roadBoundPointsCandidate == 1);
-%     plot(Y, X,'y*');
-    [X, Y] = find(roadBoundPoints == 1);
-    plot(Y, X,'r*');
-    imdump(featureMap, roadBoundPoints);
+    roadSeg = zeros(nRow, nCol);
+    roadSeg(nRowSplit:end, :) = [roadSegL, roadSegR];
+    
+%     implot(RawImg, BlurImg, featureMap, roadSeg);
+%     selplot(1); hold on;
+%     [X, Y] = find(roadBoundPoints == 1);
+%     plot(Y, X,'r*');
+    imdump(featureMap, roadSeg, roadBoundPoints);
     
     
     %% Next Stage
-    roadBoundAngleLimit = 80;
+    roadBoundAngleMin = 30;
+    roadBoundAngleMax = 75;
 
     if nargin == 1 % no tracking 
-        roadBoundLineL = fitStraightLineByHough(roadBoundPoints, 0:roadBoundAngleLimit); % 0:89
-        roadBoundLineR = fitStraightLineByHough(roadBoundPoints, -roadBoundAngleLimit:0); % -89:0
+        roadBoundLineL = fitStraightLineByHough(roadBoundPoints, roadBoundAngleMin:roadBoundAngleMax); % 0:89
+        roadBoundLineR = fitStraightLineByHough(roadBoundPoints, -roadBoundAngleMax:roadBoundAngleMin); % -89:0
     else
-        roadBoundLineL = fitStraightLineByHough(roadBoundPointsL, 0:roadBoundAngleLimit); % 0:89
-        roadBoundLineR = fitStraightLineByHough(roadBoundPointsR, -roadBoundAngleLimit:0); % -89:0
+        roadBoundLineL = fitStraightLineByHough(roadBoundPointsL, roadBoundAngleMin:roadBoundAngleMax); % 0:89
+        roadBoundLineR = fitStraightLineByHough(roadBoundPointsR, -roadBoundAngleMax:roadBoundAngleMin); % -89:0
 
         roadBoundLineL.move([0, nRowSplit]);
         roadBoundLineR.move([nColSplit, nRowSplit]);
@@ -147,11 +147,12 @@ global dumppathstr;
 	GrayImg = RawImg(:,:,1);
 	RoadFace_ROI = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]), 'FillValues', 0.8*median(GrayImg(nRow,:)));
 
-    MovingPointsSelection = figure;imshow(RawImg);impoly(gca, movingPoints);
-    axis auto;%axis([endRowPointL(1) endRowPointR(1) 1 nRow]);
-    saveeps(MovingPointsSelection, RoadFace_ROI);
+    %% plots  
+%     MovingPointsSelection = figure;imshow(RawImg);impoly(gca, movingPoints);
+%     axis auto;%axis([endRowPointL(1) endRowPointR(1) 1 nRow]);
+%     saveeps(MovingPointsSelection, RoadFace_ROI);
     
-    
+    %%
 	% if track on, then just focus the near field of last detected lane-marking.
 	multiLaneMode = false;
 
@@ -168,7 +169,6 @@ global dumppathstr;
         LaneMark(:,[1:leftLimit,rightLimit:end]) = 0;
 	else
 		LaneMark = laneMarkFilter(RoadFace_ROI);
-		leftLimit = 0;
 	end
 	
 	ColPixelSum = sum(LaneMark, 1);
@@ -210,33 +210,44 @@ global dumppathstr;
 %     
 %     GridRaw = imwarp(AllRoad, invtform, 'OutputView', imref2d([nRow, nCol]));
 
-    subplot(2,3,1);imshow(RawImg);title('Raw image');
-    subplot(2,3,2);imshow(RoadFace_ROI);title('Near field roadface');
-    subplot(2,3,[3 6]);imshow(RoadFace_All);title('Extract roadface');
-    subplot(2,3,4);imshow(featureMap);title('Detection Result');hold on;
-        plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
-        plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
-    subplot(2,3,5);imshow(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));title('Lane marks');
-        hold on; plot(1:nOutCol, ColPixelSum);
+    subplot(2,3,1);imshow(RawImg);title('Raw image');hold on;
+    	l1 = LineObj(vanishingPoint, endRowPointL);
+        l2 = LineObj(vanishingPoint, endRowPointR);
+        l1.plot('r');
+        l2.plot('g');
+        roadMidLine.plot('b');
+    subplot(2,3,2);
+    imshow(RoadFace_ROI);title('Near field roadface');
+    
+    subplot(2,3,[3 6]);
+    imshow(RoadFace_All);title('Extract roadface');
+    
+    subplot(2,3,4);
+    imshow(imoverlay(featureMap, roadSeg, [255, 255, 0]));
+    title('Detection Result');hold on;
+    plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
+    plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
+    
+    subplot(2,3,5);
+    imshow(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));
+    title('Lane marks');
+    hold on; plot(1:nOutCol, ColPixelSum);
 
-	maxfig;
+	%maxfig;
+    set(gcf,'outerposition',get(0,'screensize'));
+    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 30 20]); % [0 0 30 20]
 
 	% write results to file.
- 	imdump(RawImg, roadSeg, roadBoundPoints, RoadFace_ROI, LaneMark, BirdView, RoadFace_All); % featureMap 
+ 	imdump(RoadFace_ROI, BirdView, RoadFace_All);
+    %saveeps;
+    h = gcf;
+    [~,name,~] = fileparts(h.Name);
+    % saveas(h, ['F:\Documents\MATLAB\Temp/', name, '.png']); cannot handle
+    % maximized figure.
+    print(name, '-djpeg', '-r300'); % ['F:\Documents\MATLAB\Temp/'
+    close(h);
 
-    % in brief
-
-	% Initalize = implot(RawImg, BirdView_ROI); 
-	% selplot(1); hold on;
-	% l1 = LineObj(vanishingPoint, endRowPointL);
-	% l2 = LineObj(vanishingPoint, endRowPointR);
-	% l1.plot('r');
-	% l2.plot('g');
-	% roadMidLine.plot('b');
-	% maxfig;
-	% pause(0.5);
-
-	% check if the detection result is ok. 
+	%% check if the detection result is ok. 
 	% if not, reject the trackinfo and redetect.
 	% if redetect failed, use last detection result. 
 	ok = true;
@@ -321,9 +332,9 @@ function BW_Filtered = segment(Gray)
 end
 
 function BW_Filtered = segmentByOtsu(GrayImg)
-    BW = im2bw(GrayImg, 0.03 + graythresh(GrayImg)); % 0.06 + 
+    BW = im2bw(GrayImg, graythresh(GrayImg)); % 0.06 + 
     %BW_imclose = imclose(BW, strel('square', 5)); %imdilate imclose imopen
-    BW_areaopen = bwareaopen(BW, 100, 4); 
+    BW_areaopen = bwareaopen(BW, 230, 4); 
 	BW_Filtered = BW_areaopen; 
 end
 
