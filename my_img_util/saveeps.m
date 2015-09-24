@@ -12,7 +12,7 @@ for i = 1:nargin
 	if 1 == length(para) && ishandle(para)
 		figure(para); % 设置为当前图�?
 		print(filename,'-depsc');
-		% close(para); % 关闭图像交给外部
+		close(para); % 关闭图像交给外部
 	else 
 		h = figure; % 新建figure
 		imshow(para);

@@ -7,7 +7,7 @@ function ICASSP2016(files, isvideo, istracking)
 	if ~istracking
 		if ~isvideo
 			% test files, no tracking
-			foreach_file_do(files, @(file) {figure,roadDetection(imread(file))} );
+			foreach_file_do(files, @(file) {roadDetection(imread(file))} );
 		else
 			% test a video, no tracking
 			foreach_frame_do(files, @(file) roadDetection(file));
@@ -45,6 +45,9 @@ global dumppathstr;
     
 	%% road detection
 	[nRow, nCol, ~] = size(RawImg);
+    
+    %% Preprocessing - deblock
+    BlurImg = imgaussfilt(RawImg, 2); 
 
 	if nargin > 1
 		% trackinfo is provided
@@ -57,7 +60,7 @@ global dumppathstr;
 			% RoadFaceClassifier = learninfo.RoadFaceClassifier;
 		end
 	else
-		vanishingPoint = [nCol/2, nRow/3];
+		vanishingPoint = [nCol/2, nRow/4];
 		% endRowPointL = [0, nRow];
 		% endRowPointR = [nCol, nRow];
 	end
@@ -83,7 +86,7 @@ global dumppathstr;
 
 	else
 
-		featureMap = featureExtractionByRpGm2B(RawImg); % featureExtractionByRpGm2B
+		featureMap = featureExtractionByS2(BlurImg); % featureExtractionByRpGm2B
 		roadSegL = segmentByOtsu(featureMap(nRowSplit:end, 1:nColSplit,:));
 		roadSegR = segmentByOtsu(featureMap(nRowSplit:end, nColSplit+1:end,:));
 
@@ -102,7 +105,7 @@ global dumppathstr;
     roadBoundPoints(nRowSplit:end,:) = [roadBoundPointsL, roadBoundPointsR];
     
     roadSeg = [roadSegL, roadSegR];
-    implot(RawImg, featureMap, roadSeg);
+    implot(RawImg, BlurImg, featureMap, roadSeg);
     selplot(1); hold on;
 %     [X, Y] = find(roadBoundPointsCandidate == 1);
 %     plot(Y, X,'y*');
@@ -110,6 +113,8 @@ global dumppathstr;
     plot(Y, X,'r*');
     imdump(featureMap, roadBoundPoints);
     
+    
+    %% Next Stage
     roadBoundAngleLimit = 80;
 
     if nargin == 1 % no tracking 
@@ -140,15 +145,15 @@ global dumppathstr;
 	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
 	
 	GrayImg = RawImg(:,:,1);
-	RoadFaceIPM = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]), 'FillValues', 0.8*median(GrayImg(nRow,:)));
+	RoadFace_ROI = imwarp(GrayImg, tform, 'OutputView', imref2d([nOutRow, nOutCol]), 'FillValues', 0.8*median(GrayImg(nRow,:)));
 
     MovingPointsSelection = figure;imshow(RawImg);impoly(gca, movingPoints);
     axis auto;%axis([endRowPointL(1) endRowPointR(1) 1 nRow]);
-    saveeps(MovingPointsSelection, RoadFaceIPM);
+    saveeps(MovingPointsSelection, RoadFace_ROI);
     
     
 	% if track on, then just focus the near field of last detected lane-marking.
-	multiLaneMode = true;
+	multiLaneMode = false;
 
 	if ~multiLaneMode
 		if ~exist('ratioLaneMark', 'var')
@@ -159,16 +164,17 @@ global dumppathstr;
 		end
 		leftLimit = floor(ratioLaneMark*nOutCol-halfSearchRange);
 		rightLimit = floor(ratioLaneMark*nOutCol+halfSearchRange);
-		laneMark = laneMarkFilter(RoadFaceIPM(:,leftLimit:rightLimit));
+		LaneMark = laneMarkFilter(RoadFace_ROI);
+        LaneMark(:,[1:leftLimit,rightLimit:end]) = 0;
 	else
-		laneMark = laneMarkFilter(RoadFaceIPM);
+		LaneMark = laneMarkFilter(RoadFace_ROI);
 		leftLimit = 0;
 	end
 	
-	ColPixelSum = sum(laneMark, 1);
+	ColPixelSum = sum(LaneMark, 1);
 	[~, index] = max(ColPixelSum);
 
-	ratioLaneMark = (leftLimit + index) / nOutCol;
+	ratioLaneMark = index / nOutCol;
 
 	endRowPointM = [(1-ratioLaneMark) * roadBoundLineL.row(nRow) + ratioLaneMark * roadBoundLineR.row(nRow), nRow];
 	roadMidLine = LineObj(vanishingPoint, endRowPointM);
@@ -176,11 +182,11 @@ global dumppathstr;
 	%% plot results.
 	% in detail
 	BirdView = imwarp(RawImg, tform);
-    nOutCol = 600; nOutRow = 450; 
-    fixedPoints = [1, 1; nOutCol,1; nOutCol, nOutRow; 1,nOutRow];
+    nOutCol2 = 600; nOutRow2 = 450; 
+    fixedPoints = [1, 1; nOutCol2,1; nOutCol2, nOutRow2; 1,nOutRow2];
 	tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
     
-    AllRoad = imwarp(RawImg, tform, 'OutputView', imref2d([6*nOutRow, nOutCol],[1 nOutCol], [-5*nOutRow, nOutRow]) ); % 'OutputView', imref2d([nOutRow, nOutCol])
+    RoadFace_All = imwarp(RawImg, tform, 'OutputView', imref2d([6*nOutRow2, nOutCol2],[1 nOutCol2], [-5*nOutRow2, nOutRow2]) ); % 'OutputView', imref2d([nOutRow, nOutCol])
     % imref2d([nOutRow, nOutCol],[1 4*nOutRow],[1 nOutCol])
     % imref2d(imageSize,xWorldLimits,yWorldLimits)
 
@@ -203,18 +209,20 @@ global dumppathstr;
 % %     [x, y, ~]
 %     
 %     GridRaw = imwarp(AllRoad, invtform, 'OutputView', imref2d([nRow, nCol]));
-    
-	implot(RawImg, BirdView, AllRoad);  % , GTBirdView, BirdView_ROI
-	selplot(1); hold on;
-	plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
-	plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
 
-	% selplot(3); hold on;
-	% plot([1:nOutCol], ColPixelSum);
+    subplot(2,3,1);imshow(RawImg);title('Raw image');
+    subplot(2,3,2);imshow(RoadFace_ROI);title('Near field roadface');
+    subplot(2,3,[3 6]);imshow(RoadFace_All);title('Extract roadface');
+    subplot(2,3,4);imshow(featureMap);title('Detection Result');hold on;
+        plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
+        plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
+    subplot(2,3,5);imshow(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));title('Lane marks');
+        hold on; plot(1:nOutCol, ColPixelSum);
+
 	maxfig;
 
 	% write results to file.
- 	imdump(RawImg, roadSeg, roadBoundPoints, RoadFaceIPM, laneMark, BirdView, AllRoad); % featureMap 
+ 	imdump(RawImg, roadSeg, roadBoundPoints, RoadFace_ROI, LaneMark, BirdView, RoadFace_All); % featureMap 
 
     % in brief
 
@@ -307,13 +315,13 @@ end
 
 function BW_Filtered = segment(Gray)
     BW = Gray > 2 * mean(Gray(:)); % 2.5 * mean(Gray(end,:));0.15 * max(Gray(:));0.3 0.2
-    BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
-    BW_areaopen = bwareaopen(BW_imclose, 60, 4);  % 60
+    %BW_imclose = imclose(BW, strel('square',3)); %imdilate imclose imopen
+    BW_areaopen = bwareaopen(BW, 200, 4);  % 60
 	BW_Filtered = BW_areaopen;   
 end
 
 function BW_Filtered = segmentByOtsu(GrayImg)
-    BW = im2bw(GrayImg, 0.06 + graythresh(GrayImg));
+    BW = im2bw(GrayImg, 0.03 + graythresh(GrayImg)); % 0.06 + 
     %BW_imclose = imclose(BW, strel('square', 5)); %imdilate imclose imopen
     BW_areaopen = bwareaopen(BW, 100, 4); 
 	BW_Filtered = BW_areaopen; 
