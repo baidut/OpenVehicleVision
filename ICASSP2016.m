@@ -71,7 +71,7 @@ global dumppathstr;
 
 	nColSplit = floor(vanishingPoint(1));
 	nRowSplit = floor(vanishingPoint(2));
-	nHorizon = floor(vanishingPoint(2));
+	nHorizon = floor(vanishingPoint(2)); 
 
 	if exist('endRowPointL', 'var')
 		A = floor(vanishingPoint + endRowPointL)/2 + [0, -nHorizon+1];
@@ -199,46 +199,63 @@ global dumppathstr;
 	% GroundTruth = imread('RIMG00021.pgm');
 	% GTBirdView = imwarp(GroundTruth, tform);
     
-    %% plot.
-
-    subplot(2,3,1);
-    imshow(RawImg);title('Raw image');hold on;
-    l1 = LineObj(vanishingPoint, endRowPointL);
-    l2 = LineObj(vanishingPoint, endRowPointR);
-    l1.plot('r');
-    l2.plot('g');
-    roadMidLine.plot('b');
-    subplot(2,3,2);
-    imshow(RoadFace_ROI);title('Near field roadface');
+    dumpFigureInPaper;
+    debugout;
     
-    subplot(2,3,[3 6]);
-    imshow(RoadFace_All);title('Extract roadface');
+    %% plot(for debug).
+    function dumpFigureInPaper()
+        % note that imshow return a handle of image while implot return a
+        % handle of figure.
+        figure;h1 = implot(featureMap);title('');hold on;
+        
+        l1 = LineObj(vanishingPoint, endRowPointL);
+        l2 = LineObj(vanishingPoint, endRowPointR);
+        l1.plot('r','LineWidth', 8);
+        l2.plot('g','LineWidth', 8);
+        roadMidLine.plot('b','LineWidth', 8);
+        figure; h2 = implot(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));
+        saveeps(RawImg, h1, h2);
+    end
     
-    subplot(2,3,4);
-    imshow(imoverlay(featureMap, roadSeg, [255, 255, 0]));
-    title('Detection Result');hold on;
-    plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
-    plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
-    
-    subplot(2,3,5);
-    imshow(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));
-    title('Lane marks');
-    hold on; plot(1:nOutCol, ColPixelSum);
+    function debugout()
+        subplot(2,3,1);
+        imshow(RawImg);title('Raw image');hold on;
+        l1 = LineObj(vanishingPoint, endRowPointL);
+        l2 = LineObj(vanishingPoint, endRowPointR);
+        l1.plot('r');
+        l2.plot('g');
+        roadMidLine.plot('b');
+        subplot(2,3,2);
+        imshow(RoadFace_ROI);title('Near field roadface');
 
-	%maxfig;
-    set(gcf,'outerposition',get(0,'screensize'));
-    %set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 30 20]); % [0 0 30 20]
+        subplot(2,3,[3 6]);
+        imshow(RoadFace_All);title('Extract roadface');
 
-	% write results to file.
- 	imdump(RoadFace_ROI, BirdView, RoadFace_All);
-    %saveeps;
-    h = gcf;
-    [~,name,~] = fileparts(h.Name);
-    % saveas(h, ['F:\Documents\MATLAB\Temp/', name, '.png']); cannot handle
-    % maximized figure.
-    print(name, '-djpeg', '-r300'); % ['F:\Documents\MATLAB\Temp/'
-    %close(h);
+        subplot(2,3,4);
+        imshow(imoverlay(featureMap, roadSeg, [255, 255, 0]));
+        title('Detection Result');hold on;
+        plotpoint(roadBoundPoints, vanishingPoint, endRowPointL, endRowPointR);
+        plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
 
+        subplot(2,3,5);
+        imshow(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));
+        title('Lane marks');
+        hold on; plot(1:nOutCol, ColPixelSum);
+
+        %maxfig;
+        set(gcf,'outerposition',get(0,'screensize'));
+        %set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 30 20]); % [0 0 30 20]
+
+        % write results to file.
+    %  	imdump(RoadFace_ROI, BirdView, RoadFace_All);
+    %     %saveeps;
+    %     h = gcf;
+    %     [~,name,~] = fileparts(h.Name);
+    %     % saveas(h, ['F:\Documents\MATLAB\Temp/', name, '.png']); cannot handle
+    %     % maximized figure.
+    %     print(name, '-djpeg', '-r300'); % ['F:\Documents\MATLAB\Temp/'
+    %     %close(h);
+    end
 	%% check if the detection result is ok. 
 	% if not, reject the trackinfo and redetect.
 	% if redetect failed, use last detection result. 
@@ -324,7 +341,7 @@ function BW_Filtered = segment(Gray)
 end
 
 function BW_Filtered = segmentByOtsu(GrayImg)
-    BW = im2bw(GrayImg, graythresh(GrayImg)-0.03); % 0.06 + 
+    BW = im2bw(GrayImg, graythresh(GrayImg)+0.1); % 0.06 + 
     %BW_imclose = imclose(BW, strel('square', 5)); %imdilate imclose imopen
     BW_areaopen = bwareaopen(BW, 230, 4); 
 	BW_Filtered = BW_areaopen; 
@@ -413,9 +430,11 @@ function laneMark = laneMarkFilter(GrayImg)
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1;
+         -1, 0, 2, 0, -1;
+         -1, 0, 2, 0, -1;
 	     -1, 0, 2, 0, -1];
 	Filtered = imfilter(GrayImg,H,'replicate'); % & mask
 	BW = Filtered > 0.8*max(Filtered(:));
-	laneMark = bwareaopen(BW,8,4);
+	laneMark = bwareaopen(BW,18,4);
 	% imdump(Filtered, BW, BW_areaopen, laneMark);
 end
