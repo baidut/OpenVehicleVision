@@ -18,6 +18,10 @@ classdef LineObj<handle
         function a = get.a(obj)
             a = 180*atan(obj.k)/pi;
         end
+        
+        function t = theta(obj)
+            t = - obj.a;
+        end
 
         function k = get.k(obj)
             delta = obj.p1 - obj.p2;

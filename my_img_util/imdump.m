@@ -10,7 +10,7 @@ function  imdump(varargin)
 % 注意imdump前提是有output文件夹
 
 global doimdump;
-global dumppathstr;
+global dumpPath;
 
 if ~doimdump
 	return; % 默认不输出
@@ -30,19 +30,19 @@ for i = 1:nargin
 	para = varargin{i};
 	filename = [inputname(i), ' @', funcname, '-', num2str(line)];
 	if 1 == length(para) && ishandle(para)
-		print(para, '-djpeg', filename);
-		close(para); % 关闭图像
+		print(para, '-djpeg', [dumpPath '/', filename]);
 	else 
-		if ismatrix(para)  % grey
-			image = mat2gray(para);
-		% 文件夹浏览器显示时空格可以分行
-		elseif 3 == size(para, 3)
-			image = para;
-		else
-			error(['unkown input:', inputname(i)]);
-			dbstack
-		end
-		imwrite(image, [dumppathstr filename, '.jpg']);
+		% if ismatrix(para)&& length(para) == 2  % grey
+			% image = mat2gray(para);
+		% % 文件夹浏览器显示时空格可以分行
+		% else %if 3 == size(para, 3)
+			% image = para;
+		% % else
+			% % error(['unkown input:', inputname(i)]);
+			% % dbstack
+		% end
+		image = para;
+		imwrite(image, [dumpPath '/' filename, '.jpg']);
 	end
 end
 
