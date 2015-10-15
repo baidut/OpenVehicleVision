@@ -18,48 +18,57 @@ global dumpLevel; %global offDump;
         return; % Default: on dump
     end
     
+    debug = level > 1;
+    
     if ~isempty(dumpPath)
         dumpPath = [dumpPath '/'];
     end
    
     for i = 2:nargin
         param = varargin{i-1};
-        filename = inputname(i);
-        if level <= 1 %(no debug info)
-            debuginfo = '';
-        else
-            % carry with some debug info
+        
+        if debug  % carry with some debug info
             % st(1): imdump st(2): function which called imdump
             st = dbstack;
             if length(st) > 1, n = 2; else n = 1; end
 
             funcname = st(n).name;
             line = st(n).line;
-            debuginfo = [' @', funcname, '-', num2str(line)];
+            debuginfo = [inputname(i), ' @', funcname, '-', num2str(line)];
         end
 
         if 1 == length(param) && ishandle(param) %% handle
             handle = param;
             figure(handle); % switch to that figure.
-
-            if isempty(filename), filename = handle.Name; end
-            if isempty(filename), filename = handle.Number; end
-
-            if saveEps
-                print([dumpPath, filename debuginfo, '.eps'],'-depsc');
+            
+            if ~debug
+                filename = handle.Name;
+                if isempty(filename), filename = handle.Number; end
             else
-                print(handle, '-djpeg', [dumpPath filename debuginfo]);
+                filename = debuginfo;
+            end
+            
+            if saveEps
+                print([dumpPath, filename, '.eps'],'-depsc');
+            else
+                print(handle, '-djpeg', [dumpPath filename]);
             end
 
         else %% image
             image = param;
+            
+            if ~debug
+                filename = inputname(i);
+            else
+                filename = debuginfo;
+            end
 
             if saveEps
                 h = figure; imshow(image);
-                print([dumpPath, filename debuginfo, '.eps'],'-depsc');
+                print([dumpPath, filename, '.eps'],'-depsc');
                 close(h);
             else
-                imwrite(image, [dumpPath filename debuginfo, '.jpg']);
+                imwrite(image, [dumpPath filename, '.jpg']);
             end
         end
     end

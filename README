@@ -1,0 +1,25 @@
+README
+------
+
+This codebase implements An Illumination-Robust Approach for Feature-Based Road Detection.
+
+This code is provided "as-is" with no warranty or explicit support.  It is made available for personal and academic use ONLY.  Any commercial use of this code without explicit written consent of the authors is strictly prohibited.  Use of this in academic publications should cite:
+
+"An Illumination-Robust Approach for Feature-Based Road Detection" by Zhenqiang Ying, Ge Li & Guozhen Tan.  In IEEE International Symposium on Multimedia, ISM 2015.
+
+This code is copyright Zhenqiang Ying, Ge Li & Guozhen Tan, 2015.
+
+Questions or comments regarding this code should be directed to Zhenqiang YING (yingzhenqiang@gmail.com).
+
+
+Getting Started
+---------------
+
+Download roma dataset from http://www.lcpc.fr/english/products/image- databases/article/roma-road-markings-1817 .
+
+Download code from https://github.com/baidut/OpenVehicleVision/releases/tag/ism2015 .
+
+Open file 'ISM2015.m' and specify your folder containing roma dataset.
+path =  'F:\Documents\MATLAB\dataset\roma\'; % Modify it!
+
+run 'ISM2015.m' in Matlab.

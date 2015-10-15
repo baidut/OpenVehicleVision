@@ -1,1 +1,0 @@
-function J = imshowblob(IMAGE)

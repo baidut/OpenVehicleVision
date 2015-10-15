@@ -12,7 +12,7 @@ global dumpPath;
 mkdir('results');
 dumpPath = '.\results';
 dumpLevel = 1;
-saveEps = true;%false;
+saveEps = false;
 
 path =  'F:\Documents\MATLAB\dataset\roma\';
 ext = 'jpg';
@@ -41,7 +41,7 @@ for ii = 1 : length(files)
     close(fig);
 end
 
-%%
+%% generate 'evaluation.tex' for buiding pdf of evaluation results.
 text = evalc('gentex');
 fid = fopen('results/evaluation.tex','w');
 fprintf(fid, '%s', text);
