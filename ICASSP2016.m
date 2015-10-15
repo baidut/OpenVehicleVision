@@ -64,7 +64,7 @@ global dumppathstr;
 			% RoadFaceClassifier = learninfo.RoadFaceClassifier;
 		end
 	else
-		vanishingPoint = [nCol/2, nRow/4];
+		vanishingPoint = [nCol/2, nRow/3]; % nRow/4
 		% endRowPointL = [0, nRow];
 		% endRowPointR = [nCol, nRow];
 	end
@@ -206,7 +206,7 @@ global dumppathstr;
     function dumpFigureInPaper()
         % note that imshow return a handle of image while implot return a
         % handle of figure.
-        figure;h1 = implot(featureMap);title('');hold on;
+        figure;h1 = implot(RawImg);title('');hold on; % FeatureMap
         
         l1 = LineObj(vanishingPoint, endRowPointL);
         l2 = LineObj(vanishingPoint, endRowPointR);
@@ -215,6 +215,13 @@ global dumppathstr;
         roadMidLine.plot('b','LineWidth', 8);
         figure; h2 = implot(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));
         saveeps(RawImg, h1, h2);
+        figure; boundpoints = implot(RawImg);title('');
+        hold on;
+        plotpoint(roadBoundPoints);
+        figure; boundaries = implot(RawImg);title('');
+        l1.plot('r','LineWidth', 8);
+        l2.plot('g','LineWidth', 8);
+        saveeps(featureMap, roadSeg, boundpoints, boundaries);
     end
     
     function debugout()
@@ -347,6 +354,14 @@ function BW_Filtered = segmentByOtsu(GrayImg)
 	BW_Filtered = BW_areaopen; 
 end
 
+function BW_Filtered = segmentByFixedThresh(GrayImg)
+    GrayImg = mat2gray(GrayImg); % 0 - 1
+    BW = (GrayImg < 0.58 ) .* (GrayImg > 0.52) ; 
+    %BW_imclose = imclose(BW, strel('square', 5)); %imdilate imclose imopen
+    BW_areaopen = bwareaopen(BW, 230, 4); 
+	BW_Filtered = BW_areaopen; 
+end
+
 function BW = segmentByEdge(GrayImg, isleft)
 	H = [ 1,  0,  0,  0, -1;
 		  1,  0,  0,  0, -1;
@@ -436,5 +451,5 @@ function laneMark = laneMarkFilter(GrayImg)
 	Filtered = imfilter(GrayImg,H,'replicate'); % & mask
 	BW = Filtered > 0.8*max(Filtered(:));
 	laneMark = bwareaopen(BW,18,4);
-	% imdump(Filtered, BW, BW_areaopen, laneMark);
+	saveeps(Filtered, BW, laneMark);
 end
