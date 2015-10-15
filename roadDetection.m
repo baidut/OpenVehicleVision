@@ -21,7 +21,10 @@ function h = roadDetection(FILENAME)
 	[~,name,~] = fileparts(FILENAME);
     h = figure('NumberTitle', 'off', 'Name', name);
     
+    disp(['Processing: ' name]);
+    
     RawImg = imread(FILENAME);
+    %BlurImg = imgaussfilt(RawImg, 2);
 
     % Resize image to improve speed.
     ResizedImg = imresize(RawImg, [150, 200]);
@@ -56,19 +59,19 @@ function [rHorizon, cBoundaryL, cBoundaryR, thetaSet] = dtRoadBoundary(RGB)
     % Region of interest determination - lower 3/4
     ROI = RGB(rSplit:end,:,:);
     nRowRoi = size(ROI, 1);
-
+    
     % Image gray value conversion - S2 feature extraction
     B = ROI(:,:,3);
     V = max(ROI,[],3);
+
     S2 = double(V - B) ./ double(V + 1);
 
     %% Image segmentation
-
-    S2_bw = S2 > 0.25; % bad performance: S2_bw = im2bw(S2, graythresh(S2)); 
-    S2_bw_imclose = imclose(S2_bw, strel('square',3));
-    S2_bw_areaopen = bwareaopen(S2_bw_imclose, 50); 
-
-    Boundaries = S2_bw_areaopen;
+    % Filter out lane markings and objects
+    Filtered = medfilt2(S2, [1, 10]);
+    S2_BW = im2bw(Filtered, graythresh(Filtered(Filtered>mean(Filtered(:)))));
+  
+    Boundaries = S2_BW; %S2_BW&(~LaneMarking);
 
 %% Boundary points extraction
 
@@ -90,8 +93,7 @@ function [rHorizon, cBoundaryL, cBoundaryR, thetaSet] = dtRoadBoundary(RGB)
         BoundaryR(r, c2) = 1;
     end
 
-    imdump(S2, S2_bw, S2_bw_imclose, S2_bw_areaopen, ...
-        Candidate, BoundaryL, BoundaryR);
+    imdump(3, S2, S2_BW, Boundaries, Candidate, BoundaryL, BoundaryR);
 
 %% Road boundary model fitting
     houghL = figure;
@@ -99,7 +101,7 @@ function [rHorizon, cBoundaryL, cBoundaryR, thetaSet] = dtRoadBoundary(RGB)
     houghR = figure;
     lineR = bwFitLine(BoundaryR, thetaMin:0);
     
-    imdump(houghL,houghR);
+    imdump(3,houghL,houghR);
     close(houghL,houghR);
 
     if isempty(lineL)
@@ -196,29 +198,26 @@ function dtLaneMarking(Img,rHorizon,cBoundaryL,cBoundaryR,thetaSet)
 %%  Lane-marking feature extraction
     [nRow, nCol, ~] = size(ROI);
     I2 = zeros(nRow, nCol);
-    I3 = zeros(nRow, nCol);
     
     for r = 1 : nRow
         mw = ceil(5 * r / nRow); % marking width
-        for c = ceil(5*mw + max(1,cBoundaryL(r))):1:floor(min(cBoundaryR(r),nCol) - 5*mw)
-            I2(r, c) = V_ROI(r, c) ./ (V_ROI(r , c - mw) + V_ROI(r , c + mw));
-            I3(r, c) = (V_ROI(r, c) - (V_ROI(r , c - mw)+ V_ROI(r , c + mw))/2) ...
-                 ./ abs(V_ROI(r , c - mw) - V_ROI(r , c + mw));
+        for c =   ceil(max(cBoundaryL(r),   1) + 5*mw):1 ...
+                :floor(min(cBoundaryR(r),nCol) - 5*mw)
+            I2(r, c) = 2*V_ROI(r,c) - (V_ROI(r,c-mw) + V_ROI(r,c+mw)) ...
+                                 - abs(V_ROI(r,c-mw) - V_ROI(r,c+mw));
         end
     end
 
     mask = I2 ~= 0;
-    BW_I2 = im2bw(I2, graythresh(I2(mask)));
-    BW_I3 = im2bw(I3, graythresh(I3(mask)));
-    
-    Marking = bwareaopen(BW_I2&BW_I3, 45);
+    Marking = im2bw(I2, graythresh(I2(mask)));
 
-    imdump(ROI, I2, I3, Marking);
+    imdump(3, ROI, I2, Marking);
 
 %% Lane model fitting
     houghM = figure;
     line = bwFitLine(Marking, thetaSet);
-    imdump(houghM);
+    
+    imdump(3, houghM);
     close(houghM);
     
     if isempty(line)

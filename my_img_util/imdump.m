@@ -1,49 +1,67 @@
-function  imdump(varargin)
-% 在函数执行完后将用作调试的中间图片写入文件，支持保存fig（传入图像句柄）
-% 如果不需要输出调试图片则可以在这里return
+function  imdump(level, varargin)
+%imdump write image or figure specified by handle to file.
 
-% mfilename 返回的是最近一次调用的函数名，这里是imdump 所以不行，需要函数调用栈
-% 函数调用栈st存储了调用信息，这里st(1)是imdump, st(2)是调用imdump的函数
-
-% 调试用对象，封装调试相关方法，
-% 初始化时声明调试输出目录
-% 注意imdump前提是有output文件夹
-
-global doimdump;
+global saveEps;
 global dumpPath;
+global dumpLevel; %global offDump;
 
-if ~doimdump
-	return; % 默认不输出
+% 0 - no dump
+% 1 - + overall results (no debug info)
+% 2 - + main processing pipeline
+% 3 - + images
+
+    if ~isscalar(level) || isa(level, 'matlab.ui.Figure')
+        error('Specify the dump level.')
+    end
+
+    if level > dumpLevel
+        return; % Default: on dump
+    end
+    
+    if ~isempty(dumpPath)
+        dumpPath = [dumpPath '/'];
+    end
+   
+    for i = 2:nargin
+        param = varargin{i-1};
+        filename = inputname(i);
+        if level <= 1 %(no debug info)
+            debuginfo = '';
+        else
+            % carry with some debug info
+            % st(1): imdump st(2): function which called imdump
+            st = dbstack;
+            if length(st) > 1, n = 2; else n = 1; end
+
+            funcname = st(n).name;
+            line = st(n).line;
+            debuginfo = [' @', funcname, '-', num2str(line)];
+        end
+
+        if 1 == length(param) && ishandle(param) %% handle
+            handle = param;
+            figure(handle); % switch to that figure.
+
+            if isempty(filename), filename = handle.Name; end
+            if isempty(filename), filename = handle.Number; end
+
+            if saveEps
+                print([dumpPath, filename debuginfo, '.eps'],'-depsc');
+            else
+                print(handle, '-djpeg', [dumpPath filename debuginfo]);
+            end
+
+        else %% image
+            image = param;
+
+            if saveEps
+                h = figure; imshow(image);
+                print([dumpPath, filename debuginfo, '.eps'],'-depsc');
+                close(h);
+            else
+                imwrite(image, [dumpPath filename debuginfo, '.jpg']);
+            end
+        end
+    end
 end
-
-st = dbstack;
-if length(st) > 1
-	n = 2;
-else
-	n = 1;
-end
-
-funcname = st(n).name;
-line = st(n).line;
-
-for i = 1:nargin
-	para = varargin{i};
-	filename = [inputname(i), ' @', funcname, '-', num2str(line)];
-	if 1 == length(para) && ishandle(para)
-		print(para, '-djpeg', [dumpPath '/', filename]);
-	else 
-		% if ismatrix(para)&& length(para) == 2  % grey
-			% image = mat2gray(para);
-		% % 文件夹浏览器显示时空格可以分行
-		% else %if 3 == size(para, 3)
-			% image = para;
-		% % else
-			% % error(['unkown input:', inputname(i)]);
-			% % dbstack
-		% end
-		image = para;
-		imwrite(image, [dumpPath '/' filename, '.jpg']);
-	end
-end
-
-% 注意改写程序后，可能原图片生成对应的行号发生变化
+    
