@@ -1,12 +1,16 @@
-classdef vvTest
+classdef vvTest < handle
 %%VVTEST implements the testing module of VV lib.
 % 
 %   Example
 %   -------
-%   Test IMSHOW.
+%   %  Test IMSHOW.
 %      Test = vvTest(@imshow);
 %      Test.onImages('K:\Documents\MATLAB\dataset\roma\BDXD54\*.jpg');
 %      Test.onVideo('K:\Documents\MATLAB\dataset\SLD2011\dataset1\sequence_1.mpg');
+%
+%   %  Test roadDetection.
+%      Test.algo = @roadDetection;
+%      Test.onFiles('K:\Documents\MATLAB\dataset\roma\BDXD54\*.jpg');
 %
 %   Project website: https://github.com/baidut/openvehiclevision
 %   Copyright 2016 Zhenqiang Ying.
@@ -18,7 +22,11 @@ classdef vvTest
     methods
 		function Test = vvTest(algo)
 			Test.algo = algo;
-		end
+        end
+        
+        function onFiles(Test, files)
+            foreach_file_do(files, Test.algo);
+        end
 		
 		function onImages(Test, images, dotracking)
 		% Test on a single image or image sequence.
