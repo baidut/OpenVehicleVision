@@ -1,4 +1,4 @@
-function ok = foreach_frame_do(file, func)
+function ok = foreach_frame_do(file, func, varargin)
 %FOREACH_FRAME_DO batch processing each frame of video
 % USAGE:
 %  foreach_frame_do('./ronda42_mpeg4.avi', @imshow)
@@ -24,7 +24,7 @@ else
 	vidObj = VideoReader(file);
 	while hasFrame(vidObj)
 		vidFrame = readFrame(vidObj);
-		func(vidFrame, index);
+		func(vidFrame);
 	end
 end
 

@@ -8,3 +8,5 @@ my_test
 output
 dump
 *.asv
+%*
+html
