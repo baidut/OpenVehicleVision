@@ -10,10 +10,6 @@ classdef vvRoadSeg < handle
     %      RoadRegion = RoadSeg.result();
     %      imshow(RoadRegion);
     %
-    %   %  Call static methods.
-    %      S2 = vvRoadSeg.S2(colorImage); % or = RoadSeg.S2(colorImage)
-    %      imshow(S2);
-    %
     %   Project website: https://github.com/baidut/openvehiclevision
     %   Copyright 2016 Zhenqiang Ying.
     
@@ -50,7 +46,7 @@ classdef vvRoadSeg < handle
             BlurImg = imgaussfilt(Img, 2);
             
             %% Extract feature map. (the probablity of being a boundary point.
-            featureMap = RoadSeg.S2(BlurImg); % featureExtractionByRpGm2B
+            featureMap = vvFeature.S2(BlurImg); % featureExtractionByRpGm2B
             roadSegL = RoadSeg.segByOtsu(featureMap(nRowSplit:end, 1:nColSplit,:));
             roadSegR = RoadSeg.segByOtsu(featureMap(nRowSplit:end, nColSplit+1:end,:));
             
@@ -63,20 +59,6 @@ classdef vvRoadSeg < handle
     % Static methods are associated with a class, but not with specific instances of that class.
     % S2feature = vvRoadSeg.S2(Img);
     methods(Static)
-        %% Extract Feature Map
-        % a color image ---> a grayscale image
-        
-        function FeatureMap = S2(Img)
-            [RGB_R, RGB_G, RGB_B] = getChannel(Img);
-            RGB_max = max(max(RGB_R, RGB_G) , RGB_B);
-            FeatureMap = double(RGB_max - RGB_B) ./ double(RGB_max + 1);
-        end
-        
-        function FeatureMap = RpGm2B(Img)
-            [RGB_R, RGB_G, RGB_B] = getChannel(Img);
-            FeatureMap = RGB_R + RGB_G - 2 * RGB_B;
-        end
-        
         %% Segmentation
         % a grayscale image ---> a color image
         
