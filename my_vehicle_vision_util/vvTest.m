@@ -15,56 +15,56 @@ classdef vvTest < handle
 %   Project website: https://github.com/baidut/openvehiclevision
 %   Copyright 2016 Zhenqiang Ying.
 
-	properties
-		algo
+    properties
+        algo
     end
  
     methods
-		function Test = vvTest(algo)
-			Test.algo = algo;
+        function Test = vvTest(algo)
+            Test.algo = algo;
         end
         
         function onFiles(Test, files)
             foreach_file_do(files, Test.algo);
         end
-		
-		function onImages(Test, images, dotracking)
-		% Test on a single image or image sequence.
-			if nargin<3
-				dotracking = 0;
-			end
-			
-			if dotracking
-				% Test on image sequence (tracking on)
-				infor = 0;
-				foreach_file_do(images, @(file) { ...
-					figure('NumberTitle', 'off', 'Name', file), ...
-					assign(infor, Test.algo(imread(file), infor)) ...
-				});
-			else
-				% Test on irrelevant images (tracking off)
-				foreach_file_do('', @(file) { ...
-					figure('NumberTitle', 'off', 'Name', file), ...
-					Test.algo(imread(file)) ...
-				});
-			end
-		end
-		
-		function onVideo(Test, video, dotracking)
-			% Test on video (tracking off)
-			if nargin<3
-				dotracking = 0;
+        
+        function onImages(Test, images, dotracking)
+        % Test on a single image or image sequence.
+            if nargin<3
+                dotracking = 0;
             end
-			
+            
+            if dotracking
+                % Test on image sequence (tracking on)
+                infor = 0;
+                foreach_file_do(images, @(file) { ...
+                    figure('NumberTitle', 'off', 'Name', file), ...
+                    assign(infor, Test.algo(imread(file), infor)) ...
+                });
+            else
+                % Test on irrelevant images (tracking off)
+                foreach_file_do('', @(file) { ...
+                    figure('NumberTitle', 'off', 'Name', file), ...
+                    Test.algo(imread(file)) ...
+                });
+            end
+        end
+        
+        function onVideo(Test, video, dotracking)
+            % Test on video (tracking off)
+            if nargin<3
+                dotracking = 0;
+            end
+            
             if dotracking
                 infor = 0;
                 foreach_frame_do(video, @(frame) { ...
-					figure('NumberTitle', 'off', 'Name', frame), ...
+                    figure('NumberTitle', 'off', 'Name', frame), ...
                     assign(infor, Test.algo(frame, infor)) ...
-				});
+                });
             else 
                 foreach_frame_do(video, @(frame) Test.algo(frame) );
             end
         end
-	end
+    end
 end 
