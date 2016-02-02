@@ -19,6 +19,9 @@ classdef vvThresh
 		function BW = otsu(GrayImg)
 		    BW = im2bw(GrayImg, graythresh(GrayImg));
 		end
+		function BW = otsu2(GrayImg)
+		    BW = im2bw(GrayImg, graythresh(GrayImg)*1.3);
+		end
 		
     end% methods
 end% classdef

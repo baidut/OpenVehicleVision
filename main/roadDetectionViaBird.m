@@ -16,7 +16,7 @@ function info = roadDetectionViaBird(RawImg, info)
 %% Configurations
 global dodumpFigureInPaper;
 
-boundAngleRange = 30:75;
+boundAngleRange = 35:75;
 ratioNearField = 0.6;         % denote how much roadface will be considered as near field.
 nOutRow = 60; nOutCol = 80;   % size of the top view image, the bigger, the greater precision.
 
@@ -52,8 +52,8 @@ nColSplit = floor(info.VP(1)); % the col splitting left and right
 nRowSplit = floor(info.VP(2)); % the row splitting up and down
 
 % do thresholding and post-processing
-roadSegL = vvPostproc.filterBw(vvThresh.otsu(featureMap(nRowSplit:end, 1:nColSplit,:)));
-roadSegR = vvPostproc.filterBw(vvThresh.otsu(featureMap(nRowSplit:end, nColSplit+1:end,:)));
+roadSegL = vvPostproc.filterBw(vvThresh.otsu2(featureMap(nRowSplit:end, 1:nColSplit,:)));
+roadSegR = vvPostproc.filterBw(vvThresh.otsu2(featureMap(nRowSplit:end, nColSplit+1:end,:)));
 
 roadBoundPointsL = vvBoundModel.boundPoints(roadSegL, true);
 roadBoundPointsR = vvBoundModel.boundPoints(roadSegR, false);
@@ -94,7 +94,7 @@ movingPoints = [pointLeftTop; pointRightTop; info.endRowPointR; info.endRowPoint
 % mapping to a fixed rectangle region
 GrayImg = RawImg(:,:,1);
 RoadFace_ROI = vvIPM.proj2topview(GrayImg, movingPoints, [nOutCol nOutRow], ...
-    'FillValues', 0.8*median(GrayImg(nRow,:)));
+    'OutputView', imref2d([nOutRow, nOutCol]),'FillValues', 0.8*median(GrayImg(nRow,:)));
 
 %% Lane Marking Detection in Top View Image
 % search range
@@ -136,8 +136,6 @@ if dodumpFigureInPaper
     saveeps(featureMap, roadSeg, boundpoints, boundaries);
 else
     %% - Dump Results for debugging
-    figure;
-    
     subplot(2,3,1);
     imshow(RawImg);title('Raw image');hold on;
     l1.plot('r');
@@ -149,7 +147,7 @@ else
     
     subplot(2,3,[3 6]);
     nOutRow2 = 450; nOutCol2 = 600;
-    RoadFace_All = vvIPM.proj2topview(RawImg, movingPoints, [nOutCol nOutRow2], ...
+    RoadFace_All = vvIPM.proj2topview(RawImg, movingPoints, [nOutCol2 nOutRow2], ...
     'OutputView', imref2d([6*nOutRow2, nOutCol2],[1 nOutCol2], [-5*nOutRow2, nOutRow2])); 
     imshow(RoadFace_All);title('Extract roadface');
     

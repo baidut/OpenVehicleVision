@@ -15,8 +15,7 @@ classdef vvIPM
 		    nOutCol = rectSize(1); nOutRow = rectSize(2); % size of rectangle
 			fixedPoints = [1, 1; nOutCol,1; nOutCol, nOutRow; 1,nOutRow];
 			tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
-			TopViewImg = imwarp(srcImg, tform, 'OutputView', ...
-			   imref2d([nOutRow, nOutCol]));
+            TopViewImg = imwarp(srcImg, tform, varargin{:});
 		end
 		%% plots
 %     MovingPointsSelection = figure;imshow(RawImg);impoly(gca, movingPoints);
