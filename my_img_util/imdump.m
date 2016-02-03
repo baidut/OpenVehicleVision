@@ -2,6 +2,7 @@ function  imdump(level, varargin)
 %imdump write image or figure specified by handle to file.
 
 global saveEps;
+% global saveWebImg; smaller JPG
 global dumpPath;
 global dumpLevel; %global offDump;
 

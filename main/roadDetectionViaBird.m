@@ -15,37 +15,43 @@ function info = roadDetectionViaBird(RawImg, info)
 
 %% Configurations
 global dodumpFigureInPaper;
+persistent dorefine;
 
-boundAngleRange = 35:75;
+boundAngleRange = 30:75;
 ratioNearField = 0.6;         % denote how much roadface will be considered as near field.
 nOutRow = 60; nOutCol = 80;   % size of the top view image, the bigger, the greater precision.
 
 % load default param if info is not provided
 if nargin < 2 || isempty(info)
-    info.VP = [nCol/2, nRow/3];        % initial vanishing point
+    %info.VP = [nCol/2, nRow/2];        % initial vanishing point
+    info.VP = [nCol/2, nRow/3];        % roma:nRow/3  SLD2011:nRow/2
     info.endRowPointL = [1, nRow];
     info.endRowPointR = [nCol, nRow];
     info.ratioLaneMark = 0.5;
     halfSearchRange = nOutCol/4;
+    dorefine = 1;
 else
     halfSearchRange = 5; % only search in near area of last detected lane-marking.
+    dorefine = 0;
 end
 
 %% Preprocessing
 % deblock
-BlurImg = vvPreproc.deblock(RawImg);
+BlurImg = RawImg; %vvPreproc.deblock(RawImg);deblock will introduce blur
 
 %% Road Bound Points Extraction
 % road bound feature extraction
 featureMap = vvFeature.S2(BlurImg);
 p1 = info.endRowPointL *4/5 + info.endRowPointR *1/5;
 p2 = info.endRowPointL *1/5 + info.endRowPointR *4/5;
-x = [info.VP(1) p1(1) p2(1)];
-y = [info.VP(2) p1(2) p2(2)];
+x = [(info.VP(1)+p2(1))/2 (info.VP(1)+p1(1))/2 p1(1) p2(1)];
+y = [(info.VP(2)+p2(2))/2 (info.VP(2)+p1(2))/2 p1(2) p2(2)];
 mask = poly2mask(x,y,nRow,nCol);
-% imshow(mask)
-featureMap(mask) = 0;
-% imshow(featureMap);
+x = [info.VP(1) 0        0 nCol  nCol];
+y = [info.VP(2) nRow*3/5 0 0     nRow*3/5];
+mask = mask | poly2mask(x,y,nRow,nCol);
+% imwrite(mask,'mask.jpg');imshow(mask);return;
+% featureMap(mask) = 0;imshow(featureMap);return;
 
 % split the whole image to 4 parts
 nColSplit = floor(info.VP(1)); % the col splitting left and right
@@ -54,6 +60,10 @@ nRowSplit = floor(info.VP(2)); % the row splitting up and down
 % do thresholding and post-processing
 roadSegL = vvPostproc.filterBw(vvThresh.otsu2(featureMap(nRowSplit:end, 1:nColSplit,:)));
 roadSegR = vvPostproc.filterBw(vvThresh.otsu2(featureMap(nRowSplit:end, nColSplit+1:end,:)));
+
+% add mask
+roadSegL(mask(nRowSplit:end, 1:nColSplit,:)) = 0;
+roadSegR(mask(nRowSplit:end, nColSplit+1:end,:)) = 0;
 
 roadBoundPointsL = vvBoundModel.boundPoints(roadSegL, true);
 roadBoundPointsR = vvBoundModel.boundPoints(roadSegR, false);
@@ -72,6 +82,10 @@ imdump(2,featureMap, roadSeg, roadBoundPoints);
 roadBoundLineL = vvBoundModel.houghStraightLine(roadBoundPointsL, boundAngleRange);
 roadBoundLineR = vvBoundModel.houghStraightLine(roadBoundPointsR, -boundAngleRange); % -75:-30
 
+if isempty(roadBoundLineL) || isempty(roadBoundLineR)
+    close gcf;
+    return;
+end
 % move lines to xy of raw image
 roadBoundLineL.move([0, nRowSplit]);
 roadBoundLineR.move([nColSplit, nRowSplit]);
@@ -82,11 +96,18 @@ info.VP = roadBoundLineL.cross(roadBoundLineR);
 nHorizon = floor(info.VP(2));
 horizonLine = LineObj([1, nHorizon], [nCol, nHorizon]);
 
+info.endRowPointL = [roadBoundLineL.row(nRow), nRow];
+info.endRowPointR = [roadBoundLineR.row(nRow), nRow];
+
+% refinement
+% if dorefine
+%     roadDetectionViaBird(RawImg, info);
+%     return;
+% end
+
 %% BIRD: Boundary-Based IPM for Road Detection
 
 % select four source points
-info.endRowPointL = [roadBoundLineL.row(nRow), nRow];
-info.endRowPointR = [roadBoundLineR.row(nRow), nRow];
 pointLeftTop = info.VP*ratioNearField + info.endRowPointL*(1-ratioNearField);
 pointRightTop = info.VP*ratioNearField + info.endRowPointR*(1-ratioNearField);
 movingPoints = [pointLeftTop; pointRightTop; info.endRowPointR; info.endRowPointL];
@@ -137,44 +158,49 @@ if dodumpFigureInPaper
 else
     %% - Dump Results for debugging
     subplot(2,3,1);
-    imshow(RawImg);title('Raw image');hold on;
+    imshow(RawImg);title('Raw Image');hold on;
     l1.plot('r');
     l2.plot('g');
     roadMidLine.plot('b');
     
     subplot(2,3,2);
-    imshow(RoadFace_ROI);title('Near field roadface');
+    imshow(RoadFace_ROI);title('Near Field Roadface');
+    l3 = LineObj([nOutCol*info.ratioLaneMark, 1], [nOutCol*info.ratioLaneMark, nOutRow]);
+    l3.plot('b');
     
     subplot(2,3,[3 6]);
     nOutRow2 = 450; nOutCol2 = 600;
     RoadFace_All = vvIPM.proj2topview(RawImg, movingPoints, [nOutCol2 nOutRow2], ...
-    'OutputView', imref2d([6*nOutRow2, nOutCol2],[1 nOutCol2], [-5*nOutRow2, nOutRow2])); 
-    imshow(RoadFace_All);title('Extract roadface');
+        'OutputView', imref2d([3.2*nOutRow2, nOutCol2],[1 nOutCol2], [-2.2*nOutRow2, nOutRow2]));
+    % imref2d(size(A),xWorldLimits,yWorldLimits)
+    % e.g. imref2d([6*nOutRow2, nOutCol2],[1 nOutCol2], [-5*nOutRow2, nOutRow2])
+    imshow(RoadFace_All);title('Boundary-Based IPM');
     
     subplot(2,3,4);
     imshow(imoverlay(featureMap, roadSeg, [255, 255, 0]));
-    title('Detection Result');hold on;
+    title('Road Boundary Modeling');hold on;
     plotpoint(roadBoundPoints, info.VP, info.endRowPointL, info.endRowPointR);
-    plotobj(horizonLine, roadBoundLineL, roadBoundLineR, roadMidLine);
+    plotobj(horizonLine, roadBoundLineL, roadBoundLineR); %roadMidLine
     
     subplot(2,3,5);
     imshow(imoverlay(RoadFace_ROI, LaneMark, [255, 255, 0]));
-    title('Lane marks');
+    title('Lane Marking Detection');
     hold on; plot(1:nOutCol, ColPixelSum);
-    
-    %maxfig;
-    set(gcf,'outerposition',get(0,'screensize'));
+    %set(gcf,'outerposition',get(0,'screensize'));%
+    maxfig;
     %set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 30 20]); % [0 0 30 20]
     
     % write results to file.
     %  	imdump(RoadFace_ROI, BirdView, RoadFace_All);
     %     %saveeps;
-    %     h = gcf;
-    %     [~,name,~] = fileparts(h.Name);
-    %     % saveas(h, ['F:\Documents\MATLAB\Temp/', name, '.png']); cannot handle
-    %     % maximized figure.
-    %     print(name, '-djpeg', '-r300'); % ['F:\Documents\MATLAB\Temp/'
-    %     %close(h);
+    h = gcf;
+    [~,name,~] = fileparts(h.Name);
+    if isempty(name)
+        name = 'detection result';
+    end
+    saveas(h, ['%Temp/', name, '.jpg']); % cannot handle maximized figure.
+    % print(['%Temp/' name], '-djpeg', '-r300'); % also cannot handle maxfig
+    %close(h);
 end
 
 %% nested function

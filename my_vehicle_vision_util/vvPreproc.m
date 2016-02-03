@@ -18,7 +18,8 @@ classdef vvPreproc
     %% Static methods
     methods (Static)
 		function ImgProc = deblock(ImgRaw)
-			ImgProc = imgaussfilt(ImgRaw, 2);
+			%ImgProc = imgaussfilt(ImgRaw, 2);
+            ImgProc = imgaussfilt(ImgRaw, 2);
 		end
 		
     end% methods

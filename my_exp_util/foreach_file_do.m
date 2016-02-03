@@ -22,6 +22,14 @@ function results = foreach_file_do(files, func, varargin)
 % figure = roifilt2(I, mask, edgecanny) 
 % ```
 
+% 注意foreach_file_do 不支持matlab的路径，因为用的是dir
+% 各种数据集测试，评测代码
+% SLD2011_3 = 'F:\Documents\MATLAB\dataset\SLD2011\dataset3\sequence\0164*.jpg';
+% nicta = 'F:\Documents\MATLAB\dataset\nicta-RoadImageDatabase\After-Rain\after_rain0000*.tif';
+% sunny_shadows = 'F:\Documents\MATLAB\dataset\nicta-RoadImageDatabase\Sunny-Shadows\261011_p1WBoff_BUMBLEBEE_0610271632410*.tif';
+% figs = foreach_file_do(sunny_shadows, @roadDetection);
+
+
  % dir('pictures\*2.jpg')
  
  % dir('pictures\eas*2.jp*')

@@ -36,11 +36,15 @@ classdef vvTest < handle
             
             if dotracking
                 % Test on image sequence (tracking on)
-                infor = 0;
-                foreach_file_do(images, @(file) { ...
-                    figure('NumberTitle', 'off', 'Name', file), ...
-                    assign(infor, Test.algo(imread(file), infor)) ...
-                });
+                infor = [];
+                if ischar(images)
+                    files = str2files(images);
+                end
+                for ii = 1 : numel(files)
+                    figure('NumberTitle', 'off', 'Name', files{ii});
+                    infor = Test.algo( imread(files{ii}), infor);
+                end
+            
             else
                 % Test on irrelevant images (tracking off)
                 foreach_file_do(images, @(file) { ...

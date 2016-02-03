@@ -76,6 +76,9 @@ classdef vvBoundModel < handle
             Candidate = zeros(nRow, nCol);
             Boundary = zeros(nRow, nCol);
             
+            % do filtering first
+            BW(uint8(end*5/6):end,:) = 0;
+            
             for c = 1 : nCol % for each column
                 r = find(BW(:,c),1,'last');% up-down scan
                 Candidate(r, c) = 1;
@@ -92,6 +95,8 @@ classdef vvBoundModel < handle
                     Boundary(r, c) = 1;
                 end
             end
+            
+            Boundary(uint8(end*5/6-1),:) = 0;
         end
         
         function line = houghStraightLine(BW, Theta)
@@ -111,11 +116,16 @@ classdef vvBoundModel < handle
             end
             
             if length(lines) ~= 1
-                error('Fail in fitLine.');
+                disp('Fail in fitLine.');
+                line = [];
+                return;
             end
             
             % line = LineObj([lines.point1(2), lines.point1(1)], [lines.point2(2), lines.point2(1)]);
             line = LineObj(lines.point1, lines.point2);
+            if nargout == 0
+                line.plot();
+            end
         end
         
         function line = ransacStraightLine(BW)
