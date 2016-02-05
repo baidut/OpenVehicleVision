@@ -17,7 +17,9 @@ classdef vvIPM
             if nargin < 2
                 subplot(1,2,1);
                 imshow(srcImg);
+                
                 [nRows, nCols, ~] = size(srcImg);
+                
                 
                 % upleft(x,y);upright;
                 % downright;downleft;
@@ -25,33 +27,52 @@ classdef vvIPM
                 movingPoints = [1,1; nCols,1; ...
                     nCols,nRows; 1,nRows];
                 h = impoly(gca, movingPoints);
-                %callback_roi_ipm(movingPoints);
-                
+ 
                 setColor(h,'yellow');
-                addNewPositionCallback(h,@(p) callback_roi_ipm(p)); % title(mat2str(p,3))
+                addNewPositionCallback(h,@(p) proj(p)); % title(mat2str(p,3))
                 disp('Load tform.mat to get the saved transform matrix.');
+                
+                oCols = ceil(nCols/3);
+                oRows = ceil(nRows/3);
+                
+                fixedPoints = [1, 1;  oCols, 1;...
+                    oCols, oRows;     1, oRows];
+                
+                tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
+                proj(movingPoints);
                 return;
             end
             
-            function callback_roi_ipm(movingPoints)
-                
-                % title(mat2str(movingPoints,3));return
-                
-                fixedPoints = [1, 1;  nCols, 1;...
-                    nCols, nRows;     1, nRows];
-                
+            function proj(movingPoints)
+                title(mat2str(movingPoints,3));
                 tform = fitgeotrans(movingPoints, fixedPoints, 'projective');
                 
                 BirdView = imwarp(srcImg, tform, ...
-                    'OutputView', imref2d([3*nRows, 3*nCols],[-nCols 2*nCols], [-nRows, 2*nRows]));
+                    'OutputView', imref2d([3*oRows, 3*oCols],[-oCols 2*oCols], [-oRows, 2*oRows]));
                 % imwarp(srcImg, tform, 'OutputView', imref2d([nRows, nCols]));
                 subplot(1,2,2);
-                imshow(BirdView);
+                imshow(BirdView); 
+                hold on;
+                rectangle('Position',[oCols oRows oCols oRows],...
+                    'EdgeColor','b','LineWidth',3);%plot([oCols 2*oCols 2*oCols oCols oCols], [oRows oRows 2*oRows 2*oRows oRows]);
+                 %   2*oCols,2*oRows; oCols,2*oRows])
+                h2 = impoly(gca,[oCols,oRows; 2*oCols,oRows; ... 
+                    2*oCols,2*oRows; oCols,2*oRows]); % maybe imrect is better
                 
-                impoly(gca,[nCols,nRows; 2*nCols,nRows; ...
-                    2*nCols,2*nRows; nCols,2*nRows]);
-                
+                addNewPositionCallback(h2,@(p) proj_back(p));
                 save tform.mat tform movingPoints;
+            end
+            
+            function proj_back(p)
+                title(mat2str(p,3));
+                % move to O
+                X = p(:,1) - oCols; % Cols
+                Y = p(:,2)- oRows; % Rows
+                
+                [U,V] = transformPointsInverse(tform,X,Y);
+                subplot(1,2,1);
+                hold on;
+                plot(U,V);% ,'og'
             end
             
             %% if params is given, then do IPM
