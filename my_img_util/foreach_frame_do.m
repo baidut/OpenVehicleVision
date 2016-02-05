@@ -1,4 +1,4 @@
-function ok = foreach_frame_do(file, func, varargin)
+function ok = foreach_frame_do(file, func, frameRate)
 %FOREACH_FRAME_DO batch processing each frame of video
 % USAGE:
 %  foreach_frame_do('./ronda42_mpeg4.avi', @imshow)
@@ -13,23 +13,36 @@ if verLessThan('matlab', '7.11')
 % R2010a(7.10) Functions and Function Elements Being Removed [includes aviread]
 % R2010b(7.11) mmreader Renamed VideoReader 
 % view the release notes page for detail http://www.mathworks.com/help/matlab/release-notes-older.html
-
 	mov = mmreader(file);
 	frames = read(mov);
-	for i = 1 : size(frames, 4)
-		image = frames(:,:,:,i);
-		func(image, varargin{:});
+    if nargin < 3
+       frameRate = mov.FrameRate; 
+    end
+	for idx = 1 : mov.FrameRate/frameRate : size(frames, 4)
+		image = frames(:,:,:,idx);
+		func(image, idx);
 	end
 else
 	vidObj = VideoReader(file);
-	while hasFrame(vidObj)
-		vidFrame = readFrame(vidObj);
-		func(vidFrame);
-	end
+	
+    if nargin < 3 % vidObj.FrameRate == frameRate
+        idx = 0;
+        while hasFrame(vidObj)
+            vidFrame = readFrame(vidObj);
+            idx = 1 + idx;
+            func(vidFrame, idx);
+        end
+    else
+        for n = 1 : vidObj.FrameRate/frameRate : vidObj.NumberOfFrames
+            vidFrame = read(vidObj, round(n));
+            func(vidFrame, n);
+        end
+    end
+
 end
 
 
-% MMREADER has been removed. Use VIDEOREADER instead.
+ % MMREADER has been removed. Use VIDEOREADER instead.
 
 % VERSION
 
