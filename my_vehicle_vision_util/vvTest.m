@@ -1,24 +1,24 @@
 classdef vvTest < handle
-%%VVTEST implements the testing module of VV lib.
-% 
-%   Example
-%   -------
-%   %  Test IMSHOW.
-%      Test = vvTest(@imshow);
-%      Test.onImages('K:\Documents\MATLAB\dataset\roma\BDXD54\*.jpg');
-%      Test.onVideo('K:\Documents\MATLAB\dataset\SLD2011\dataset1\sequence_1.mpg');
-%
-%   %  Test roadDetection.
-%      Test.algo = @roadDetection;
-%      Test.onFiles('K:\Documents\MATLAB\dataset\roma\BDXD54\*.jpg');
-%
-%   Project website: https://github.com/baidut/openvehiclevision
-%   Copyright 2016 Zhenqiang Ying.
-
+    %%VVTEST implements the testing module of VV lib.
+    %
+    %   Example
+    %   -------
+    %   %  Test IMSHOW.
+    %      Test = vvTest(@imshow);
+    %      Test.onImages('K:\Documents\MATLAB\dataset\roma\BDXD54\*.jpg');
+    %      Test.onVideo('K:\Documents\MATLAB\dataset\SLD2011\dataset1\sequence_1.mpg');
+    %
+    %   %  Test roadDetection.
+    %      Test.algo = @roadDetection;
+    %      Test.onFiles('K:\Documents\MATLAB\dataset\roma\BDXD54\*.jpg');
+    %
+    %   Project website: https://github.com/baidut/openvehiclevision
+    %   Copyright 2016 Zhenqiang Ying.
+    
     properties
         algo
     end
- 
+    
     methods
         function Test = vvTest(algo)
             Test.algo = algo;
@@ -29,7 +29,7 @@ classdef vvTest < handle
         end
         
         function onImages(Test, images, dotracking)
-        % Test on a single image or image sequence.
+            % Test on a single image or image sequence.
             if nargin<3
                 dotracking = 0;
             end
@@ -44,13 +44,15 @@ classdef vvTest < handle
                     figure('NumberTitle', 'off', 'Name', files{ii});
                     infor = Test.algo( imread(files{ii}), infor);
                 end
-            
+                
             else
                 % Test on irrelevant images (tracking off)
-                foreach_file_do(images, @(file) { ...
-                    figure('NumberTitle', 'off', 'Name', file), ...
-                    Test.algo(imread(file)) ...
-                });
+                
+                foreach_file_do(images, @do);
+            end
+            function do(file)
+                figure('NumberTitle', 'off', 'Name', file);
+                Test.algo(imread(file));
             end
         end
         
@@ -65,10 +67,10 @@ classdef vvTest < handle
                 foreach_frame_do(video, @(frame) { ...
                     figure('NumberTitle', 'off', 'Name', frame), ...
                     assign(infor, Test.algo(frame, infor)) ...
-                });
-            else 
+                    });
+            else
                 foreach_frame_do(video, @(frame) Test.algo(frame) );
             end
         end
     end
-end 
+end

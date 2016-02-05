@@ -49,8 +49,12 @@ for ii = 1 : len
 	file = files{1, ii};
 	if iscell(file)
 		file = cell2mat(file);
-	end
-	results{ii} = func( file, varargin{:} );
+    end
+    if nargout == 0
+        func( file, varargin{:} );
+    else
+        results{ii} = func( file, varargin{:} );
+    end
 end
 
 return;
