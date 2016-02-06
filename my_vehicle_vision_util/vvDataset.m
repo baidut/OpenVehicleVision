@@ -23,7 +23,7 @@ classdef vvDataset
             %   % using default settings
             %   vvDataset.vid2img(input_video);
             %   % specify out format
-            %   Out.namefmt = 'Out/Frame%04d.jpg';
+            %   Out.namefmt = '%%Out/Frame%04d.jpg'; % use %% instead of %
             %   Out.size = [480 640];
             %   Out.fps = 2;
             %   vvDataset.vid2img(input_video, Out);

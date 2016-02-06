@@ -27,6 +27,7 @@ classdef vvIPM
                 movingPoints = [1,1; nCols,1; ...
                     nCols,nRows; 1,nRows];
                 
+                load tform.mat
                 h3 = impoly(gca,movingPoints);
                 setVerticesDraggable(h3, false);
                 

@@ -30,7 +30,7 @@ classdef vvPreproc
         end
         
         function segments = slicSuperpixel(ImgRaw)
-            %http://www.vlfeat.org/overview/slic.html            
+            %http://www.vlfeat.org/overview/slic.html
             % im contains the input RGB image as a SINGLE array
             
             % IMAGE is not of class SINGLE.
@@ -46,7 +46,7 @@ classdef vvPreproc
         end
         
         %% distortion caused by camera
-        function ImgProc = debarrel(ImgRaw, k)
+        function ImgProc = debarrel(ImgRaw, k, varargin)
             % remove barrel distortion
             % TODO: if k is not given, then open GUI for debarreling
             % foreach_file_do('%datasets\pku\1\*.jpg', @(f)imwrite(vvPreproc.debarrel(imread(f),-0.19),['%Temp/debarrel_' vvFile.name(f) '.jpg']));
@@ -67,8 +67,14 @@ classdef vvPreproc
                     title(num2str(get(hObject,'Value'),'vvPreproc.debarrel(I,%.2f)')) ...
                     });
             else
-                ImgProc = lensdistort(ImgRaw, k);
+                ImgProc = lensdistort(ImgRaw, k, varargin{:});
             end
+        end
+        
+        %% distortion casused by position
+        function ImgProc = derotate(ImgRaw, angle)
+            % imrotate(I,-1);
+            ImgProc = imrotate(ImgRaw, angle);
         end
         %% distortion caused by image compression algorithm
         function ImgProc = deblock(ImgRaw)
