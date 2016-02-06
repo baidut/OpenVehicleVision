@@ -17,10 +17,9 @@ classdef vvPreproc
     
     %% Static methods
     methods (Static)
-        function ImgProc = deblock(ImgRaw)
-            %ImgProc = imgaussfilt(ImgRaw, 2);
-            ImgProc = imgaussfilt(ImgRaw, 2);
-        end
+        
+        %% distortion caused by illumination effects
+        % deshadow, illuminate-invarient feature
         
         function Iseg = superpixel(I)
             ratio = 0.5;
@@ -46,5 +45,22 @@ classdef vvPreproc
             imlab = im;
             segments = vl_slic(imlab, regionSize, regularizer);
         end
+        
+        %% distortion caused by camera
+        function ImgProc = debarrel(ImgRaw, k)
+            % remove barrel distortion
+            % TODO: if k is not given, then open GUI for debarreling
+        % foreach_file_do('%datasets\pku\1\*.jpg', @(f)imwrite(vvPreproc.debarrel(imread(f),-0.19),['%Temp/debarrel_' vvFile.name(f) '.jpg']));
+        % or oo coding style
+        % Files = vvFile('%datasets\pku\1\*.jpg');
+        % Files.foreach(@(f)imwrite(vvFlow.pipeline(f, @imread, @vvPreproc.debarrel), vvFile.name(f)))
+            ImgProc = lensdistort(ImgRaw, k);
+        end
+        %% distortion caused by image compression algorithm
+        function ImgProc = deblock(ImgRaw)
+            %ImgProc = imgaussfilt(ImgRaw, 2);
+            ImgProc = imgaussfilt(ImgRaw, 2);
+        end
+        
     end% methods
 end% classdef

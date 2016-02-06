@@ -26,6 +26,10 @@ classdef vvIPM
                 % to specify a poly region
                 movingPoints = [1,1; nCols,1; ...
                     nCols,nRows; 1,nRows];
+                
+                h3 = impoly(gca,movingPoints);
+                setVerticesDraggable(h3, false);
+                
                 h = impoly(gca, movingPoints);
  
                 setColor(h,'yellow');
@@ -72,7 +76,8 @@ classdef vvIPM
                 [U,V] = transformPointsInverse(tform,X,Y);
                 subplot(1,2,1);
                 hold on;
-                plot(U,V);% ,'og'
+                %plot(U,V);% ,'og'
+                setPosition(h3, [U,V]);
             end
             
             %% if params is given, then do IPM
@@ -100,9 +105,10 @@ classdef vvIPM
         
         
         function test_images(images, movingPoints, outSize) % size: [width, height]
-            % vvIPM.test_images('K:\Documents\MATLAB\dataset\road_dataset_pku\1\*.jpg',movingPoints, [640 480]);
+            % vvIPM.test_images('%datasets\pku\1\*.jpg',movingPoints, [640 480]);
             Test = vvTest(@process);
             Test.onImages(images); %func = @process;%@imshow;
+            disp('see folder %Temp.');
             
             function process(image)
                 %@(f)imshow(vvIPM.proj2topview(f,movingPoints,[nCols nRows], ...
