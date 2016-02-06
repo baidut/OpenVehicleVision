@@ -26,12 +26,11 @@ classdef vvPreproc
             kernelsize = 2;
             maxdist = 10;
             
-            Iseg = vl_quickseg(I, ratio, kernelsize, maxdist);            
+            Iseg = vl_quickseg(I, ratio, kernelsize, maxdist);
         end
         
         function segments = slicSuperpixel(ImgRaw)
-            %http://www.vlfeat.org/overview/slic.html
-            
+            %http://www.vlfeat.org/overview/slic.html            
             % im contains the input RGB image as a SINGLE array
             
             % IMAGE is not of class SINGLE.
@@ -50,11 +49,26 @@ classdef vvPreproc
         function ImgProc = debarrel(ImgRaw, k)
             % remove barrel distortion
             % TODO: if k is not given, then open GUI for debarreling
-        % foreach_file_do('%datasets\pku\1\*.jpg', @(f)imwrite(vvPreproc.debarrel(imread(f),-0.19),['%Temp/debarrel_' vvFile.name(f) '.jpg']));
-        % or oo coding style
-        % Files = vvFile('%datasets\pku\1\*.jpg');
-        % Files.foreach(@(f)imwrite(vvFlow.pipeline(f, @imread, @vvPreproc.debarrel), vvFile.name(f)))
-            ImgProc = lensdistort(ImgRaw, k);
+            % foreach_file_do('%datasets\pku\1\*.jpg', @(f)imwrite(vvPreproc.debarrel(imread(f),-0.19),['%Temp/debarrel_' vvFile.name(f) '.jpg']));
+            % or oo coding style
+            % Files = vvFile('%datasets\pku\1\*.jpg');
+            % Files.foreach(@(f)imwrite(vvFlow.pipeline(f, @imread, @vvPreproc.debarrel), vvFile.name(f)))
+            if nargin < 2
+                subplot(1,2,1);
+                imshow(ImgRaw);title('I');
+                subplot(1,2,2);
+                imshow(ImgRaw);
+                hsl = uicontrol('Style','slider',...
+                    'Min',-1,'Max',1,'Value',0,...
+                    'SliderStep',[0.01 0.10],...
+                    'Position',[20 20 200 20]);
+                set(hsl,'Callback',@(hObject,eventdata) { ...
+                    imshow(vvPreproc.debarrel(ImgRaw,get(hObject,'Value'))), ...
+                    title(num2str(get(hObject,'Value'),'vvPreproc.debarrel(I,%.2f)')) ...
+                    });
+            else
+                ImgProc = lensdistort(ImgRaw, k);
+            end
         end
         %% distortion caused by image compression algorithm
         function ImgProc = deblock(ImgRaw)
