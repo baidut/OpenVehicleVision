@@ -17,21 +17,34 @@ classdef Ui
     %   Copyright 2016 Zhenqiang Ying.
     
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Static methods
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %TODO
+    % rearrange the position after window resized.
+    
     methods (Static)
         function imshow(h, func, varargin)
             cnt = 0;
             uictrls = cell(1,numel(varargin));
             isuictrls = zeros(1,numel(varargin));
+            values = cell(1,numel(varargin));
+            pos = h.Position .* [560 420 0 0];
             for n = 1:numel(varargin)
                 arg = varargin{n};
                 if isstruct(arg)
                     cnt = cnt + 1;
                     switch lower(arg.style)
                         case 'slider'
-                            uictrls{cnt} = uicontrol('style','slider');
+                            uicontrol('style','text',...
+                                'position',pos + [0 35 60 15],...
+                                'string',inputname(n+2));
+                            values{cnt} = uicontrol('style','text',...
+                                'position',pos + [0 20 60 15],...
+                                'string',inputname(n+2));
+                            uictrls{cnt} = uicontrol('style','slider',...
+                                    'position',pos + [60 20 120 30]...
+                                 );
                         case 'popup'
                             uictrls{cnt} = uicontrol('style','popup');
                             
@@ -53,9 +66,9 @@ classdef Ui
                     end
                 end
                 % init uictrls done, add callback
-                for n = 1:cnt
-                    if isuictrls(n)
-                        set(uictrls{n},'callback',@(h,e)callback_func()); 
+                for n_cnt = 1:cnt
+                    if isuictrls(n_cnt)
+                        set(uictrls{n_cnt},'callback',@(h,e)callback_func());
                     end
                 end
                 
@@ -64,7 +77,7 @@ classdef Ui
             end
             
             function callback_func()
-                % shared args: h,uictrls,func,varargin{:}
+                % shared args: h,uictrls,func,varargin{:},values
                 % load the value of uicontrols
                 idx = 0;
                 args = varargin;
@@ -72,8 +85,11 @@ classdef Ui
                     if isstruct(args{m})
                         idx = idx + 1;
                         switch lower(args{m}.style)
-                            case {'popup','slider'}
+                            case {'popup'}
                                 args{m} = get(uictrls{idx},'value');
+                            case 'slider'
+                                args{m} = get(uictrls{idx},'value');
+                                set(values{idx},'string',num2str(args{m},'%2.2f'));
                             case 'image'
                                 args{m} = getimage(uictrls{idx});
                             case 'rangeslider'
