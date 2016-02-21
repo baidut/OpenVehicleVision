@@ -24,6 +24,8 @@ function h = implot(varargin)
 % 	
 %   See also SELPLOT.
 
+% Copyright 2015 Zhenqiang YING.  [yingzhenqiang-at-gmail.com] 
+
 h = gcf;
 
 if ~isempty(h.Children) && ~ishold

@@ -11,6 +11,9 @@ classdef vvPreproc
     %   Project website: https://github.com/baidut/openvehiclevision
     %   Copyright 2016 Zhenqiang Ying.
     
+    % Todo
+    % Color correction - White Balance Correct
+    
     %% Public properties
     % properties (GetAccess = public, SetAccess = private)
     % end
@@ -44,7 +47,34 @@ classdef vvPreproc
             imlab = im;
             segments = vl_slic(imlab, regionSize, regularizer);
         end
-        
+        %% distortion caused by noise
+        function ImgProc = denoise(ImgRaw)
+            % Noise Removal http://cn.mathworks.com/help/images/noise-removal.html
+            % todo: denoise test app
+            ImgProc = wiener2(ImgRaw,[5 5]);
+        end
+         %% distortion caused by Bayer filter
+         function ImgProc = debayer(ImgRaw)
+            % https://en.wikipedia.org/wiki/Bayer_filter
+            % matlab demosaic process a raw RBBG format image to be smooth
+            % dabayer process a processed RBBG image.
+            % Bayer Encoding for Color Images is used for image compression
+            % see http://www.ni.com/white-paper/3903/en/
+            
+            % the specific format(gbrg or grbg) is not known, we must do some testing.
+            [XXXR,XGGX,BXXX,] = getChannel(ImgRaw);
+            
+            % B  G1
+            % G2 R
+            B = BXXX(1:2:end,1:2:end);
+            R = XXXR(2:2:end,2:2:end);
+            G1 = XGGX(1:2:end,2:2:end);
+            G2 = XGGX(2:2:end,1:2:end);
+            
+            
+            % check bayer filter
+            
+         end  
         %% distortion caused by camera
         function ImgProc = debarrel(ImgRaw, k, varargin)
             % remove barrel distortion
@@ -54,6 +84,9 @@ classdef vvPreproc
             % Files = vvFile('%datasets\pku\1\*.jpg');
             % Files.foreach(@(f)imwrite(vvFlow.pipeline(f, @imread, @vvPreproc.debarrel), vvFile.name(f)))
             if nargin < 2
+                if nargout ~= 0
+                    error('k must be given when using debarrel');
+                end
                 subplot(1,2,1);
                 imshow(ImgRaw);title('I');
                 subplot(1,2,2);
