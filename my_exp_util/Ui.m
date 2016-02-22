@@ -1,6 +1,59 @@
 classdef Ui
     %UI make it easier to test params of function
-    %
+	%
+    %   Project website: https://github.com/baidut/openvehiclevision
+    %   Copyright 2016 Zhenqiang Ying.
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Static methods
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    methods (Static)
+		function h = subplot(varargin)
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Static methods\figure
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%
+    %   Example
+    %   -------
+	%
+	%	   Football = imread('football.jpg');
+	%      Cameraman = imread('cameraman.tif'); 
+	%	   Ui.subplot(Football, Cameraman);
+	%	   Ui.subplot('kids.tif',rgb2gray(Football), im2bw(Cameraman));
+    
+		
+			r = floor(sqrt(nargin));
+			c = ceil(nargin/r);
+			
+			for n = 1:numel(varargin)
+				arg = varargin{n};
+				
+				subplot(r, c, n);
+				title(inputname(n)); % default title
+				hold on;
+				
+				switch class(arg)
+					case {'Uictrl','ImgObj'}
+						arg.plot(gca);
+					case 'char'
+						imshow(imread(arg));
+						title(arg);
+					case {'uint8','uint16','uint32','int8','int16','int32'}
+					% additional case goes here
+						imshow(arg);
+					% additional case ends here
+					otherwise
+						disp(['Unknown class:' inputname(n)]);
+				end
+			end
+		end
+        function h = imshow(func, varargin)
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Static methods\imshow
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%
     %   Example
     %   -------
     %       I = imread('circuit.tif');
@@ -12,19 +65,9 @@ classdef Ui
     %       subplot(122);
     %       % BW = edge(I,'sobel',THRESH)
     %       Ui.imshow(gca, @edge, image, 'sobel', thresh);
-    %
-    %   Project website: https://github.com/baidut/openvehiclevision
-    %   Copyright 2016 Zhenqiang Ying.
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Static methods
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %TODO
+	
+	%TODO
     % rearrange the position after window resized.
-    
-    methods (Static)
-        function h = imshow(func, varargin)
             % default value
             h = gca;
             n_fixarg = nargin - numel(varargin);
