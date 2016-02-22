@@ -24,9 +24,10 @@ classdef Ui
     % rearrange the position after window resized.
     
     methods (Static)
-        function imshow(func, varargin)
+        function h = imshow(func, varargin)
             % default value
             h = gca;
+            n_fixarg = nargin - numel(varargin);
             % init variables
             cnt = 0;
             uictrls = cell(1,numel(varargin));
@@ -35,16 +36,16 @@ classdef Ui
             pos = h.Position .* [560 420 0 0];
             for n = 1:numel(varargin)
                 arg = varargin{n};
-                if isstruct(arg)
+                if isstruct(arg) % BUG: some function may take struct as an input
                     cnt = cnt + 1;
                     switch lower(arg.style)
                         case 'slider'
                             uicontrol('style','text',...
                                 'position',pos + [0 0 60 15],...
-                                'string',inputname(n+2));
+                                'string',inputname(n+n_fixarg));
                             values{cnt} = uicontrol('style','text',...
                                 'position',pos + [0 -15 60 15],...
-                                'string',inputname(n+2));
+                                'string',inputname(n+n_fixarg));
                             uictrls{cnt} = uicontrol('style','slider',...
                                     'position',pos + [60 -15 120 30]...
                                  );
@@ -82,6 +83,8 @@ classdef Ui
             function callback_func()
                 % shared args: h,uictrls,func,varargin{:},values
                 % load the value of uicontrols
+                
+                titlestr = [char(func) '('];
                 idx = 0;
                 args = varargin;
                 for m = 1:numel(args)
@@ -92,7 +95,8 @@ classdef Ui
                                 args{m} = get(uictrls{idx},'value');
                             case 'slider'
                                 args{m} = get(uictrls{idx},'value');
-                                set(values{idx},'string',num2str(args{m},'%2.2f'));
+                                set(values{idx},'string',num2str(args{m}));%,'%2.2f'
+                                
                             case 'image'
                                 args{m} = getimage(uictrls{idx});
                             case 'rangeslider'
@@ -100,13 +104,23 @@ classdef Ui
                                 disp('Unknown ui control style.');
                         end
                     end
+                    
+                    if ischar(args{m})
+                        titlestr = sprintf('%s''%s'',',titlestr,args{m});
+                    elseif isscalar(args{m})
+                        titlestr = [titlestr num2str(args{m}) ','];
+                    else
+                        disp('Unknown arg type.');
+                    end
                 end
                 result = func(args{:});
                 axes(h);
                 imshow(result);
                 
-                %use txt instead of title to avoid conflict
-                %TODO
+                %TODO:use txt instead of title to avoid conflict
+                titlestr = [titlestr(1:end-1) ')'];
+                title(titlestr);
+                %title(sprintf('%s(%)') char(func) ) 
             end
             
         end
