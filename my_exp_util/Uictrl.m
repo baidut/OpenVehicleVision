@@ -30,8 +30,8 @@ classdef Uictrl<handle
                     case 'Uiview'
                         idx = idx + 1;
                         obj.h_uictrls{n} = arg.plot(h_axes, obj.argName{n}, idx);
-                        %arg.setCallback(obj.h_uictrl{n},@(h,ev)obj.callback_func());%
-                        obj.h_uictrls{n}.Callback = @(h,ev)obj.callback_func();
+                        arg.setCallbackFunc(obj.h_uictrls{n},@(h,ev)obj.callback_func());
+                        %obj.h_uictrls{n}.Callback = @(h,ev)obj.callback_func();
                     otherwise
                         % fixed param
                 end%switch
@@ -61,8 +61,13 @@ classdef Uictrl<handle
                 if n == 1, fprintf('(');
                 else fprintf(',');
                 end
-                if isscalar(args{n}), fprintf('%f',args{n}); 
-                elseif ischar(args{n}), fprintf('''%s''',args{n}); 
+				
+                if isscalar(args{n})
+					fprintf('%f',args{n}); 
+                elseif ischar(args{n})
+					fprintf('''%s''',args{n});
+				elseif size(args{n},1)==1&&size(args{n},2)==2
+					fprintf('[%f,%f]',args{n}(1),args{n}(2));
                 else fprintf('%s',obj.argName{n});
                 end
             end%for

@@ -18,12 +18,10 @@ classdef vvEdge
 			end
 			
 			thresh = Uiview('slider','min',0,'max',0.2,'value',0.1);
-			direction = Uiview('popup','string', {'both','horizontal','vertical'});
+			direction = Uiview('popupmenu','string', {'both','horizontal','vertical'});
 			sigma = Uiview('slider','min',0,'max',0.2,'value',0.1);
-			thinning = Uiview('popup','string', {'thinning','nothinning'});
+			thinning = Uiview('popupmenu','string', {'thinning','nothinning'});
 			
-			thresh2 = Uiview('slider','min',0,'max',0.2,'value',0.15);
-
 			sobel = Uictrl(@edge, I, 'sobel', thresh, direction, thinning);
 			prewitt = Uictrl(@edge, I, 'prewitt', thresh, direction, thinning);
 			roberts = Uictrl(@edge, I, 'roberts', thresh, thinning);
@@ -32,6 +30,18 @@ classdef vvEdge
 			% Ui.subplot(I, roberts); % ,sobel, prewitt
 			% Ui.subplot(roberts, I);
         end
+		
+		function testCanny(I)
+			if nargin == 0, I = imread('circuit.tif');
+			end
+			
+			% if THRESH is empty ([]), edge chooses low and high values automatically.
+			range = Uiview('jrangeslider');
+			sigma = Uiview('slider','min',0,'max',0.2,'value',0.1);
+			
+			sobel = Uictrl(@edge, I, 'canny', range, sigma);
+			Ui.subplot(I, sobel);
+		end
 		
     end% methods
 end% classdef

@@ -22,7 +22,9 @@ classdef Ui
             %      Cameraman = imread('cameraman.tif');
             %	   Ui.subplot(Football, Cameraman);
             %	   Ui.subplot('kids.tif',rgb2gray(Football), im2bw(Cameraman));
-            h = figure;
+            
+            %h = figure('units','normalized','position',[.1 .1 .4 .4]);
+            h = figure('position',[680 558 800 420]);
             %maxfig;
             
             r = floor(sqrt(nargin));
