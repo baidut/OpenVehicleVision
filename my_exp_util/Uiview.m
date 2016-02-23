@@ -12,13 +12,18 @@ classdef Uiview<handle
             obj.prop = varargin;
         end
         
-        function handle = plot(obj, h)
+        function handle = plot(obj, h, name)
             handle = uicontrol('style', obj.style, obj.prop{:});
             % if Position is not set
-            % parent position ratio
+            % Axes cannot be a parent.
             f = gcf;
             pos = h.Position .* [f.Position(3:4) 0 0];
-            set(handle,'position',pos + [0 -15 180 15]);
+            set(handle,'position',pos + [60 -15 120 15]);
+            
+            %add text
+            uicontrol('style','text',...
+                'position',pos + [0 -15 60 15],...
+                'string',name);
         end
     end% methods
     methods (Static)
