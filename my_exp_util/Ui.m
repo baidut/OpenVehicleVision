@@ -1,6 +1,6 @@
 classdef Ui
     %UI make it easier to test params of function
-	%
+    %
     %   Project website: https://github.com/baidut/openvehiclevision
     %   Copyright 2016 Zhenqiang Ying.
     
@@ -10,64 +10,64 @@ classdef Ui
     
     
     methods (Static)
-		function h = subplot(varargin)
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Static methods\figure
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	%
-    %   Example
-    %   -------
-	%
-	%	   Football = imread('football.jpg');
-	%      Cameraman = imread('cameraman.tif'); 
-	%	   Ui.subplot(Football, Cameraman);
-	%	   Ui.subplot('kids.tif',rgb2gray(Football), im2bw(Cameraman));
-    
-		
-			r = floor(sqrt(nargin));
-			c = ceil(nargin/r);
-			
-			for n = 1:numel(varargin)
-				arg = varargin{n};
-				
-				subplot(r, c, n);
-				title(inputname(n)); % default title
-				hold on;
-				
-				switch class(arg)
-					case {'Uictrl','ImgObj'}
-						arg.plot(gca);
-					case 'char'
-						imshow(imread(arg));
-						title(arg);
-					case {'uint8','uint16','uint32','int8','int16','int32'}
-					% additional case goes here
-						imshow(arg);
-					% additional case ends here
-					otherwise
-						disp(['Unknown class:' inputname(n)]);
-				end
-			end
-		end
+        function h = subplot(varargin)
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Static methods\figure
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            %   Example
+            %   -------
+            %
+            %	   Football = imread('football.jpg');
+            %      Cameraman = imread('cameraman.tif');
+            %	   Ui.subplot(Football, Cameraman);
+            %	   Ui.subplot('kids.tif',rgb2gray(Football), im2bw(Cameraman));
+            h = figure;
+            
+            r = floor(sqrt(nargin));
+            c = ceil(nargin/r);
+            
+            for n = 1:numel(varargin)
+                arg = varargin{n};
+                
+                subplot(r, c, n);
+                title(inputname(n)); % default title
+                hold on;
+                
+                switch class(arg)
+                    case {'Uictrl','ImgObj'}
+                        arg.plot(gca);
+                    case 'char'
+                        imshow(imread(arg));
+                        title(arg);
+                    case {'uint8','uint16','uint32','int8','int16','int32'}
+                        % additional case goes here
+                        imshow(arg);
+                        % additional case ends here
+                    otherwise
+                        disp(['Unknown class:' inputname(n)]);
+                end
+            end
+        end
         function h = imshow(func, varargin)
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Static methods\imshow
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	%
-    %   Example
-    %   -------
-    %       I = imread('circuit.tif');
-    %
-    %       subplot(121);
-    %       imshow(I);
-    %       image = struct('style','image','h',gca); % style must be lower case
-    %       thresh = struct('style','slider','min',0,'max',1,'value',0.5);
-    %       subplot(122);
-    %       % BW = edge(I,'sobel',THRESH)
-    %       Ui.imshow(gca, @edge, image, 'sobel', thresh);
-	
-	%TODO
-    % rearrange the position after window resized.
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Static methods\imshow
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            %   Example
+            %   -------
+            %       I = imread('circuit.tif');
+            %
+            %       subplot(121);
+            %       imshow(I);
+            %       image = struct('style','image','h',gca); % style must be lower case
+            %       thresh = struct('style','slider','min',0,'max',1,'value',0.5);
+            %       subplot(122);
+            %       % BW = edge(I,'sobel',THRESH)
+            %       Ui.imshow(gca, @edge, image, 'sobel', thresh);
+            
+            %TODO
+            % rearrange the position after window resized.
             % default value
             h = gca;
             n_fixarg = nargin - numel(varargin);
@@ -90,8 +90,8 @@ classdef Ui
                                 'position',pos + [0 -15 60 15],...
                                 'string',inputname(n+n_fixarg));
                             uictrls{cnt} = uicontrol('style','slider',...
-                                    'position',pos + [60 -15 120 30]...
-                                 );
+                                'position',pos + [60 -15 120 30]...
+                                );
                         case 'popup'
                             uictrls{cnt} = uicontrol('style','popup');
                             
@@ -163,7 +163,7 @@ classdef Ui
                 %TODO:use txt instead of title to avoid conflict
                 titlestr = [titlestr(1:end-1) ')'];
                 title(titlestr);
-                %title(sprintf('%s(%)') char(func) ) 
+                %title(sprintf('%s(%)') char(func) )
             end
             
         end
