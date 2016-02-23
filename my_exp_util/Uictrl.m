@@ -23,14 +23,15 @@ classdef Uictrl<handle
             %if nargin<2, h = gca; end
             axes(h_axes);
             obj.h_uictrls = cell(1,numel(obj.argValue));
-            
+            idx = 0;
             for n = 1:numel(obj.argValue)
                 arg = obj.argValue{n};
                 switch class(arg)
                     case 'Uiview'
-                        obj.h_uictrls{n} = arg.plot(h_axes, obj.argName{n});
+                        idx = idx + 1;
+                        obj.h_uictrls{n} = arg.plot(h_axes, obj.argName{n}, idx);
                         %arg.setCallback(obj.h_uictrl{n},@(h,ev)obj.callback_func());%
-                        set(obj.h_uictrls{n},'callback',@(h,ev)obj.callback_func());
+                        obj.h_uictrls{n}.Callback = @(h,ev)obj.callback_func();
                     otherwise
                         % fixed param
                 end%switch
@@ -51,9 +52,8 @@ classdef Uictrl<handle
                 arg = args{n};
                 switch class(arg)
                     case 'Uiview'
-                        %args{n} = arg.val(obj.h_uictrl{n});%
-                        args{n} = get(obj.h_uictrls{n},'value');
-                        
+                        args{n} = arg.getValue(obj.h_uictrls{n});%
+                        %args{n} = obj.h_uictrls{n}.Value;
                     otherwise
                         % fixed param
                 end%switch

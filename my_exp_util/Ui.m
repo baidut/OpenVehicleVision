@@ -23,6 +23,7 @@ classdef Ui
             %	   Ui.subplot(Football, Cameraman);
             %	   Ui.subplot('kids.tif',rgb2gray(Football), im2bw(Cameraman));
             h = figure;
+            %maxfig;
             
             r = floor(sqrt(nargin));
             c = ceil(nargin/r);

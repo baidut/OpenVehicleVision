@@ -12,17 +12,19 @@ classdef Uiview<handle
             obj.prop = varargin;
         end
         
-        function handle = plot(obj, h, name)
+        function handle = plot(obj, h, name, n)
             handle = uicontrol('style', obj.style, obj.prop{:});
             % if Position is not set
             % Axes cannot be a parent.
             f = gcf;
-            pos = h.Position .* [f.Position(3:4) 0 0];
-            set(handle,'position',pos + [60 -15 120 15]);
+            height = 20;
+            width = 120;
+            pos = h.Position .* [f.Position(3:4) 0 0] + [0 10 0 0];
+            set(handle,'position',pos + [60 -height*n width height]);
             
             %add text
             uicontrol('style','text',...
-                'position',pos + [0 -15 60 15],...
+                'position',pos + [0 -height*n 60 height],...
                 'string',name);
         end
     end% methods
@@ -31,8 +33,14 @@ classdef Uiview<handle
             % if exist obj.h
             set(h,'callback',func);
         end
-        function value = val(h)
-            value = get(h,'value');
+        function value = getValue(h) % val:No method 'val' with matching signature found for class 'Uiview'.
+            switch h.Style
+                case 'popupmenu'
+                    maps = h.String;
+                    value = maps{h.Value};
+                otherwise
+                    value = h.Value;
+            end
         end
     end% methods
     
