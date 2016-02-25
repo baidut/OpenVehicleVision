@@ -23,30 +23,10 @@ classdef vvPreproc
         
         %% distortion caused by illumination effects
         % deshadow, illuminate-invarient feature
+        % usage: %s sigma k min input(ppm) output(ppm)
         
-        function Iseg = superpixel(I)
-            ratio = 0.5;
-            kernelsize = 2;
-            maxdist = 10;
-            
-            Iseg = vl_quickseg(I, ratio, kernelsize, maxdist);
-        end
+		% seg has been moved to vvSeg module
         
-        function segments = slicSuperpixel(ImgRaw)
-            %http://www.vlfeat.org/overview/slic.html
-            % im contains the input RGB image as a SINGLE array
-            
-            % IMAGE is not of class SINGLE.
-            im = im2single(ImgRaw);
-            
-            regionSize = 10 ;
-            regularizer = 10 ;
-            % IM contains the image in RGB format as before
-            %imlab = vl_xyz2lab(vl_rgb2xyz(im)) ;
-            %imlab = im2single(imlab);
-            imlab = im;
-            segments = vl_slic(imlab, regionSize, regularizer);
-        end
         %% distortion caused by noise
         function ImgProc = denoise(ImgRaw)
             % Noise Removal http://cn.mathworks.com/help/images/noise-removal.html

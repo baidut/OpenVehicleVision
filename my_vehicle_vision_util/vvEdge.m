@@ -37,7 +37,7 @@ classdef vvEdge
 			
 			% if THRESH is empty ([]), edge chooses low and high values automatically.
 			range = Uiview('jrangeslider');
-			sigma = Uiview('slider','min',0,'max',0.2,'value',0.1);
+			sigma = Uiview('slider','min',0,'max',10,'value',0.1);
 			
 			sobel = Uictrl(@edge, I, 'canny', range, sigma);
 			Ui.subplot(I, sobel);

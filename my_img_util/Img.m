@@ -1,6 +1,5 @@
 classdef Img
 %     I = Img('circuit.tif');
-%     I.getname()
     
     %% Public properties
     properties (GetAccess = public, SetAccess = private)
@@ -19,19 +18,21 @@ classdef Img
             [I.rows, I.cols, I.chns] = size(I.data);
         end
         
-        function h = plot(I)
-            h = imshow(I.data);
+        function h = plot(I, varargin)
+            h = imshow(I.data, varargin{:});
             title(inputname(1));
         end
         
         function bool = isgray(I)
             bool = (I.chns == 1);
         end
+		
+        % plot and draw
+        % plot over can be removed while draw will change image data.
+		% plot is not the responsibility of this obj (axes, figure)
+		% draw 
         
-        function ratio = plotLane(I)
-        end
-        
-        function [pointsM, labeled] = drawLine(I, ratio)
+        function imdata = drawLine(I, lineObj)
         end
         
     end% methods

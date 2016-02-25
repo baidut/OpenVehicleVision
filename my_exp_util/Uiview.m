@@ -18,9 +18,16 @@ classdef Uiview<handle
 			% if Position is not set
 			% Axes cannot be a parent.
 			f = gcf;
+			
+			% put uicontrol on the left of axes
+			% height = 20;
+			% width = 80;
+			% pos = h.Position .* [f.Position(3:4) 0 0] + [-140 110 0 0];
+			
+			% put uicontrol on the downside of axes
 			height = 20;
-			width = 80;
-			pos = h.Position .* [f.Position(3:4) 0 0] + [-140 110 0 0];
+			width = 180;
+			pos = h.Position .* [f.Position(3:4) 0 0] + [-100 50 0 0];
 			position = pos + [120 -height*n width height];
 			
 			switch lower(obj.style)
@@ -30,10 +37,10 @@ classdef Uiview<handle
 				case 'jrangeslider'
 					% http://undocumentedmatlab.com/blog/sliders-in-matlab-gui
 					jRangeSlider = com.jidesoft.swing.RangeSlider(0,100,20,80);  % min,max,low,high
-					jRangeSlider = javacomponent(jRangeSlider, [0,0,200,80], gcf);
+					jRangeSlider = javacomponent(jRangeSlider, position, gcf);
 					% set(jRangeSlider, 'MajorTickSpacing',25, 'MinorTickSpacing',5);
-					set(jRangeSlider, 'MajorTickSpacing',25, 'MinorTickSpacing',5, 'PaintTicks',true, 'PaintLabels',true, ...
-						'Background',java.awt.Color.white);
+					% set(jRangeSlider, 'MajorTickSpacing',25, 'MinorTickSpacing',5, 'PaintTicks',true, 'PaintLabels',true, ...
+						% 'Background',java.awt.Color.white);
 					handle = jRangeSlider;
 				otherwise
 					disp(['unknown style: ' obj.style]);
@@ -67,8 +74,9 @@ classdef Uiview<handle
 						case 'popupmenu'
 							maps = h.String;
 							value = maps{h.Value};
-						otherwise
+                        otherwise
 							value = h.Value;
+                            %isinteger(h.Value)-no
 					end
 				case 'javahandle_withcallbacks.com.jidesoft.swing.RangeSlider'
 					%jRangeSlider

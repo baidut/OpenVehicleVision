@@ -43,12 +43,13 @@ classdef Ui
                     case 'char'
                         imshow(imread(arg));
                         title(arg);
-                    case {'uint8','uint16','uint32','int8','int16','int32'}
+                    case {'uint8','uint16','uint32','int8','int16','int32', 'logical'}
                         % additional case goes here
                         imshow(arg);
                         % additional case ends here
                     otherwise
-                        disp(['Unknown class:' inputname(n)]);
+						imshow(arg);
+                        % disp(['Unknown class:' inputname(n)]);
                 end
             end
         end
