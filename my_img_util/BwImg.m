@@ -20,8 +20,11 @@ classdef BwImg
 			h = imshow(obj.data, varargin{:});
         end
 		
-		function bw = bound(obj, varargin)
-			bw = BwImg(bwperim(obj.data, varargin{:}));
+		function bwImg = bound(obj, varargin)
+			bw = bwperim(obj.data, varargin{:});
+			bw([1,end],:) = 0;
+			bw(:,[1,end]) = 0;
+			bwImg = BwImg(bw);
 		end
 		
     end% methods

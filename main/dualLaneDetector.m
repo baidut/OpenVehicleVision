@@ -21,11 +21,11 @@ boundAngleRange = 30:75;
 BoundL = vvBoundModel.houghStraightLine(Edge, boundAngleRange); % 0:89
 BoundR = vvBoundModel.houghStraightLine(Edge, -boundAngleRange); % -89:0
 
-implot(imoverlay(ROI, Edge, [255, 255, 0]),Raw);
+implot(Raw);
 hold on;
-BoundL.plot('r','LineWidth', 2);
-BoundR.plot('g','LineWidth', 2);
-
+plotpoint(Edge);% TODO: remove plotpoint
+BoundL.plot('r');
+BoundR.plot('g');
 %% Edge detection
 % remove the edge from trees and grass: smooth or resize or thresh canny
 % Thumbnails = imresize(ROI, [60 160]); % [240 640] [60 160]

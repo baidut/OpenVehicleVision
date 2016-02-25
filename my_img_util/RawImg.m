@@ -35,11 +35,11 @@ classdef RawImg<handle
             else
                 xdata = [1 I.cols] - I.roi{2}(1);
                 ydata = [1 I.rows] - I.roi{1}(1);
-				disp(xdata)
-				disp(ydata)
                 h = imshow(I.data, 'Xdata',xdata, 'Ydata',ydata, varargin{:});
             end
         end
+		
+		%% TODO: imoverlay(ROI, Edge, [255, 255, 0])
         
         % 		function ROI = selroi(I, roi)
         % 		% not finished yet
