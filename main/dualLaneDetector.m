@@ -4,11 +4,26 @@ ROI = Raw(ceil(end/2):end,:,:);
 
 %% Segmentation
 % vvSeg.felzen(ROI);
-ISeg = vvSeg.felzen(ROI,0.6); % 2
+ISeg = vvSeg.felzen(ROI,3);
 RoadFace = ISeg.maxarea();
-implot(ROI, ISeg, RoadFace);
 
-return;
+%% Road Bound Edge
+RoadBound = RoadFace.bound(8);
+
+% implot(ROI, ISeg, RoadFace, imoverlay(ROI, RoadBound.data, [255, 255, 0]));
+% return;
+%% line detection
+Edge = RoadBound.data;
+boundAngleRange = 30:75;
+
+BoundL = vvBoundModel.houghStraightLine(Edge, boundAngleRange); % 0:89
+BoundR = vvBoundModel.houghStraightLine(Edge, -boundAngleRange); % -89:0
+
+implot(imoverlay(ROI, Edge, [255, 255, 0]),ROI);
+hold on;
+BoundL.plot('r','LineWidth', 2);
+BoundR.plot('g','LineWidth', 2);
+
 %% Edge detection
 % remove the edge from trees and grass: smooth or resize or thresh canny
 % Thumbnails = imresize(ROI, [60 160]); % [240 640] [60 160]
@@ -24,16 +39,7 @@ joinedIm = imdilate(Edge1,diskEnt);
 Edge = joinedIm & Edge2;
 % implot(Edge1,Edge2,joinedIm,Edge);
 
-%% line detection
-boundAngleRange = 30:75;
 
-BoundL = vvBoundModel.houghStraightLine(Edge, boundAngleRange); % 0:89
-BoundR = vvBoundModel.houghStraightLine(Edge, -boundAngleRange); % -89:0
-
-imshow(imoverlay(ROI, Edge, [255, 255, 0]));
-hold on;
-BoundL.plot('r','LineWidth', 2);
-BoundR.plot('g','LineWidth', 2);
 
 
 %% Road Face Extraction is needed

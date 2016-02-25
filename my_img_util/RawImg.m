@@ -1,4 +1,4 @@
-classdef Img
+classdef RawImg
 %     I = Img('circuit.tif');
     
     %% Public properties

@@ -22,7 +22,7 @@ classdef LabelImg
 		% http://stackoverflow.com/questions/20725603/how-to-select-the-object-with-the-largest-area
 			stat = regionprops(obj.data,'Centroid','Area','PixelIdxList');
 			[maxValue,index] = max([stat.Area]);
-			bw = obj.data == index;
+			bw = BwImg(obj.data == index);
 		end
     end% methods
 end% classdef
