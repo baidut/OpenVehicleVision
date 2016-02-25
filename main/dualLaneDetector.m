@@ -5,7 +5,8 @@ ROI = Raw(ceil(end/2):end,:,:);
 %% Segmentation
 % vvSeg.felzen(ROI);
 ISeg = vvSeg.felzen(ROI,0.6); % 2
-implot(ROI, ISeg);
+RoadFace = ISeg.maxarea();
+implot(ROI, ISeg, RoadFace);
 
 return;
 %% Edge detection
