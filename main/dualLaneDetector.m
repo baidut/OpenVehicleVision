@@ -1,6 +1,8 @@
 
-Raw = imread('F:\Documents\pku-road-dataset\1\EMER0009\0379.jpg');%0289
-ROI = Raw(ceil(end/2):end,:,:);
+Raw = RawImg('F:\Documents\pku-road-dataset\1\EMER0009\0379.jpg');%0289
+
+%TODO: below the horizon
+ROI = Raw.rectroi({ceil(Raw.rows/2):Raw.rows,1:Raw.cols});
 
 %% Segmentation
 % vvSeg.felzen(ROI);
@@ -19,7 +21,7 @@ boundAngleRange = 30:75;
 BoundL = vvBoundModel.houghStraightLine(Edge, boundAngleRange); % 0:89
 BoundR = vvBoundModel.houghStraightLine(Edge, -boundAngleRange); % -89:0
 
-implot(imoverlay(ROI, Edge, [255, 255, 0]),ROI);
+implot(imoverlay(ROI, Edge, [255, 255, 0]),Raw);
 hold on;
 BoundL.plot('r','LineWidth', 2);
 BoundR.plot('g','LineWidth', 2);
