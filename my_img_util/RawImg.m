@@ -4,9 +4,9 @@ classdef RawImg<handle
     %% Public properties
     properties (GetAccess = public, SetAccess = private)
         path,name,ext
-        data
+        data % only store roi data?
         rows,cols,chns
-        roi
+        rect%roi
     end
     
     %% Public methods
@@ -22,26 +22,58 @@ classdef RawImg<handle
         % selcols
         function ROI = rectroi(I, rect) % rectroi({rows, cols}) cannot use []
             ROI = I.data(rect{:}, :);
-            I.roi = rect;
+            I.rect = rect;
             % obj.roi = axes('position',[0.1,0.1,0.4,0.4]);
         end
-        
+		
         function h = imshow(I, varargin)
             % TODO resize downsample cases
             %move axis oxy to oxy of roi, for ploting obj in roi
-            if isempty(I.roi)
-				disp ok
+            if isempty(I.rect)
                 h = imshow(I.data, varargin{:});
             else
-                xdata = [1 I.cols] - I.roi{2}(1);
-                ydata = [1 I.rows] - I.roi{1}(1);
+                xdata = [1 I.cols] - I.rect{2}(1);
+                ydata = [1 I.rows] - I.rect{1}(1);
                 h = imshow(I.data, 'Xdata',xdata, 'Ydata',ydata, varargin{:});
             end
 			
 			title(I.name);
         end
 		
-		%% TODO: imoverlay(ROI, Edge, [255, 255, 0])
+		function [R,G,B] = rgbchn(I)
+		% get rgb channel
+			R = I.data(:,:,1);
+			G = I.data(:,:,2);
+			B = I.data(:,:,3);
+		end
+		
+		%% TODO: different kinds of images
+		% imoverlay(ROI, Edge, [255, 255, 0])
+		function J = roidrawmask(I, mask, color)
+			if nargin < 3
+				color = 'r';
+			end
+			
+			mask = (mask ~= 0); 
+			
+			if ~isgray(I)
+				[R,G,B] = getChannel(I.data(I.rect{:}, :)); %I.rgbchn();
+				switch lower(color)
+					case 'r'
+						R(mask) = 255;
+					case 'g'
+						G(mask) = 255;
+					case 'b'
+						B(mask) = 255;
+				end
+				
+				J = cat(3, R, G, B);
+				
+				if nargout == 0 
+					I.data(I.rect{:}, :) = J;
+				end
+			end
+		end
         
         % 		function ROI = selroi(I, roi)
         % 		% not finished yet

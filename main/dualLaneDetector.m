@@ -29,14 +29,14 @@ classdef dualLaneDetector<handle
             BoundL = vvBoundModel.houghStraightLine(Edge, boundAngleRange); % 0:89
             BoundR = vvBoundModel.houghStraightLine(Edge, -boundAngleRange); % -89:0
             
+            Raw.roidrawmask(RoadFace.data);
             imshow(Raw);
-            hold on;
-            plotpoint(Edge);% TODO: remove plotpoint
+            %plotpoint(Edge);% TODO: remove plotpoint, 
             BoundL.plot('r');
             BoundR.plot('g');
             
-            saveas(gcf, ['%Temp/', Raw.name, '.jpg']); 
-            close(gcf);
+%             saveas(gcf, ['%Temp/', Raw.name, '.jpg']); 
+%             close(gcf);
         end
     end
 end
