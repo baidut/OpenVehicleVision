@@ -37,6 +37,8 @@ classdef RawImg<handle
                 ydata = [1 I.rows] - I.roi{1}(1);
                 h = imshow(I.data, 'Xdata',xdata, 'Ydata',ydata, varargin{:});
             end
+			
+			title(I.name);
         end
 		
 		%% TODO: imoverlay(ROI, Edge, [255, 255, 0])
