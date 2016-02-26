@@ -1,175 +1,183 @@
 classdef Ui
-    %UI make it easier to test params of function
+    %%
     %
-    %   Project website: https://github.com/baidut/openvehiclevision
-    %   Copyright 2016 Zhenqiang Ying.
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Static methods
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    
+    %%
+    % FEATURE
+    %
+    % * subplot automatic layout
+    % * title featured variable name
+    %
+    %%
+    % TODO
+    %
+    % * title class type
+    % * title image size
+    %
+    %%
+    % WONT DO
+    %
+    % * do mat2gray for matrix
+    % * show hist, bar...
+    %
+    %%
+    % Example
+    %
+    %   Football = imread('football.jpg');
+    %   Cameraman = imread('cameraman.tif');
+    %   Ui.subimshow(Football, Cameraman);
+    %   Ui.subimshow('kids.tif',rgb2gray(Football), im2bw(Cameraman));
+    %
+    %  Project website: https://github.com/baidut/openvehiclevision
+    %  Copyright 2016 Zhenqiang Ying [yingzhenqiang-at-gmail.com].
+    %
+    %%
+    % See also
+    %
+    % Ui.subimshow, Ui.subimshow, Ui.subplot.
+
     methods (Static)
-        function h = subplot(varargin)
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % Static methods\figure
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %% eachsubplot
+        function h = eachsubplot(func, args, names)
+            %%
+            %  EACHSUBPLOT(f,{I,J,K},{'1','2','3'}) is same as
+            %  subplot(221); title('1'); f(I);
+            %  subplot(222); title('2'); f(J);
+            %  subplot(223); title('3'); f(K);
             %
-            %   Example
-            %   -------
+            %  h = eachsubplot(func,args,names)
             %
-            %	   Football = imread('football.jpg');
-            %      Cameraman = imread('cameraman.tif');
-            %	   Ui.subplot(Football, Cameraman);
-            %	   Ui.subplot('kids.tif',rgb2gray(Football), im2bw(Cameraman));
+            %%
+            % INPUTS
+            %
+            % * func - handle of function which takes one input
+            % * args - cell array of variables
+            % * names - cell array of variable names
+            %%
+            % OUTPUTS
+            %
+            % * h - handle of the figure
+            %
+            %
+            % NOTE
+            %
+            % 	this function will new a figure if current figure is not
+            % empty and hold is off.
+            %
+            % USAGE
+            %
+            %   Ui.eachsubplot(@imshow, {'kids.tif','cameraman.tif'});
+            %
+            % SEE ALSO Ui.name2str, Ui.subimshow, Ui.subplot.
             
-            %h = figure('units','normalized','position',[.1 .1 .4 .4]);
-            h = figure('position',[680 558 800 420]);
-            %maxfig;
+            narg = numel(args);
+            titles = cell(1,narg);
             
-            r = floor(sqrt(nargin));
-            c = ceil(nargin/r);
+            if nargin>2
+                assert(narg == numel(names));
+                titles = names;
+            end
             
-            for n = 1:numel(varargin)
-                arg = varargin{n};
-                
-                subplot(r, c, n);
-                title(inputname(n)); % default title
-                hold on;
-                
-                switch class(arg)
-                    case {'Uictrl','ImgObj'}
-                        arg.plot(gca);
-                    case 'char'
-                        imshow(imread(arg));
-                        title(arg);
-                    case {'uint8','uint16','uint32','int8','int16','int32', 'logical'}
-                        % additional case goes here
-                        imshow(arg);
-                        % additional case ends here
-                    otherwise
-						imshow(arg);
-                        % disp(['Unknown class:' inputname(n)]);
+            h = gcf;
+            if ~isempty(h.Children) && ~ishold
+                h = figure;
+            end
+            
+            r = floor(sqrt(narg));
+            c = ceil(narg/r);
+            
+            holdstat = ishold;% if hold is on, and 0 if it is off.
+            
+            for n = 1:narg
+                arg = args{n};
+                if ~isempty(arg)
+                    subplot(r, c, n);
+                    if ~isempty(titles{n})
+                        title(titles{n});
+                        hold on;
+                    end
+                    % call function
+                    func(arg); % default title can be rewritten
                 end
+            end
+            
+            if ~holdstat, hold off; end
+        end
+        %% name2str
+        function str = name2str(name)
+            %NAME2STR convert an identifier to a string
+            % name      -->      	string
+            % 'RawImg'           	'Raw Img'
+            % 'RGB_R'   			'RGB_R'
+            % 'FilteredImg_roi'   	'FilteredImg_r_o_i'
+            %
+            % USAGE:
+            %   Ui.name2str('FilteredImg_RectRoi')
+            %
+            % SEE ALSO title.
+            
+            % 'RawImg' -> 'Raw Img'
+            str = [name(1) regexprep(name(2:end),'[A-Z]',' $&')];
+            
+            % or 'rawImage' -> 'Raw image'
+            %
+            % name = regexprep(name,'[A-Z]',' $&'); % 'rawImage' -> 'raw Image'
+            % name = lower(name);					% -> 'raw image'
+            % name(1) = name(1) + 'A' - 'a';		% -> 'Raw image'
+            
+            % subscript: IMAGE_GRAY - title('IMAGE_G_R_A_Y')
+            
+            S = regexp(str, '_', 'split');
+            if length(S) == 2
+                s1 = S{1}; % Filtered
+                s2 = S{2}; % Mean
+                s_ = repmat('_',1,length(s2));
+                t = [s_; s2];
+                s2 = t(:)' ; %_M_e_a_n
+                str = [s1, s2];
             end
         end
-        function h = imshow(func, varargin)
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % Static methods\imshow
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            %   Example
-            %   -------
-            %       I = imread('circuit.tif');
-            %
-            %       subplot(121);
-            %       imshow(I);
-            %       image = struct('style','image','h',gca); % style must be lower case
-            %       thresh = struct('style','slider','min',0,'max',1,'value',0.5);
-            %       subplot(122);
-            %       % BW = edge(I,'sobel',THRESH)
-            %       Ui.imshow(gca, @edge, image, 'sobel', thresh);
+        
+        %% subimshow
+        function h = subimshow(varargin)
+            %UI.SUBIMSHOW(I,J,K,L...)
+            % USAGE:
+            % 	RawImage = imread('peppers.png');
+            % 	GrayImage = rgb2gray(RawImage);
+            % 	BinaryImage = im2bw(RawImage);
+            % 	BinaryImage_otsu = im2bw(GrayImage, graythresh(GrayImage));
+            %   Ui.subimshow(RawImage,GrayImage,BinaryImage,BinaryImage_otsu)
             
-            %TODO
-            % rearrange the position after window resized.
-            % default value
-            h = gca;
-            n_fixarg = nargin - numel(varargin);
-            % init variables
-            cnt = 0;
-            uictrls = cell(1,numel(varargin));
-            isuictrls = zeros(1,numel(varargin));
-            values = cell(1,numel(varargin));
-            pos = h.Position .* [560 420 0 0];
+            titles = cell(1,numel(varargin));
+            
             for n = 1:numel(varargin)
                 arg = varargin{n};
-                if isstruct(arg) % BUG: some function may take struct as an input
-                    cnt = cnt + 1;
-                    switch lower(arg.style)
-                        case 'slider'
-                            uicontrol('style','text',...
-                                'position',pos + [0 0 60 15],...
-                                'string',inputname(n+n_fixarg));
-                            values{cnt} = uicontrol('style','text',...
-                                'position',pos + [0 -15 60 15],...
-                                'string',inputname(n+n_fixarg));
-                            uictrls{cnt} = uicontrol('style','slider',...
-                                'position',pos + [60 -15 120 30]...
-                                );
-                        case 'popup'
-                            uictrls{cnt} = uicontrol('style','popup');
-                            
-                            % additional ui controls
-                        case 'image'
-                            uictrls{cnt} = arg.h;
-                        case 'rangeslider'
-                        otherwise
-                            disp('Unknown ui control style.');
-                    end
-                    % add other properties of uictrls{cnt}
-                    switch lower(arg.style)
-                        case {'slider','popup'}
-                            isuictrls(cnt) = true;
-                            fields = fieldnames(arg);
-                            for n = 2:numel(fields) % style must be the first field
-                                set(uictrls{cnt}, fields{n}, arg.(fields{n}));
-                            end
-                    end
-                end
-                % init uictrls done, add callback
-                for n_cnt = 1:cnt
-                    if isuictrls(n_cnt)
-                        set(uictrls{n_cnt},'callback',@(h,e)callback_func());
-                    end
-                end
+                name = inputname(n);
                 
-                % call once
-                callback_func();
+                if isempty(name)
+                    titles{n} = class(arg);
+                else
+                    titles{n} = sprintf('(%s) \\color{blue}%s',...
+                        class(arg), Ui.name2str(name));
+                end
             end
+            h = Ui.eachsubplot(@imshow, varargin, titles);
+            %, variable name of
+            % I,J,K,... will be titled.
+            % default title
+        end
+        
+        %% subplot
+        function h = subplot(varargin)
+            %UI.SUBPLOT(I,J,K) is same as
+            % subplot(221); plot(I);
+            % subplot(222); plot(J);
+            % subplot(223); plot(K);
+            %
+            % USAGE
+            %  x = 1:50;
+            %  Ui.subplot(sin(x),cos(x),sin(2*x),cos(2*x));
             
-            function callback_func()
-                % shared args: h,uictrls,func,varargin{:},values
-                % load the value of uicontrols
-                
-                titlestr = [char(func) '('];
-                idx = 0;
-                args = varargin;
-                for m = 1:numel(args)
-                    if isstruct(args{m})
-                        idx = idx + 1;
-                        switch lower(args{m}.style)
-                            case {'popup'}
-                                args{m} = get(uictrls{idx},'value');
-                            case 'slider'
-                                args{m} = get(uictrls{idx},'value');
-                                set(values{idx},'string',num2str(args{m}));%,'%2.2f'
-                                
-                            case 'image'
-                                args{m} = getimage(uictrls{idx});
-                            case 'rangeslider'
-                            otherwise
-                                disp('Unknown ui control style.');
-                        end
-                    end
-                    
-                    if ischar(args{m})
-                        titlestr = sprintf('%s''%s'',',titlestr,args{m});
-                    elseif isscalar(args{m})
-                        titlestr = [titlestr num2str(args{m}) ','];
-                    else
-                        disp('Unknown arg type.');
-                    end
-                end
-                result = func(args{:});
-                axes(h);
-                imshow(result);
-                
-                %TODO:use txt instead of title to avoid conflict
-                titlestr = [titlestr(1:end-1) ')'];
-                title(titlestr);
-                %title(sprintf('%s(%)') char(func) )
-            end
-            
+            h = Ui.eachsubplot(@plot, varargin);
         end
         
     end% methods
