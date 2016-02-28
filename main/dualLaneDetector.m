@@ -13,6 +13,16 @@ classdef dualLaneDetector<handle
             %TODO: below the horizon
             ROI = Raw.rectroi({ceil(Raw.rows/2):Raw.rows,1:Raw.cols});
             
+            %% Preproc:Filtering road marking
+            
+            % do filter on R, G, B then cat
+            % img.eachchn()
+            LT = vvMark.rowFilter(ROI, @vvMark.LT);
+            MLT = vvMark.rowFilter(ROI, @vvMark.MLT);
+            SMLT = vvMark.rowFilter(ROI, @vvMark.SMLT);
+            Fig.subimshow(ROI,LT,MLT,SMLT);
+            return;
+            
             %% Segmentation
 %             vvSeg.felzen(ROI);return;
             ISeg = vvSeg.felzen(ROI,3,200,50);%200

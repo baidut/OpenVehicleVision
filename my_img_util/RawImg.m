@@ -13,10 +13,21 @@ classdef RawImg<handle
     methods (Access = public)
         
         function I = RawImg(ImageFile)
-            [I.path,I.name,I.ext] = fileparts(ImageFile);
-            I.data = imread(ImageFile);
+			if ischar(ImageFile)
+				[I.path,I.name,I.ext] = fileparts(ImageFile);
+				I.data = imread(ImageFile);
+			else
+				I.data = ImageFile;
+			end
             [I.rows, I.cols, I.chns] = size(I.data);
         end
+		
+		function I = togray(I)
+			if ~I.isgray()
+				I.data = rgb2gray(I.data);
+				I.chns = 1;
+            end
+		end
         
         % selrows
         % selcols
