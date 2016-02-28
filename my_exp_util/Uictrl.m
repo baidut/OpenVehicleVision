@@ -61,13 +61,18 @@ classdef Uictrl<handle
                 if n == 1, fprintf('(');
                 else fprintf(',');
                 end
-				
+                
                 if isscalar(args{n})
-					fprintf('%f',args{n}); 
+                    switch class(args{n})
+                        case 'function_handle'
+                            fprintf('@%s',char(args{n}));
+                        otherwise
+                            fprintf('%f',args{n});
+                    end
                 elseif ischar(args{n})
-					fprintf('''%s''',args{n});
-				elseif size(args{n},1)==1&&size(args{n},2)==2
-					fprintf('[%f,%f]',args{n}(1),args{n}(2));
+                    fprintf('''%s''',args{n});
+                elseif size(args{n},1)==1&&size(args{n},2)==2
+                    fprintf('[%f,%f]',args{n}(1),args{n}(2));
                 else fprintf('%s',obj.argName{n});
                 end
             end%for

@@ -93,7 +93,7 @@ classdef vvMark
             
         end
         
-        function Filtered = rowFilter(im, filter)
+        function Filtered = rowFilter(im, filter, ratio)
             % since the perspective effect in vehicle vision image,
             % size of rowFilter template will adjust according to the row position
             % please do roi selection first to make the horizon line first row.
@@ -109,7 +109,10 @@ classdef vvMark
             I = RawImg(im);
             I.togray();
             
-            ratio = 0.1;
+            if nargin < 3
+                ratio = 0.1;
+            end
+            
             % width = I.cols/10;% lane marking width
             
             Filtered = I.data;

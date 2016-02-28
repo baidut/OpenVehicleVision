@@ -14,14 +14,20 @@ classdef dualLaneDetector<handle
             ROI = Raw.rectroi({ceil(Raw.rows/2):Raw.rows,1:Raw.cols});
             
             %% Preproc:Filtering road marking
+            % may smooth the road boundary either
             
             % do filter on R, G, B then cat
             % img.eachchn()
-            LT = vvMark.rowFilter(ROI, @vvMark.LT);
-            MLT = vvMark.rowFilter(ROI, @vvMark.MLT);
-            SMLT = vvMark.rowFilter(ROI, @vvMark.SMLT);
-            Fig.subimshow(ROI,LT,MLT,SMLT);
-            return;
+%             LT = vvMark.rowFilter(ROI, @vvMark.LT);
+%             MLT = vvMark.rowFilter(ROI, @vvMark.MLT);
+%             SMLT = vvMark.rowFilter(ROI, @vvMark.SMLT);
+%             Fig.subimshow(ROI,LT,MLT,SMLT);
+            
+%             Size = Uiview('slider','min',0,'max',1,'value',0.1);
+%             SMLT = Uictrl(@vvMark.rowFilter, ROI, @vvMark.SMLT, Size);
+%             Fig.subimshow(ROI,SMLT);
+            SMLT = vvMark.rowFilter(ROI,@vvMark.SMLT,0.3);
+            ROI = SMLT;
             
             %% Segmentation
 %             vvSeg.felzen(ROI);return;
@@ -42,7 +48,7 @@ classdef dualLaneDetector<handle
             BoundR = vvBoundModel.houghStraightLine(Edge, -boundAngleRange); % -89:0
             
             Result = Raw.roidrawmask(RoadFace.data);
-            Ui.subimshow(Raw,Result,ROI,ISeg);
+            Fig.subimshow(Raw,Result,ROI,ISeg);
             selplot(2);
             %plotpoint(Edge);% TODO: remove plotpoint, 
             BoundL.plot('r');
