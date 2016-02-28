@@ -1,4 +1,4 @@
-classdef Ui
+classdef Fig
     %%
     %
     %%
@@ -157,10 +157,10 @@ classdef Ui
                     titles{n} = class(arg);
                 else
                     titles{n} = sprintf('(%s) \\color{blue}%s',...
-                        class(arg), Ui.name2str(name));
+                        class(arg), Fig.name2str(name));
                 end
             end
-            h = Ui.eachsubplot(@imshow, varargin, titles);
+            h = Fig.eachsubplot(@imshow, varargin, titles);
             %, variable name of
             % I,J,K,... will be titled.
             % default title
@@ -177,7 +177,7 @@ classdef Ui
             %  x = 1:50;
             %  Ui.subplot(sin(x),cos(x),sin(2*x),cos(2*x));
             
-            h = Ui.eachsubplot(@plot, varargin);
+            h = Fig.eachsubplot(@plot, varargin);
         end
         
     end% methods
