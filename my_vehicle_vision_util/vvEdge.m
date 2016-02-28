@@ -26,7 +26,7 @@ classdef vvEdge
 			prewitt = Uictrl(@edge, I, 'prewitt', thresh, direction, thinning);
 			roberts = Uictrl(@edge, I, 'roberts', thresh, thinning);
 
-			Ui.subplot(I, sobel, prewitt, roberts);
+			Ui.subimshow(I, sobel, prewitt, roberts);
 			% Ui.subplot(I, roberts); % ,sobel, prewitt
 			% Ui.subplot(roberts, I);
         end
@@ -40,7 +40,7 @@ classdef vvEdge
 			sigma = Uiview('slider','min',0,'max',10,'value',0.1);
 			
 			sobel = Uictrl(@edge, I, 'canny', range, sigma);
-			Ui.subplot(I, sobel);
+			Ui.subimshow(I, sobel);
 		end
 		
     end% methods

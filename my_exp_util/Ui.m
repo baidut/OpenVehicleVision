@@ -116,7 +116,7 @@ classdef Ui
             % SEE ALSO title.
             
             % 'RawImg' -> 'Raw Img'
-            str = [name(1) regexprep(name(2:end),'[A-Z]',' $&')];
+            str = [name(1) regexprep(name(2:end),'([A-Z])[a-z]',' $&')];
             
             % or 'rawImage' -> 'Raw image'
             %

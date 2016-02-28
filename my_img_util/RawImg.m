@@ -37,7 +37,7 @@ classdef RawImg<handle
                 h = imshow(I.data, 'Xdata',xdata, 'Ydata',ydata, varargin{:});
             end
 			
-			title(I.name);
+			title(I.name,'Interpreter','none');
         end
 		
 		function [R,G,B] = rgbchn(I)

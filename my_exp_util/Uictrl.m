@@ -3,6 +3,7 @@ classdef Uictrl<handle
     properties (GetAccess = public, SetAccess = private)
         func,argName,argValue
         h_uictrls,h_axes
+        args_imshow
     end
     
     methods (Static)
@@ -19,17 +20,16 @@ classdef Uictrl<handle
             obj.argValue = varargin;
         end
         
-        function plot(obj,h_axes) % handle
-            %if nargin<2, h = gca; end
-            axes(h_axes);
+        function imshow(obj,varargin) % handle
             obj.h_uictrls = cell(1,numel(obj.argValue));
+            obj.args_imshow = varargin;
             idx = 0;
             for n = 1:numel(obj.argValue)
                 arg = obj.argValue{n};
                 switch class(arg)
                     case 'Uiview'
                         idx = idx + 1;
-                        obj.h_uictrls{n} = arg.plot(h_axes, obj.argName{n}, idx);
+                        obj.h_uictrls{n} = arg.plot(gca, obj.argName{n}, idx);
                         arg.setCallbackFunc(obj.h_uictrls{n},@(h,ev)obj.callback_func());
                         %obj.h_uictrls{n}.Callback = @(h,ev)obj.callback_func();
                     otherwise
@@ -37,7 +37,7 @@ classdef Uictrl<handle
                 end%switch
             end%for
             
-            obj.h_axes = h_axes;
+            obj.h_axes = gca;
             obj.callback_func(); % call once
             % nested callback_func is also ok
         end
@@ -75,7 +75,7 @@ classdef Uictrl<handle
             %if gca ~= h, axes(h);end
             %hold on; % keep the title
             fprintf(');\n');
-            imshow(obj.func(args{:}),'Parent',obj.h_axes);
+            imshow(obj.func(args{:}),'Parent',obj.h_axes, obj.args_imshow{:});
         end
     end% methods
 end% classdef
