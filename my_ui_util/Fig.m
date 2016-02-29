@@ -34,11 +34,77 @@ classdef Fig
     % See also
     %
     % Ui.subimshow, Ui.subimshow, Ui.subplot.
-
+    
+    %% Properties
+    properties (GetAccess = public, SetAccess = private)
+        h;
+    end
+    
+    %% Figure
+    %   F = Fig;
+    %   figure(F); % set F current figure.
+    %   imshow('peppers.png');
+    %   F.maximize();
+    methods (Access = public)
+        function F = Fig(varargin)
+            F.h = figure(varargin{:});
+        end
+        function h = figure(F)
+            figure(F.h);
+            h.NumberTitle = 'off';
+            h.Name = inputname(1);
+        end
+        function h = maximize(F)
+            F.h.Position = get(0,'ScreenSize');
+            h = F.h;
+        end
+    end
+    
+    %% eachsubplot, subimshow, subplot,
     methods (Static)
-        %% eachsubplot
+        % subimshow
+        function h = subimshow(varargin)
+            %UI.SUBIMSHOW(I,J,K,L...)
+            % USAGE:
+            % 	RawImage = imread('peppers.png');
+            % 	GrayImage = rgb2gray(RawImage);
+            % 	BinaryImage = im2bw(RawImage);
+            % 	BinaryImage_otsu = im2bw(GrayImage, graythresh(GrayImage));
+            %   Ui.subimshow(RawImage,GrayImage,BinaryImage,BinaryImage_otsu)
+            
+            titles = cell(1,numel(varargin));
+            
+            for n = 1:numel(varargin)
+                arg = varargin{n};
+                name = inputname(n);
+                
+                if isempty(name)
+                    titles{n} = class(arg);
+                else
+                    titles{n} = sprintf('(%s) \\color{blue}%s',...
+                        class(arg), Fig.name2str(name));
+                end
+            end
+            h = Fig.eachsubplot(@imshow, varargin, titles);
+            %, variable name of
+            % I,J,K,... will be titled.
+            % default title
+        end
+        
+        function h = subplot(varargin)
+            %UI.SUBPLOT(I,J,K) is same as
+            % subplot(221); plot(I);
+            % subplot(222); plot(J);
+            % subplot(223); plot(K);
+            %
+            % USAGE
+            %  x = 1:50;
+            %  Ui.subplot(sin(x),cos(x),sin(2*x),cos(2*x));
+            
+            h = Fig.eachsubplot(@plot, varargin);
+        end
+        
         function h = eachsubplot(func, args, names)
-            %%
             %  EACHSUBPLOT(f,{I,J,K},{'1','2','3'}) is same as
             %  subplot(221); title('1'); f(I);
             %  subplot(222); title('2'); f(J);
@@ -46,17 +112,15 @@ classdef Fig
             %
             %  h = eachsubplot(func,args,names)
             %
-            %%
             % INPUTS
             %
             % * func - handle of function which takes one input
             % * args - cell array of variables
             % * names - cell array of variable names
-            %%
+            %
             % OUTPUTS
             %
             % * h - handle of the figure
-            %
             %
             % NOTE
             %
@@ -102,7 +166,7 @@ classdef Fig
             
             if ~holdstat, hold off; end
         end
-        %% name2str
+        
         function str = name2str(name)
             %NAME2STR convert an identifier to a string
             % name      -->      	string
@@ -136,49 +200,6 @@ classdef Fig
                 str = [s1, s2];
             end
         end
-        
-        %% subimshow
-        function h = subimshow(varargin)
-            %UI.SUBIMSHOW(I,J,K,L...)
-            % USAGE:
-            % 	RawImage = imread('peppers.png');
-            % 	GrayImage = rgb2gray(RawImage);
-            % 	BinaryImage = im2bw(RawImage);
-            % 	BinaryImage_otsu = im2bw(GrayImage, graythresh(GrayImage));
-            %   Ui.subimshow(RawImage,GrayImage,BinaryImage,BinaryImage_otsu)
-            
-            titles = cell(1,numel(varargin));
-            
-            for n = 1:numel(varargin)
-                arg = varargin{n};
-                name = inputname(n);
-                
-                if isempty(name)
-                    titles{n} = class(arg);
-                else
-                    titles{n} = sprintf('(%s) \\color{blue}%s',...
-                        class(arg), Fig.name2str(name));
-                end
-            end
-            h = Fig.eachsubplot(@imshow, varargin, titles);
-            %, variable name of
-            % I,J,K,... will be titled.
-            % default title
-        end
-        
-        %% subplot
-        function h = subplot(varargin)
-            %UI.SUBPLOT(I,J,K) is same as
-            % subplot(221); plot(I);
-            % subplot(222); plot(J);
-            % subplot(223); plot(K);
-            %
-            % USAGE
-            %  x = 1:50;
-            %  Ui.subplot(sin(x),cos(x),sin(2*x),cos(2*x));
-            
-            h = Fig.eachsubplot(@plot, varargin);
-        end
-        
-    end% methods
+    end
+    
 end% classdef

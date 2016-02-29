@@ -2,6 +2,10 @@ function h=slidevar(varname,span)
 %SLIDEVAR controlling a variable with a slidebar 
 % http://www.mathworks.com/matlabcentral/newsreader/view_thread/28286
 
+% Example
+%  var = 80;
+%  h=slidevar('var',[10 100]);
+
 if nargin==2
     h = figure('pos',[300 300 300 80],...
         'menubar','none',...
