@@ -33,7 +33,7 @@ classdef ImCtrl<handle
                     %TODO: panel or child figure
                     %NOTE: Axes cannot be a parent.
                     f = gcf;
-					a = gca;
+                    a = gca;
                     
                     % put uicontrol on the downside of axes
                     height = 20;
@@ -83,7 +83,11 @@ classdef ImCtrl<handle
             %if gca ~= h, axes(h);end
             %hold on; % keep the title
             fprintf(');\n');
+            
+            holdstat = ishold;
+            hold on;
             imshow(obj.func(args{:}),'Parent',obj.h_axes, obj.args_imshow{:});
+            if ~holdstat, hold off; end
         end
     end% methods
 end% classdef

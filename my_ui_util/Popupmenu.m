@@ -1,11 +1,11 @@
-classdef Slider < UiModel
+classdef Popupmenu < UiModel
     %%
     % Example
     %
     %{
 	I = imread('circuit.tif');
-    thresh = Slider([0,0.2]);
-    Sobel = ImCtrl(@edge, I, 'sobel', thresh);
+    direction = Popupmenu({'both','horizontal','vertical'});
+    Sobel = ImCtrl(@edge, I, 'sobel', 0.1, direction);
     Fig.subimshow(I, Sobel);
     %}
     %  Project website: https://github.com/baidut/openvehiclevision
@@ -16,29 +16,35 @@ classdef Slider < UiModel
     %
     % Popupmenu, ImCtrl, RangeSlider.
     
-    %TODO: check int* support
-    
     %% Properties
     properties (GetAccess = public, SetAccess = private)
-        span,prop
+        menu,prop
     end
     
     methods (Access = public)
-        function obj = Slider(span, varargin)
-            obj.span = span;
+        function obj = Popupmenu(menu, varargin)
+            obj.menu = menu;
             obj.prop = varargin;
+            
         end
         function h = plot(obj)
-            h = uicontrol('style', 'slider', obj.prop{:}, ...
-                'min', obj.span(1), ...
-                'max', obj.span(2), ...
-                'value', ( obj.span(1) + obj.span(2) )/2 ...
-                );
+            h = uicontrol('style', 'popupmenu', obj.prop{:});
+            h.String = obj.menu;
+            
             h.Position= obj.Position;
             h.Callback= obj.Callback;
             
-            %add inputname text to the left of uicontrol
             text(obj,inputname(1));
         end
     end
+    
+    %%
+    methods (Static)
+        %   Popmenu.val(h);
+        function value = val(h)
+            maps = h.String;
+            value = maps{h.Value};
+        end
+    end
+    
 end% classdef

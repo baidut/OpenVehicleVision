@@ -17,16 +17,18 @@ classdef vvEdge
 			if nargin == 0, I = imread('circuit.tif');
 			end
 			
-			thresh = Uiview('slider','min',0,'max',0.2,'value',0.1);
-			direction = Uiview('popupmenu','string', {'both','horizontal','vertical'});
-			sigma = Uiview('slider','min',0,'max',0.2,'value',0.1);
-			thinning = Uiview('popupmenu','string', {'thinning','nothinning'});
+			thresh = Slider([0 0.2]);
+			direction = Popupmenu({'both','horizontal','vertical'});
+			%sigma = Slider([0 0.2]);
+			thinning = Popupmenu({'thinning','nothinning'});
 			
-			sobel = Uictrl(@edge, I, 'sobel', thresh, direction, thinning);
-			prewitt = Uictrl(@edge, I, 'prewitt', thresh, direction, thinning);
-			roberts = Uictrl(@edge, I, 'roberts', thresh, thinning);
+			Sobel = ImCtrl(@edge, I, 'sobel', thresh, direction, thinning);
+			Prewitt = ImCtrl(@edge, I, 'prewitt', thresh, direction, thinning);
+			Roberts = ImCtrl(@edge, I, 'roberts', thresh, thinning);
 
-			Ui.subimshow(I, sobel, prewitt, roberts);
+            F = Fig;
+            F.maximize();
+			F.subimshow(I, Sobel, Prewitt, Roberts);
 			% Ui.subplot(I, roberts); % ,sobel, prewitt
 			% Ui.subplot(roberts, I);
         end
@@ -36,11 +38,11 @@ classdef vvEdge
 			end
 			
 			% if THRESH is empty ([]), edge chooses low and high values automatically.
-			range = Uiview('jrangeslider');
-			sigma = Uiview('slider','min',0,'max',10,'value',0.1);
-			
-			sobel = Uictrl(@edge, I, 'canny', range, sigma);
-			Ui.subimshow(I, sobel);
+                range = RangeSlider([0 1]);
+                sigma = Slider([0 10]);
+
+                sobel = ImCtrl(@edge, I, 'canny', range, sigma);
+                Fig.subimshow(I, sobel);
 		end
 		
     end% methods
