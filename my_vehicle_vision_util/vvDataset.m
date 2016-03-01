@@ -24,11 +24,40 @@ implay(AfterRain); % montage(AfterRain);
 
 RawImgs = AfterRain.imgsarray('*.tif');
 GtImgs = AfterRain.imgsarray('*.png');
-RgbGtImgs = repmat(GtImgs, [1, 1, 3]);% gray to rgb
+RgbGtImgs = repmat(GtImgs.*255, [1, 1, 3]);% binary to rgb
     
 implay([RawImgs RgbGtImgs]);
+    
+% Note image must have same size and channel num
+% repmat(GtImgs, [1, 1, 3]);% gray to rgb
+% repmat(GtImgs.*255, [1, 1, 3]);% binary to rgb
+%
+The data set is divided in three different sequences. The first sequence,
+i.e., S¦È, consists of 350 images, and it is used to evaluate the camera
+calibration algorithm. The second sequence consists of 250 images acquired
+during a rainy day, just after the rain stopped so that the road was wet,
+although there were no reflecting puddles. The third sequence consists of
+450 images acquired during a sunny day to favor the existence of shadows.
+The second and third sequences are combined in a single sequence, i.e.,
+SRD, which is used to validate the road detection algorithm. Example images
+of this sequence are shown in Figs. 1 and 2. The former shows an image with
+wet asphalt and vehicles. The latter shows images taken during a sunny day,
+with shadows and the presence of other vehicles. The dataset is available
+online at http://www.cvc.uab.es/adas/databases.
+
+rainy day   250
+sunny day 	450
+    
+After-Rain
+size(RawImgs)   % 480   640     3   481
+size(RgbGtImgs) % 480   640     3   251
+    in all                          732
 
     
+Sunny-Shadows
+size(RawImgs)   % 480   640     3   854
+size(RgbGtImgs) % 480   640     3   754
+    in all                          1608+1(Thumbs.db produced by Windows Explorer)
 % matlab code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % load raw image
