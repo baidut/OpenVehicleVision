@@ -10,3 +10,7 @@ nameFolds = {d(isub).name}';
 %You can then remove . and ..
 nameFolds(ismember(nameFolds,{'.','..'})) = [];
 %You shouldn't do nameFolds(1:2) = [], since dir output from root %directory does not contain those dot-folders. At least on Windows.
+
+if isempty(nameFolds)
+	disp('No subfolder here. You may check your spelling.');
+end
