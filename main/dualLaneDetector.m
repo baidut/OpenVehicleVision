@@ -1,5 +1,11 @@
 classdef dualLaneDetector<handle
 % foreach_file_do('E:\Documents\pku-road-dataset\1\EMER0009\0*.jpg', @dualLaneDetector);
+%{
+AfterRain = vvDataset('%datasets\nicta-RoadImageDatabase\After-Rain');
+files = AfterRain.filenames('*.tif');
+ cellfun(@dualLaneDetector, files, 'UniformOutput',false);
+%}
+% 
 % 0720
 
     %% Public properties
@@ -26,8 +32,9 @@ classdef dualLaneDetector<handle
 %             Size = Uiview('slider','min',0,'max',1,'value',0.1);
 %             SMLT = Uictrl(@vvMark.rowFilter, ROI, @vvMark.SMLT, Size);
 %             Fig.subimshow(ROI,SMLT);
-            SMLT = vvMark.rowFilter(ROI,@vvMark.SMLT,0.3);
-            ROI = SMLT;
+
+%             SMLT = vvMark.rowFilter(ROI,@vvMark.SMLT,0.3);
+%             ROI = SMLT;
             
             %% Segmentation
 %             vvSeg.felzen(ROI);return;
