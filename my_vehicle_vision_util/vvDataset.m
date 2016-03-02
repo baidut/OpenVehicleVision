@@ -35,6 +35,10 @@ MaskedImgs = cell2mat(arrayfun(@(x,y)imdrawmask(x{:},y{:}), ...
 num2cell(RawImgs,1:3),num2cell(GtImgs,1:3),...
 'UniformOutput', false));
     
+%drawmask boundary
+imdrawmask2 = @(x,y)(x + imoverlay(x,y,[255 0 0]) + imoverlay(x,bwperim(y),[0 255 0]));
+
+    
 % PaintImgs
 
 implay([RawImgs OverlayImgs]);
@@ -91,7 +95,7 @@ implay(imgsarray);
     methods (Access = public)
         function obj = vvDataset(path)
             obj.path = path;
-%             obj.sub = subfolder(path);
+            %             obj.sub = subfolder(path);
             
         end
         
@@ -120,6 +124,8 @@ implay(imgsarray);
             a = permute(t,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3
         end
         
+        % TODO:imgscell
+        
         function montage(obj, varargin)
             montage(obj.selected, varargin{:});
         end
@@ -130,6 +136,34 @@ implay(imgsarray);
         %             % select subdataset
         %             obj.curDataset = n;
         %         end
+        
+        function ProbImg = baseline(obj, selector) % averaging images
+             %Example
+             %{
+                % After Rain
+                AfterRain = vvDataset('%datasets\nicta-RoadImageDatabase\After-Rain');
+
+                ProbImg_AfterRain = AfterRain.baseline('*.png');
+                imwrite(ProbImg_AfterRain,'%datasets\nicta-RoadImageDatabase\After-Rain.png');
+             
+                % Sunny Shadows
+                SunnyShadows = vvDataset('%datasets\nicta-RoadImageDatabase\Sunny-Shadows');
+
+                ProbImg_SunnyShadows = SunnyShadows.baseline('*.png');
+                imwrite(ProbImg_SunnyShadows,'%datasets\nicta-RoadImageDatabase\Sunny-Shadows.png');
+             
+                % All images
+                ProbImg_All = (ProbImg_AfterRain+ProbImg_SunnyShadows)/2;
+                Fig.subimshow(ProbImg_AfterRain,ProbImg_SunnyShadows,ProbImg_All);
+                imwrite(ProbImg_All,'%datasets\nicta-RoadImageDatabase\All.png');
+             
+             %}
+            GtImgs = obj.imgsarray(selector);
+            % 480   640     1   754
+            GtImgs = permute(GtImgs,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3
+            nImgs = size(GtImgs,3);
+            ProbImg = double(sum(GtImgs, 3))/nImgs; % double image:0-1
+        end
     end
     %% Satic methods
     methods (Static)
@@ -180,14 +214,6 @@ implay(imgsarray);
                 Out.fps = vidObj.FrameRate;
             end
             
-            %             if ~isfield(Out, 'roi')
-            %                 Out.roi = {1:vidObj.Height,1:vidObj.Width };
-            %             end
-            %
-            %             if ~isfield(Out, 'size')
-            %                 Out.size = [vidObj.Height, vidObj.Width];
-            %             end
-            
             do_roi = isfield(Out, 'roi');
             do_resize = isfield(Out, 'size');
             
@@ -195,9 +221,6 @@ implay(imgsarray);
                 idx = uint32(round(n));
                 vidFrame = read(vidObj, idx);
                 
-                %                 roi = vidFrame(Out.roi{1},Out.roi{2},:);
-                %                 resized = imresize(roi, Out.size);
-                %                 imwrite( resized, sprintf(Out.namefmt,idx) );
                 if do_roi
                     vidFrame = vidFrame(Out.roi{1},Out.roi{2},:);
                 end
@@ -211,36 +234,6 @@ implay(imgsarray);
             
             disp('ok');
             disp(vidObj);
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %             %% old way
-            %             % load default value of parameters.
-            %             if ~isfield(Out, 'size')
-            %                 proc = @(x)x; % do nothing
-            %             else
-            %                 proc = @(frame) imresize(frame, Out.size);
-            %             end
-            %
-            %             if ~isfield(Out, 'namefmt')
-            %                 Out.namefmt = '%04d';
-            %             end
-            %
-            %             if ~isfield(Out, 'roi')
-            %                 select = @(x)x;
-            %             else
-            %                 select = @(x) (x(Out.roi{1},Out.roi{2},:));
-            %             end
-            %
-            %             funct = @(frame, index) imwrite( ...
-            %                 proc(select(frame)), ...
-            %                 sprintf(Out.namefmt,index) ...
-            %                 );
-            %
-            %             if ~isfield(Out, 'fps')
-            %                 foreach_frame_do(video, funct);
-            %             else
-            %                 foreach_frame_do(video, funct, Out.fps);
-            %             end
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
     end
