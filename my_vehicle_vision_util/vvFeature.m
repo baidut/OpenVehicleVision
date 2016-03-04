@@ -32,6 +32,20 @@ classdef vvFeature
             Gray = double(RGB_max - B) ./ double(RGB_max + 1);
         end
         
+        function Gray = Slog(Rgb)
+            [R, G, B] = getChannel(Rgb);
+            RGB_max = max(max(R, G) , B);
+            RGB_min = min(min(R, G) , B);
+            Gray = sqrt(double(RGB_max.^2 - RGB_min.^2) ./ double(RGB_max.^2 + 1));
+        end
+        
+        function Gray = Slog2(Rgb)
+            [R, G, B] = getChannel(Rgb);
+            RGB_max = max(max(R, G) , B);
+            RGB_min = min(min(R, G) , B);
+            Gray = sqrt(double(RGB_max.^2 - RGB_min.^2) ./ double(RGB_max.^2 + 1));
+        end
+        
         function Gray = RpGm2B(Rgb)
             % this feature is unstable, use S2 instead.
             [R, G, B] = getChannel(Rgb);
@@ -77,6 +91,11 @@ classdef vvFeature
             Gray = mat2gray(R - max(G, B));
         end
         
+		%% Binary image
+		
+		%function Bw = lightness(Rgb)
+		% 	Bw = vvThresh.otsu(Rgb);
+		%end
         
         function hsvhist(rgb)
             % with little modification

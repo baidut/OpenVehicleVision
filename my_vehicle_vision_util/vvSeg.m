@@ -31,7 +31,7 @@ classdef vvSeg
             Iseg = vl_quickseg(I, ratio, kernelsize, maxdist);
         end
         
-        function segments = slic(ImgRaw)
+        function labelImg = slic(ImgRaw)
             % note the output segments is not an rendered image, use superpixel
             %http://www.vlfeat.org/overview/slic.html
             % im contains the input RGB image as a SINGLE array
@@ -46,6 +46,8 @@ classdef vvSeg
             %imlab = im2single(imlab);
             imlab = im;
             segments = vl_slic(imlab, regionSize, regularizer);
+            labelImg = LabelImg(segments);
+			if nargout == 0, imshow(labelImg); end
         end
         
         %% Segmentation
