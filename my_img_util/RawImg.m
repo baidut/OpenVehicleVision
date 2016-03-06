@@ -1,11 +1,10 @@
-classdef RawImg<handle
+classdef RawImg<ColorImg
     %     I = Img('circuit.tif');
     
     %% Public properties
     properties (GetAccess = public, SetAccess = private)
         path,name,ext
-        data % only store roi data?
-        rows,cols,chns
+        %data % only store roi data?
         rect%roi
     end
     
@@ -13,13 +12,12 @@ classdef RawImg<handle
     methods (Access = public)
         
         function I = RawImg(ImageFile)
-			if ischar(ImageFile)
-				[I.path,I.name,I.ext] = fileparts(ImageFile);
-				I.data = imread(ImageFile);
-			else
-				I.data = ImageFile;
+			if ~ischar(ImageFile)
+				error('Input must be a string specify the path of an image file');
 			end
-            [I.rows, I.cols, I.chns] = size(I.data);
+			
+			I@ColorImg( imread(ImageFile) ) ;
+			[I.path,I.name,I.ext] = fileparts(ImageFile);
         end
 		
 		function I = togray(I)
@@ -48,7 +46,7 @@ classdef RawImg<handle
                 h = imshow(I.data, 'Xdata',xdata, 'Ydata',ydata, varargin{:});
             end
 			
-			title(I.name,'Interpreter','none');
+			title([I.name, I.ext],'Interpreter','none');
         end
 		
 		function [R,G,B] = rgbchn(I)
