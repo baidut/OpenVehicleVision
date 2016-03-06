@@ -1,4 +1,5 @@
 classdef vvSeg
+    %TODO: matlab support slic superpixels [Introduced in R2016a]
     %VVSEG do image segmentation
     %
     %   Example

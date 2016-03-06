@@ -24,10 +24,11 @@ classdef ColorImg<handle
 			end
 			
 			%no need to use arrayfun since the #chn is not big
+            varargout = cell(I.chns,1);
 			for n = 1:I.chns
 				varargout{n} = func(I.data(:,:,n));
-			end
-		end
+            end
+        end
 		
 		function h = imshow(I, varargin)
             h = imshow(I.data, varargin{:});
