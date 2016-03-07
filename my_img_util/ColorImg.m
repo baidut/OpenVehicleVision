@@ -1,4 +1,5 @@
 classdef ColorImg<handle
+    %TODO: add imadd imsub overwrite
 	% Multi-Channel Image.
     
     %% Public properties

@@ -1,5 +1,6 @@
 classdef RawImg<ColorImg
-    %     I = Img('circuit.tif');
+    %TODO: overwrite save 
+    % save Raw;
     
     %% Public properties
     properties (GetAccess = public, SetAccess = private)

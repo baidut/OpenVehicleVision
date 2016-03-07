@@ -1,13 +1,13 @@
 function test_find_shadow
-
-% strong shadow
-imgFile = '%datasets\roma\BDXD54\IMG00002.jpg'; %'%datasets\roma\BDXD54\IMG00146.jpg';
-% strong shadow IMG00002 IMG00071
+imgFile = '%datasets\roma\BDXD54\IMG00164.jpg';
+% strong shadow IMG00002 IMG00071 IMG00146 (one side) IMG00164 (high light)
+% IMG00030 
+% weak shadow
 Raw = RawImg(imgFile);
 E = zeros([Raw.rows, Raw.cols]);
 
 % for r = 1:Raw.rows-1
-%     b1 = Raw.data(r,:,3); 
+%     b1 = Raw.data(r,:,3);
 %     b2 = Raw.data(r+1,:,3);
 %     g1 = Raw.data(r,:,2);
 %     g2 = Raw.data(r+1,:,2);
@@ -27,20 +27,35 @@ E = zeros([Raw.rows, Raw.cols]);
 % end
 
 %% Explore Strong Shadow Edge Feature
+% Conclusion: shadow edge occurs at delta B-G peak
 % IMPROVE: plot more in one figure.
 % select one column
-
+figure;
 imshow(rot90(Raw.data));%, 'Xdata',[1 Raw.cols]- 255);
 %%
 [~,G,B] = Raw.eachChn();
 hold on;
-%show_colum_gb(ceil(Raw.cols/2));
-show_colum_gb(ceil(Raw.cols/4));
-%show_colum_gb(ceil(Raw.cols*3/4)); % basevalue is fixed for one axes, so `area` cannot be used
+show_column_gb(ceil(Raw.cols/2));
+show_column_gb(ceil(Raw.cols/4));
+show_column_gb(ceil(Raw.cols*3/4)); % basevalue is fixed for one axes, so `area` cannot be used
 camroll(-90);
 
+%% Test shadow detection , shadow removal and ii iamge(shadow and light)
+figure;
+Mask = zeros([Raw.rows*Raw.cols, 3],class(Raw.data));% 'uint8'
+Mask(B>G&B<120,3) = 125;% Mask(B>G&B<120,:) = [0 0 255];
+Mask = reshape(Mask,[Raw.rows, Raw.cols, 3] );
+% imshow(Mask);
+imshow(imadd(Raw.data,Mask));
+
+%% For this time we don't need to do shadow removal, just remove the false edges
+% don't use shadow's boudary since it is variable to threshold
+% use B-G peak
+
+%% B-G peak
+
 %%
-    function show_colum_gb(c)
+    function show_column_gb(c)
         %imshow( rot90(imoverlay(Raw.data,SelectedCol,[255 0 0])) ,'Ydata',[1 Raw.cols]- c);%, 'Xdata',[1 Raw.cols]- 255);
         % imshow( imoverlay(Raw.data,SelectedCol,[255 0 0]) );
         
@@ -50,8 +65,12 @@ camroll(-90);
         %         diff = int32(B(:,c))-int32(G(:,c));
         % plot(diff, 1:Raw.rows, 'b', 'MarkerFaceColor', 'b');
         %area(double(B(:,c)')-double(G(:,c)'), 'FaceColor', 'y'); % area(int32(B(:,c))-int32(G(:,c))); %  'basevalue', -255
-        area(double(B(:,c)-G(:,c))'+c, 'FaceColor', 'b', 'basevalue', c);
-        area(-double(G(:,c)-B(:,c))'+c, 'FaceColor', 'g', 'basevalue', c);
+                b = Raw.cols-c;
+                baseline = ones(1,Raw.rows)*b;
+                fill_between_lines = @(X,Y1,Y2,C) fill( [X fliplr(X)],  [Y1 fliplr(Y2)], C );
+                fill_between_lines( 1:Raw.rows, double(B(:,c)-G(:,c))'+b, baseline,'b');
+                fill_between_lines( 1:Raw.rows, -double(G(:,c)-B(:,c))'+b, baseline,'g');
+        % http://stackoverflow.com/questions/6245626/matlab-filling-in-the-area-between-two-sets-of-data-lines-in-one-figure
     end
 end
 % % select a rect region
