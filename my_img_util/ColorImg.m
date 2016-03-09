@@ -35,6 +35,22 @@ classdef ColorImg<handle
             h = imshow(I.data, varargin{:});
 			title(inputname(1),'Interpreter','none');
         end
-
+		
+		function c = plus(a,b)
+			c = ColorImg(imadd(a.data, b.data));
+		end
+		
+		function c = minus(a,b)
+			c = ColorImg(imsubtract(a.data, b.data));
+		end
+		
+		function c = uminus(a)
+			c = ColorImg(imcomplement(a.data));
+			% if c == a, delete a?
+		end
+		
+		function c = times(a)
+			c = ColorImg(immultiply(a.data, b.data));
+		end
     end% methods
 end% classdef

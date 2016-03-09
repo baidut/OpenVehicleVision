@@ -11,6 +11,16 @@ classdef vvMark
     % properties (GetAccess = public, SetAccess = private)
     % end
     
+    properties (Constant)
+        % [Sm,SM] = [5cm,20cm].
+        % s_min = 17;  % 5cm = 17.5 pixel
+        % s_max = 70;  % 20cm = 70 pixel % 58 pixel
+        
+        k_min = 5;      % min kernel size
+        k_max = 2*70;
+        T_good = 35;    %25 is too low, fixed threshold, not the best threshold but works well
+    end
+    
     %% Static methods
     
     %% Superpixel
@@ -44,6 +54,70 @@ classdef vvMark
             res = imfilter(im, template_DLD, 'corr', 'replicate');
         end
         
+        function res = F_LT(im)
+            % speedup: when size not change, the rows can do filtering
+            % together
+            % block-based filtering
+            m_im = zeros(size(im), 'like', im);
+            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
+            
+            for r = 1 : size(im,1)
+                m_im(r,:) = vvMark.LT(im(r,:), ceil(vvMark.k_min + r*ratio));
+            end
+            res = (im - m_im) > vvMark.T_good;
+        end
+        
+        function res = F_MLT(im)
+            m_im = zeros(size(im), 'like', im);
+            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
+            
+            for r = 1 : size(im,1)
+                m_im(r,:) = vvMark.MLT(im(r,:), ceil(vvMark.k_min + r*ratio));
+            end
+            res = (im - m_im) > vvMark.T_good;
+        end
+        
+        function res = F_SMLT(im)
+        % speedup: m_im -> m_im_left, m_im_right
+        % I - m_im_left > T & I - m_im_right > T
+            res = false(size(im));
+            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
+            
+            for r = 1 : size(im,1)
+                s = ceil(vvMark.k_min + r*ratio);
+                mid = im(r,1+s:end-s);
+                m_left  = vvMark.MLT(im(r,1:end-2*s), s);
+                m_right = vvMark.MLT(im(r,1+2*s:end), s);
+                res(r,s+1:end-s) = (mid - m_left) > vvMark.T_good  ...
+                    & (mid - m_right) > vvMark.T_good;
+            end
+        end
+        
+        function res = F_SLT(im)
+        % speedup: m_im -> m_im_left, m_im_right
+        % I - m_im_left > T & I - m_im_right > T
+            res = false(size(im));
+            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
+            
+            for r = 1 : size(im,1)
+                s = ceil(vvMark.k_min + r*ratio);
+                mid = im(r,1+s:end-s);
+                m_left  = vvMark.LT(im(r,1:end-2*s), s);
+                m_right = vvMark.LT(im(r,1+2*s:end), s);
+                res(r,s+1:end-s) = (mid - m_left) > vvMark.T_good  ...
+                    & (mid - m_right) > vvMark.T_good;
+            end
+        end
+        % matlab speed measure: 
+        % pixel level for-loop
+        % row level for-loop
+        % block level for-loop
+        % arrayfun
+        % left and right
+        % gpu
+        
+        %% fix-ratio-threshold methods
+        % TODO
         function test1dfilter(I, h, w)
             % h - horizon
             % w - lane-marking pixel width of last row
@@ -117,8 +191,7 @@ classdef vvMark
             
             Filtered = I.data;
             for r = 1 : I.rows
-                size = ceil(5 + r*ratio);
-                Filtered(r,:) = filter(I.data(r,:), size);
+                Filtered(r,:) = filter(I.data(r,:), ceil(5 + r*ratio));
             end
             
         end

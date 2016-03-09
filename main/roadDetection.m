@@ -207,9 +207,8 @@ function dtLaneMarking(Img,rHorizon,cBoundaryL,cBoundaryR,thetaSet)
                                  - abs(V_ROI(r,c-mw) - V_ROI(r,c+mw));
         end
     end
-
-    mask = I2 ~= 0;
-    Marking = im2bw(I2, graythresh(I2(mask)));
+    
+    Marking = im2bw(I2, graythresh(I2(I2 ~= 0)));
 
     imdump(3, ROI, I2, Marking);
 
