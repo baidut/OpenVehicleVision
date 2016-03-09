@@ -34,16 +34,22 @@ classdef vvMark
         function res = MLT(im, s) % median filter
             res = medfilt2(im, [1, s]);
         end
-        function res = PLT(im, s)
-        end
-        function res = SLT(im, s)
-        end
-        function res = SMLT(im, s)
-            half_s = ceil(s/2);
-            Middle = medfilt2(im, [1, s]);
-            Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
-            res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
-        end
+        
+%         function res = PLT(im, s)
+%         end
+
+%         function res = SLT(im, s)
+%             half_s = ceil(s/2);
+%             Middle = imfilter(im, ones(1, s)/s , 'corr', 'replicate');
+%             Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
+%             res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
+%         end
+%         function res = SMLT(im, s)
+%             half_s = ceil(s/2);
+%             Middle = medfilt2(im, [1, s]);
+%             Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
+%             res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
+%         end
         
         function res = DLD(im, s) % -1-1 1 1 1 1 -1 -1
             I = double(I); % negative numbers
@@ -53,62 +59,68 @@ classdef vvMark
             template_DLD(half_s*3:s*2) = -1;
             res = imfilter(im, template_DLD, 'corr', 'replicate');
         end
+
+        function m_im = aver(im, func, s)
+            if nargin < 3
+                s = [vvMark.k_min vvMark.k_max];
+            end
+            m_im = zeros(size(im), 'like', im);
+            ratio = (s(2) - s(1)) / size(im, 1);
+            
+            for r = 1 : size(im,1)
+                m_im(r,:) = func(im(r,:), ceil(s(1) + r*ratio));
+            end
+        end
         
-        function res = F_LT(im)
+        function res = F_LT(im, T, varargin)
+            if nargin < 2
+                T = vvMark.T_good;
+            end
             % speedup: when size not change, the rows can do filtering
             % together
             % block-based filtering
-            m_im = zeros(size(im), 'like', im);
-            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
-            
-            for r = 1 : size(im,1)
-                m_im(r,:) = vvMark.LT(im(r,:), ceil(vvMark.k_min + r*ratio));
-            end
-            res = (im - m_im) > vvMark.T_good;
+            m_im = vvMark.aver(im, @vvMark.LT, varargin{:});
+            res = (im - m_im) > T;
         end
         
-        function res = F_MLT(im)
-            m_im = zeros(size(im), 'like', im);
-            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
-            
-            for r = 1 : size(im,1)
-                m_im(r,:) = vvMark.MLT(im(r,:), ceil(vvMark.k_min + r*ratio));
+        function res = F_MLT(im, T, varargin)
+            if nargin < 2
+                T = vvMark.T_good;
             end
-            res = (im - m_im) > vvMark.T_good;
+            m_im = vvMark.aver(im, @vvMark.MLT, varargin{:});
+            res = (im - m_im) > T;
         end
         
-        function res = F_SMLT(im)
-        % speedup: m_im -> m_im_left, m_im_right
-        % I - m_im_left > T & I - m_im_right > T
+        function res = symmetrical(im, func, T, s)
+        % column 1:s_max and end-s_max:s_max will not be assigned value
+            if nargin < 4
+                s = [vvMark.k_min vvMark.k_max];
+            end
+            s_max = s(2);
+            
+            m_im = vvMark.aver(im, func, s);
+            im_mid = im(:,1+s_max:end-s_max);
+            m_im_left = m_im(:,1:end-2*s_max);
+            m_im_right = m_im(:,1+2*s_max:end);
+            
             res = false(size(im));
-            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
-            
-            for r = 1 : size(im,1)
-                s = ceil(vvMark.k_min + r*ratio);
-                mid = im(r,1+s:end-s);
-                m_left  = vvMark.MLT(im(r,1:end-2*s), s);
-                m_right = vvMark.MLT(im(r,1+2*s:end), s);
-                res(r,s+1:end-s) = (mid - m_left) > vvMark.T_good  ...
-                    & (mid - m_right) > vvMark.T_good;
-            end
+            res(:,1+s_max:end-s_max) = (im_mid - m_im_left) > T & (im_mid - m_im_right) > T;
         end
         
-        function res = F_SLT(im)
-        % speedup: m_im -> m_im_left, m_im_right
-        % I - m_im_left > T & I - m_im_right > T
-            res = false(size(im));
-            ratio = (vvMark.k_max - vvMark.k_min) / size(im, 1);
-            
-            for r = 1 : size(im,1)
-                s = ceil(vvMark.k_min + r*ratio);
-                mid = im(r,1+s:end-s);
-                m_left  = vvMark.LT(im(r,1:end-2*s), s);
-                m_right = vvMark.LT(im(r,1+2*s:end), s);
-                res(r,s+1:end-s) = (mid - m_left) > vvMark.T_good  ...
-                    & (mid - m_right) > vvMark.T_good;
+        function res = F_SMLT(im, T, varargin)
+            if nargin < 2
+                T = vvMark.T_good;
             end
+            res = vvMark.symmetrical(im, @vvMark.MLT, T, varargin{:});
         end
-        % matlab speed measure: 
+        
+        function res = F_SLT(im, T, varargin)
+            if nargin < 2
+                T = vvMark.T_good;
+            end
+            res = vvMark.symmetrical(im, @vvMark.LT, T, varargin{:});
+        end
+        % matlab speed measure:
         % pixel level for-loop
         % row level for-loop
         % block level for-loop
