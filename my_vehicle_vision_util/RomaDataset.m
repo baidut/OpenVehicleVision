@@ -52,70 +52,77 @@ classdef RomaDataset < vvDataset
             % figure,montage(imgs1);          % all
             % figure,montage(imgs2(1:2:end)); % partial
             % figure,montage(imgs3(end:-1:1));% descend
-            
-            % % test runtime
-            % tic, imgs = roma.images(roma.situations,roma.scenarioMap.values()); toc
-            % forloop version | - | cellfun version | 0.147112 s
-            % tic, imgs = roma.images(roma.situations(2:3),roma.scenarioMap.values({'AdverseLight','CurvedRoad'})); toc
-            % forloop version | 0.014138 s | cellfun version | 0.014667 s
-            % tic, imgs = roma.images('BDXD54','Rimg.mov'); toc
-            % forloop version | 0.007714 s | cellfun version | 0.009108 s
+            % 
+            % % Get all images
+            % imgs = roma.images(roma.situations,roma.scenarioMap.values());
             
             if ~iscell(situation), situation = {situation}; end
             if ~iscell(scenario), scenario = {scenario}; end
             
-			% for-loop version \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-			%{
-            idx = 0;
-            files = cell([1,numel(situation)*numel(scenario)]);
-            
-            for m = situation
-                for n = scenario
-                    folder = fullfile(roma.path,m{1}); % m{1} is faster than m{:}
-                    movFile = fullfile(folder,n{1});
-                    idx = idx + 1;
-                    files{idx} = strcat(folder,filesep,roma.loadmov(movFile));
-                end
-            end
-			
-			images = cat(1, files{:}); % buggy when one of files is empty: Dimensions of matrices being concatenated are not consistent.
-			%}
-			% end for-loop version ///////////////////////////////////
-			
-			% cellfun version \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-            %%{
 			situ = repmat(situation, [1 numel(scenario)]);
 			scen = repmat(scenario, [1 numel(situation)]);
             files = cellfun(@getAndLoadMov,situ,scen,'UniformOutput',false);
             images = cat(1, files{:});
-            % images{1}
 			
 			function imageList = getAndLoadMov(situation, scenario)
 				folder = fullfile(roma.path,situation);
                 movFile = fullfile(folder,scenario);
                 imageList = strcat(folder,filesep,roma.loadmov(movFile));
 			end
-            %%}
-			% end cell version ///////////////////////////////////////
         end
 		
-		function benchmark(algo, images, threshRange)
+		function [time] = benchmark(roma, algo, images, threshRange)
+		% images = roma.images('BDXD54','Rimg.mov');
+		% roma.benchmark(@vvMark.LT, images, [1 254])
+		% 
+		% image = fullfile(roma.path,'BDXD54\IMG00002.jpg');
+		% roma.benchmark(@vvMark.LT, image);
+			if nargin < 4
+				threshRange = 1:254; % exclude 0 and 255
+			end
+		
+			if ~iscell(images), images = {images}; end
+			
+			% for im = images
+				% image = im{1};
+				% fun = @(t)algo(image,t);
+				% results = arrayfun(fun, threshRange,'UniformOutput',false);
+			% end
+			
+			imgData = cellfun(@imread,'UniformOutput',false);
+			param1 = repmat(imgData,numel(threshRange));
+			param2 = repmat(threshRange,numel(images));
+			
 			tic;
-			% cellfun(@algo, images, )
-			time = toc;
+			results = cellfun(algo,param1,param2,'UniformOutput',false);
+			time = toc/numel(images);
+			
+			% benchmark 
+			% gtImgs = roma.groundTruth(images);
+			
+			if nargout == 0 
+			% ask if visualize best results
+			% ask if save results
+			end
+			
+			
 		end
+		
+% 		function evalResult(roma, )
+% 		
+% 		end
+% 		
+% 		function compareResult(roma, )
+% 		
+% 		
+% 		end
 		
 		function benchmarkAll(roma,algo)
 		% benchmark for all images, all threshold
 		% and output a text file report.
 		
-			for m = roma.situations{:}
-                for n = roma.scenarioMap.values
-					files = roma.images(m,n);
-					benchmark(algo, images, 1:254); % (exclude 0 and 255)
-                end
-            end
-		
+			imgs = roma.images(roma.situations,roma.scenarioMap.values());
+			benchmark(algo, images);
 		end
 		
 		function comparePerformance(roma,algoList)
@@ -156,5 +163,13 @@ classdef RomaDataset < vvDataset
             % all the names
             files=data(2:nelem+1);
         end
+		
+		function gtFiles = groundTruth(oriFiles)
+		% IMG00007.jpg
+		% RIMG00007.pgm
+			if ~iscell(oriFiles), oriFiles = {oriFiles}; end
+			func = @(f) [f(1:end-12) 'R' f(end-11:end-4) '.pgm'];
+			gtFiles = cellfun(func,oriFiles,'UniformOutput',false);
+		end
     end
 end
