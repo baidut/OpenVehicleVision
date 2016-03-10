@@ -14,36 +14,9 @@ classdef vvDataset<handle
     %Example
     %{
 %After-Rain/ After-Rain\
-AfterRain = vvDataset('%datasets\nicta-RoadImageDatabase\After-Rain');
-
-files = AfterRain.filenames('*.tif');
-montage(files(1:8:end));
-
-AfterRain.select('*.tif');
-implay(AfterRain); % montage(AfterRain);
-
-RawImgs = AfterRain.imgsarray('*.tif');
-GtImgs = AfterRain.imgsarray('*.png');
-RgbGtImgs = repmat(GtImgs.*255, [1, 1, 3]);% binary to rgb
-    
-OverlayImgs = cell2mat(arrayfun(@(x,y)imoverlay(x{:},y{:}), ...
-num2cell(RawImgs,1:3),num2cell(GtImgs,1:3),...
-'UniformOutput', false));
-
-imdrawmask = @(x,y)(x + imoverlay(x,y,[255 0 0]));
-MaskedImgs = cell2mat(arrayfun(@(x,y)imdrawmask(x{:},y{:}), ...
-num2cell(RawImgs,1:3),num2cell(GtImgs,1:3),...
-'UniformOutput', false));
-    
-%drawmask boundary
-imdrawmask2 = @(x,y)(x + imoverlay(x,y,[255 0 0]) + imoverlay(x,bwperim(y),[0 255 0]));
 
     
-% PaintImgs
 
-implay([RawImgs OverlayImgs]);
-%implay([RawImgs RgbGtImgs;...
-MaskedImgs OverlayImgs]);
     
 % Note image must have same size and channel num
 % repmat(GtImgs, [1, 1, 3]);% gray to rgb
@@ -93,8 +66,12 @@ imgsarray = permute(t,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3 M-N-3-K
 implay(imgsarray);
     %}
     methods (Access = public)
-        function obj = vvDataset(path)
-            obj.path = path;
+        function obj = vvDataset(varargin)
+            if numel(varargin) == 0
+                obj.path = cd;
+            else
+                obj.path = GetFullPath(fullfile(varargin{:}));
+            end
             %             obj.sub = subfolder(path);
             
         end

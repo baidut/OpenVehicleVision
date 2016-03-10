@@ -53,6 +53,7 @@ for n = 1:numel(f);
     subplot(2,2,n);
     imshow(f{n}(ROI));title(char(f{n}),'Interpreter','none');
 end
+% Elapsed time is 3.359061 seconds.
 
 % Fig.subimshow(Raw, MarkPoints);
 
