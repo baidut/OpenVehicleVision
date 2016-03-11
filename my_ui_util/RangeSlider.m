@@ -33,7 +33,7 @@ classdef RangeSlider < UiModel
         end
         
         function h = plot(obj)
-            jRangeSlider = com.jidesoft.swing.RangeSlider(0,100,30,60);  % min,max,low,high
+            jRangeSlider = com.jidesoft.swing.RangeSlider(0,20,6,12);  % min,max,low,high
             h = javacomponent(jRangeSlider, obj.Position, gcf);
             % set(jRangeSlider, 'MajorTickSpacing',25, 'MinorTickSpacing',5);
             % set(jRangeSlider, 'MajorTickSpacing',25, 'MinorTickSpacing',5, 'PaintTicks',true, 'PaintLabels',true, ...
@@ -46,7 +46,7 @@ classdef RangeSlider < UiModel
         %   Popmenu.val(handle);
         function value = val(obj,h)
             % note jRangeSlider can only parse int.
-            value = double([h.getLowValue h.getHighValue])/100*double(obj.span(2)-obj.span(1));
+            value = double([h.getLowValue h.getHighValue])/20*double(obj.span(2)-obj.span(1));
             % keep data type
             value = cast(value,'like',obj.span);
         end
