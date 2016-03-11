@@ -1,4 +1,4 @@
-classdef vvMark
+classdef vvMark < handle
     %VVMARKFEATURE do lane feature extraction
     %
     %   Example
@@ -21,9 +21,12 @@ classdef vvMark
         T_good = 35;    %25 is too low, fixed threshold, not the best threshold but works well
     end
     
-    %% Static methods
+   properties
+        s_min,s_max
+        T
+   end
     
-    %% Superpixel
+    %% 
     methods (Static)
         
         %% 1D filters
@@ -84,6 +87,7 @@ classdef vvMark
         end
         
         function res = F_MLT(im, T, varargin)
+		% can deal with RGB image
             if nargin < 2
                 T = vvMark.T_good;
             end
@@ -92,19 +96,18 @@ classdef vvMark
         end
         
         function res = symmetrical(im, func, T, s)
-        % column 1:s_max and end-s_max:s_max will not be assigned value
+        % solved: column 1:s_max and end-s_max:s_max will not be assigned value
             if nargin < 4
                 s = [vvMark.k_min vvMark.k_max];
             end
             s_max = s(2);
             
             m_im = vvMark.aver(im, func, s);
-            im_mid = im(:,1+s_max:end-s_max);
-            m_im_left = m_im(:,1:end-2*s_max);
-            m_im_right = m_im(:,1+2*s_max:end);
+            m_im_left = [m_im(:,1:end-s_max) im()];
+            m_im_right = [m_im(:,1+s_max:end) ];
             
             res = false(size(im));
-            res(:,1+s_max:end-s_max) = (im_mid - m_im_left) > T & (im_mid - m_im_right) > T;
+            res(:,1+s_max:end-s_max) = (im - m_im_left) > T & (im - m_im_right) > T;
         end
         
         function res = F_SMLT(im, T, varargin)

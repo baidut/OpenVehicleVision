@@ -92,8 +92,8 @@ classdef RomaDataset < vvDataset
             % end
             
             images = cellfun(@imread,imageFiles,'UniformOutput',false);
-			gtImgs = cellfun(@imread,RomaDataset.groundTruth(imageFiles),'UniformOutput',false);
-			
+            gtImgs = cellfun(@imread,RomaDataset.groundTruth(imageFiles{:}),'UniformOutput',false);
+            
             param1 = repmat(images,numel(threshRange));
             param2 = repmat(threshRange,numel(images));
             
@@ -111,13 +111,14 @@ classdef RomaDataset < vvDataset
         end
         
         function [TPs,FPs,TNs,FNs,cMask] = compareWithGroundTruth(results, GTs)
-		% roma = RomaDataset('%datasets\roma');
-		% imageFile = fullfile(roma.path, 'RouenN8IRC051900\IMG00007.jpg');
-		% I = imread(imageFile);
-		% GT = imread(roma.groundTruth(imageFile));
-		% Result = vvMark.LT(I, 30); % threshold:30
-		% roma.compareWithGroundTruth(Result, GT);
-		
+            % roma = RomaDataset('%datasets\roma');
+            % imageFile = fullfile(roma.path, 'RouenN8IRC051900\IMG00007.jpg');
+            % I = imread(imageFile);
+            % GT = imread(roma.groundTruth(imageFile));
+            % Result = vvMark.F_LT(I, 30); % threshold:30
+            % [TP,FP,TN,FN,visualizeMask] = roma.compareWithGroundTruth(Result, GT);
+            % imshow(I+visualizeMask);
+            
             if ~iscell(results), results = {results}; end
             [cTP,cFP,cTN,cFN,cMask] = cellfun(@eval,results,GTs,'UniformOutput',false);
             TPs = cell2mat(cTP);
@@ -126,9 +127,9 @@ classdef RomaDataset < vvDataset
             FNs = cell2mat(cFN);
             
             function [TP,FP,TN,FN,visualizeMask] = eval(result, GT)
-			% Note TP... is not a ratio but a count number about
-			% how many true positive pixels in image or images.
-			
+                % Note TP... is not a ratio but a count number about
+                % how many true positive pixels in image or images.
+                
                 % lane-marking    GT == 255   result == 1
                 % special-marking GT == 125   result == 0
                 % non-marking     GT == 0     result == 0
@@ -136,11 +137,11 @@ classdef RomaDataset < vvDataset
                 FP_bw = (result == 1) & (GT ~= 255);
                 TN_bw = (result == 0) & (GT ~= 255);
                 FN_bw = (result == 0) & (GT == 255);
-				
-				TP = sum(TP_bw(:));
-				FP = sum(FP_bw(:));
-				TN = sum(TN_bw(:));
-				FN = sum(FN_bw(:));
+                
+                TP = sum(TP_bw(:));
+                FP = sum(FP_bw(:));
+                TN = sum(TN_bw(:));
+                FN = sum(FN_bw(:));
                 % red denotes false negatives, blue areas correspond to
                 % false positives and green represents true positives.
                 % FP and FN need to be transparent for finding the
@@ -151,11 +152,11 @@ classdef RomaDataset < vvDataset
         end
         %
         function [TPs,FPs,TNs,FNs] = compareTwo(results1, results2)
-			assert(numel(results1)==numel(results2));
-			if ~iscell(results1), 
-				results1 = {results1};
-			end
-			
+            assert(numel(results1)==numel(results2));
+            if ~iscell(results1),
+                results1 = {results1};
+            end
+            
             GT = roma.groundTruth(results1);
             [cTP,cFP,cTN,cFN] = cellfun(@eval,results,GT);
             TPs = cell2mat(cTP);
@@ -164,9 +165,9 @@ classdef RomaDataset < vvDataset
             FNs = cell2mat(cFN);
             
             function [TP,FP,TN,FN] = eval(result, gt)
-			% Note TP... is not a ratio but a count number about
-			% how many true positive pixels in image or images.
-			
+                % Note TP... is not a ratio but a count number about
+                % how many true positive pixels in image or images.
+                
                 % lane-marking    gt == 255   result == 1
                 % special-marking gt == 125   result == 0
                 % non-marking     gt == 0     result == 0
@@ -174,11 +175,11 @@ classdef RomaDataset < vvDataset
                 FP_bw = (result == 1) & (gt ~= 255);
                 TN_bw = (result == 0) & (gt ~= 255);
                 FN_bw = (result == 0) & (gt == 255);
-				
-				TP = sum(TP_bw(:));
-				FP = sum(FP_bw(:));
-				TN = sum(TN_bw(:));
-				FN = sum(FN_bw(:));
+                
+                TP = sum(TP_bw(:));
+                FP = sum(FP_bw(:));
+                TN = sum(TN_bw(:));
+                FN = sum(FN_bw(:));
             end
         end
         
@@ -227,17 +228,15 @@ classdef RomaDataset < vvDataset
             files=data(2:nelem+1);
         end
         
-        function gtFiles = groundTruth(oriFiles)
+        function gtFiles = groundTruth(varargin)
+            % % USAGE:
+            %    RomaDataset.groundTruth(IMG00007.jpg')
+            %    RomaDataset.groundTruth(imageFiles{:})
+            
             % IMG00007.jpg
             % RIMG00007.pgm
-            
             func = @(f) [f(1:end-12) 'R' f(end-11:end-4) '.pgm'];
-            
-            if ~iscell(oriFiles) % one single image
-                gtFiles = func(oriFiles);
-            else
-                gtFiles = cellfun(func,oriFiles,'UniformOutput',false);
-            end
+            gtFiles = cellfun(func,varargin,'UniformOutput',false);
         end
     end
 end
