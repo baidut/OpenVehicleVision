@@ -1,4 +1,4 @@
-classdef Fig
+classdef Fig < handle
     %%
     %
     %%
@@ -46,13 +46,22 @@ classdef Fig
     %   imshow('peppers.png');
     %   F.maximize();
     methods (Access = public)
-        function F = Fig(varargin)
+        function F = Fig(titlestr, varargin)
             F.h = figure(varargin{:});
+            if nargin > 1
+                F.title(titlestr);
+            end
         end
         function h = figure(F)
             figure(F.h);
-            h.NumberTitle = 'off';
-            h.Name = inputname(1);
+            h = F.h;
+        end
+        function title(F, string)
+            if nargin == 0
+                string = inputname(1);
+            end
+            F.h.NumberTitle = 'off';
+            F.h.Name = string;
         end
         function h = maximize(F)
             F.h.Position = get(0,'ScreenSize');

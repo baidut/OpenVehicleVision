@@ -25,20 +25,29 @@ classdef Slider < UiModel
     
     methods (Access = public)
         function obj = Slider(span, varargin)
+            % span [min minorstep majorstep max]
             obj.span = span;
             obj.prop = varargin;
         end
         function h = plot(obj)
-            h = uicontrol('style', 'slider', obj.prop{:}, ...
+            h = uicontrol('style', 'slider', ...
                 'min', obj.span(1), ...
                 'max', obj.span(2), ...
-                'value', ( obj.span(1) + obj.span(2) )/2 ...
-                );
+                'value', mean([obj.span(1),obj.span(2)]), ... 
+                obj.prop{:} ... %  rewrite default prop
+                ); 
+            % Note: 'value', ( obj.span(1) + obj.span(2) )/2 may change value type, 
+            % eg. uint8 -> double
             h.Position= obj.Position;
             h.Callback= obj.Callback;
             
             %add inputname text to the left of uicontrol
             text(obj,inputname(1));
         end
+        
+        function value = val(obj,h)
+			value = h.Value;
+            value = cast(value, 'like', obj.span);
+		end 
     end
 end% classdef

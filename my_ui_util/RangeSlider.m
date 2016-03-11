@@ -46,7 +46,9 @@ classdef RangeSlider < UiModel
         %   Popmenu.val(handle);
         function value = val(obj,h)
             % note jRangeSlider can only parse int.
-            value = double([h.getLowValue h.getHighValue])/100*(obj.span(2)-obj.span(1));
+            value = double([h.getLowValue h.getHighValue])/100*double(obj.span(2)-obj.span(1));
+            % keep data type
+            value = cast(value,'like',obj.span);
         end
     end
     

@@ -53,6 +53,10 @@ classdef ImCtrl<handle
         end
         
         function callback_func(obj)
+            % We turn the interface off for processing.
+%             InterfaceObj=findobj(obj.h_axes,'Enable','on');
+%             set(InterfaceObj,'Enable','off');
+
             % arg/args: read the uicontrol values
             args = obj.argValue; % do not change argValue
             
@@ -88,6 +92,9 @@ classdef ImCtrl<handle
             hold on;
             imshow(obj.func(args{:}),'Parent',obj.h_axes, obj.args_imshow{:});
             if ~holdstat, hold off; end
+            
+            % We turn back on the interface
+%             set(InterfaceObj,'Enable','on');
         end
     end% methods
 end% classdef
