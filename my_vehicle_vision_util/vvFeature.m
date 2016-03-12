@@ -32,6 +32,27 @@ classdef vvFeature
             Gray = double(RGB_max - B) ./ double(RGB_max + 1);
         end
         
+        function Gray = shadowfree(Rgb)
+        % roma = vvDataset('%datasets\roma\BDXD54'); % BDXN01 % LRAlargeur13032003
+        % imgs = roma.imgscell('*.jpg');
+        % results = cellfun(@vvFeature.shadowfree, imgs,'UniformOutput',false);
+        % figure,montage(cat(4,imgs{:}));
+        % figure,montage(cat(4,results{:}));
+        
+%             [~, G, B] = getChannel(Rgb);
+%             Gray = (G+255-B);
+
+              [~, G, B] = getChannel(im2double(Rgb));
+              %Gray = abs(G+0.18-B)./B; 
+              Gray = (G+0.2-B)./B; % (G+0.18-B)./B
+              % avoid exceed 1 (saturate)
+        end
+        
+        function r = road(Rgb)
+            sf = vvFeature.shadowfree(Rgb(floor(end/2):end,:,:));
+            r = vvThresh.otsu(sf);
+        end
+        
         function Gray = Slog(Rgb)
             [R, G, B] = getChannel(Rgb);
             RGB_max = max(max(R, G) , B);

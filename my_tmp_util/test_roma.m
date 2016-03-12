@@ -1,14 +1,4 @@
-% This code provide Zhenqiang YING's implementation of following paper:
-%
-% T.Veit, J.-P.Tarel, P.Nicolle, andP. Charbonnier, ¡°Eval-
-% uation of road marking feature extraction,¡± in Intelligent
-% Transportation Systems, 2008. ITSC 2008. 11th Interna-
-% tional IEEE Conference on, Oct 2008, pp. 174¨C181.
-%
-% See also vvMark.
-%
-%   Project website: https://github.com/baidut/openvehiclevision
-%   Copyright 2016 Zhenqiang Ying.
+% This code 
 
 function test_roma(imgFile)
 

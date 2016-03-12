@@ -9,7 +9,7 @@ function test_find_shadow(imgFile)
 boundAngleRange = 30:75;%30:75;
 
 if nargin < 1
-    imgFile = '%datasets\roma\BDXD54\IMG00071.jpg'; %  '%datasets\roma\LRAlargeur26032003\IMG00579.jpg'; %
+    imgFile = '%datasets\roma\BDXD54\IMG00002.jpg'; %  '%datasets\roma\LRAlargeur26032003\IMG00579.jpg'; %
 end
 % strong shadow IMG00002 IMG00071 IMG00146 (one side) IMG00164 (high light)
 % IMG00030
@@ -17,6 +17,11 @@ end
 Raw = RawImg(imgFile);
 
 [R,G,B] = Raw.eachChn();
+S2 = vvFeature.S2(Raw.data);
+
+%% Explore lane-marking feature
+test_dld;return
+
 
 %% Explore Strong Shadow Edge Feature
 % test_gb;return
@@ -32,11 +37,12 @@ Mask(Shadow,3) = 125;% Mask(B>G&B<120,:) = [0 0 255];
 Mask = reshape(Mask,[Raw.rows, Raw.cols, 3] );
 
 % ----------------------------------------------------------------------- %
-figure;Fig.subimshow(Raw, imadd(Raw.data,Mask));return 
+% figure;Fig.subimshow(Raw, imadd(Raw.data,Mask));return
 
 SSEdge = bwperim(Mask(:,:,3)~=0); %bwboundaries(Mask, 8); % Strong Shadow Edge
 Mask = imoverlay(Mask, SSEdge, [255 255 0]);
 
+% ----------------------------------------------------------------------- %
 % figure;imshow(imadd(Raw.data,Mask));return
 
 %% For this time we don't need to do shadow removal, just remove the false edges
@@ -45,7 +51,6 @@ Mask = imoverlay(Mask, SSEdge, [255 255 0]);
 %% Road Edge detection(no strong shadow edge)
 % vvEdge.testCanny(R);% don't use G or B to extract Edge
 
-S2 = vvFeature.S2(Raw.data);
 %% Dealing with large shadow: Edge detection in strong shadow area
 % in strong shadow area, cannot find edge in R image.
 % show hist and enhancement effects
@@ -62,12 +67,15 @@ Enhanced(Shadow) = histeq(ShadowArea(Shadow));
 EdgeInShadow = edge(Enhanced,'canny',[0.0200,0.2900],4.6323);
 BminsG = histeq(mat2gray(B - G));
 
-figure;Fig.subimshow(BminsG, Enhanced);return;% EdgeInShadow
+% ----------------------------------------------------------------------- %
+% figure;Fig.subimshow(BminsG, Enhanced);return;
 
 %% Edge in other area: using S2 to deal with weak shadow
+% use canny ... cannot find the true edge, we need filtering the edge with
+% directrion
 
 % vvEdge.testCanny(S2);return;
-EdgeInS2 = edge(S2,'canny',[0.0900,0.2000],6.5441);
+% EdgeInS2 = edge(S2,'canny',[0.0900,0.2000],6.5441);
 
 EdgeAll = EdgeInShadow | EdgeInS2;
 
@@ -75,6 +83,8 @@ se = strel('square',5); %ceil(Raw.cols/100)*2+1);
 ErodedSSEdge = imdilate(SSEdge,se);
 EdgeTrue = EdgeAll & (~ErodedSSEdge);
 
+
+% ----------------------------------------------------------------------- %
 % use different color to show different kind of Edges
 figure;Fig.subimshow(EdgeInShadow, EdgeInS2);return; % EdgeAll,
 % figure;Fig.subimshow(ErodedSSEdge, EdgeTrue);return; % EdgeAll,
@@ -119,8 +129,48 @@ BoundR.plot('g');
         end
     end
 
-    function edge_detection_by_column_scan()
+    function test_dld()
         
+        figure;
+        imshow(Raw.data);%, 'Xdata',[1 Raw.cols]- 255);
+        
+        hold on;
+%         show_row_dld(ceil(Raw.rows*9/16), R, 'r');
+%         show_row_dld(ceil(Raw.rows*10/16), G, 'g'); 
+%         show_row_dld(ceil(Raw.rows*11/16), B, 'b');
+%         show_row_dld(ceil(Raw.rows*13/16), R, 'r'); 
+%         show_row_dld(ceil(Raw.rows*14/16), G, 'g'); 
+%         show_row_dld(ceil(Raw.rows*15/16), B, 'b');
+
+        [H,S,V] = getChannel(rgb2hsv(Raw.data));
+        
+        show_row_dld(ceil(Raw.rows*9/16), im2uint8(H), 'y');
+        show_row_dld(ceil(Raw.rows*10/16), im2uint8(S), 'm'); 
+        show_row_dld(ceil(Raw.rows*11/16), im2uint8(V), 'c');
+        show_row_dld(ceil(Raw.rows*12/16), im2uint8(S2), 'w');
+        show_row_dld(ceil(Raw.rows*13/16),  im2uint8(H), 'y'); 
+        show_row_dld(ceil(Raw.rows*14/16), im2uint8(S), 'm'); 
+        show_row_dld(ceil(Raw.rows*15/16), im2uint8(V), 'c');
+        
+        function show_row_dld(r, chn, color)
+            % left: show row light
+            % middle: show row hsv (very unstable) color based method are
+            % quite unstable. S2 is good at weak shadow cases. S2 is very
+            % unstable
+            % hsv segmentation is good for road boundary
+            % detection. note we only dealing with limited cases.
+            % Conclusion: low blue diff in shadow cases
+           
+           % since most algorithm precess along each line, we plot... 
+            b = r;
+            baseline = ones(1,Raw.cols)*b;
+            fill_between_lines = @(X,Y1,Y2,C) fill( [X fliplr(X)],  [Y1 fliplr(Y2)], C );
+            fill_between_lines( 1:Raw.cols, -double(chn(r,:))/4+b, baseline,color);
+        end
+    end
+
+    function edge_detection_by_column_scan()
+        % not robust
         E = zeros([Raw.rows, Raw.cols]);
         
         for r = 1:Raw.rows-1
@@ -142,6 +192,11 @@ BoundR.plot('g');
             E((b1>=g1) & (b2<=g2),c ) = 128;
             E((b1<=g1) & (b2>=g2),c ) = 255;
         end
+    end
+
+    function direction_edge()
+        
+        
     end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

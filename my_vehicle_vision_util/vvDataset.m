@@ -88,14 +88,10 @@ implay(imgsarray);
         
         function a = imgsarray(obj, selector)
             imgscell = obj.imgscell(selector);
-            
-            nImgs = numel(imgscell);
-            [nRows, nCols, nChns] = size(imgscell{1});
-            
-            % M-by-N-by-3-by-K array.
-            t = reshape([imgscell{:}], [nRows nCols nImgs nChns]); % M-N*K-3 to M-N-K-3
-            a = permute(t,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3
+            a = cat(4, imgscell{:});
         end
+        % cell to array: cat
+        % a = cat(4, imgs{:})
         
         function c = imgscell(obj, selector)
             if nargin < 2
@@ -105,8 +101,6 @@ implay(imgsarray);
             end
             c = cellfun(@imread,files,'UniformOutput',false);
         end
-        
-        % TODO:imgscell
         
         function montage(obj, varargin)
             montage(obj.selected, varargin{:});

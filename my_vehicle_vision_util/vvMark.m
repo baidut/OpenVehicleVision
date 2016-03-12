@@ -20,39 +20,48 @@ classdef vvMark < handle
         k_max = 2*70;
         T_good = 35;    %25 is too low, fixed threshold, not the best threshold but works well
     end
+
     
-   properties
-        s_min,s_max
-        T
-   end
+    methods (Access = public)
+        function md = vvMark(s_range, horizon, thresh)
+        % md: Mark detector
+            md.s_min = s_range(1);
+            md.s_max = s_range(2);
+            md.thresh = thresh;
+            md.horizon = horizon;
+        end
+        
+        function res = LT(md, im)
+            % speedup: when size not change, the rows can do filtering
+            % together
+            % block-based filtering
+            m_im = vvMark.aver(im, @md.LT, md.size);
+            res = (im - m_im) > T;
+        end
+        
+
+    end
     
-    %% 
+    %%
     methods (Static)
         
-        %% 1D filters
-        % s - size
-        function res = LT(im, s) % mean filter
-            res = imfilter(im, ones(1, s)/s , 'corr', 'replicate');
-        end
-        function res = MLT(im, s) % median filter
-            res = medfilt2(im, [1, s]);
-        end
         
-%         function res = PLT(im, s)
-%         end
-
-%         function res = SLT(im, s)
-%             half_s = ceil(s/2);
-%             Middle = imfilter(im, ones(1, s)/s , 'corr', 'replicate');
-%             Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
-%             res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
-%         end
-%         function res = SMLT(im, s)
-%             half_s = ceil(s/2);
-%             Middle = medfilt2(im, [1, s]);
-%             Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
-%             res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
-%         end
+        
+        %         function res = PLT(im, s)
+        %         end
+        
+        %         function res = SLT(im, s)
+        %             half_s = ceil(s/2);
+        %             Middle = imfilter(im, ones(1, s)/s , 'corr', 'replicate');
+        %             Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
+        %             res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
+        %         end
+        %         function res = SMLT(im, s)
+        %             half_s = ceil(s/2);
+        %             Middle = medfilt2(im, [1, s]);
+        %             Middle = [repmat(Middle(1), [1,half_s]), Middle, repmat(Middle(end), [1,half_s])];
+        %             res = Middle(1:end-half_s*2)/2 + Middle(1+half_s*2:end)/2;
+        %         end
         
         function res = DLD(im, s) % -1-1 1 1 1 1 -1 -1
             I = double(I); % negative numbers
@@ -62,7 +71,7 @@ classdef vvMark < handle
             template_DLD(half_s*3:s*2) = -1;
             res = imfilter(im, template_DLD, 'corr', 'replicate');
         end
-
+        
         function m_im = aver(im, func, s)
             if nargin < 3
                 s = [vvMark.k_min vvMark.k_max];
@@ -87,7 +96,7 @@ classdef vvMark < handle
         end
         
         function res = F_MLT(im, T, varargin)
-		% can deal with RGB image
+            % can deal with RGB image
             if nargin < 2
                 T = vvMark.T_good;
             end
@@ -96,7 +105,7 @@ classdef vvMark < handle
         end
         
         function res = symmetrical(im, func, T, s)
-        % solved: column 1:s_max and end-s_max:s_max will not be assigned value
+            % solved: column 1:s_max and end-s_max:s_max will not be assigned value
             if nargin < 4
                 s = [vvMark.k_min vvMark.k_max];
             end
