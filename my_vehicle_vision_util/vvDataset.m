@@ -87,18 +87,23 @@ implay(imgsarray);
         end
         
         function a = imgsarray(obj, selector)
+            imgscell = obj.imgscell(selector);
+            
+            nImgs = numel(imgscell);
+            [nRows, nCols, nChns] = size(imgscell{1});
+            
+            % M-by-N-by-3-by-K array.
+            t = reshape([imgscell{:}], [nRows nCols nImgs nChns]); % M-N*K-3 to M-N-K-3
+            a = permute(t,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3
+        end
+        
+        function c = imgscell(obj, selector)
             if nargin < 2
                 files = obj.selected;
             else
                 files = obj.select(selector);
             end
-            nfiles = numel(files);
-            [nRows, nCols, nChns] = size(imread(files{1}));
-            
-            imgscell = cellfun(@imread,files,'UniformOutput',false);
-            % M-by-N-by-3-by-K array.
-            t = reshape([imgscell{:}], [nRows nCols nfiles nChns]); % M-N*K-3 to M-N-K-3
-            a = permute(t,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3
+            c = cellfun(@imread,files,'UniformOutput',false);
         end
         
         % TODO:imgscell
