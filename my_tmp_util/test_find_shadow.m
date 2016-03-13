@@ -17,10 +17,16 @@ end
 Raw = RawImg(imgFile);
 
 [R,G,B] = Raw.eachChn();
+[Rd,Gd,Bd] = getChannel(im2double(Raw.data));
 S2 = vvFeature.S2(Raw.data);
 
+%% Explore color feature
+plot_ycbcr;return
+plot_rgb;return
+% plot_rg_minus_b;return
+
 %% Explore lane-marking feature
-test_dld;return
+% test_dld;return
 
 
 %% Explore Strong Shadow Edge Feature
@@ -104,6 +110,145 @@ BoundR.plot('g');
 % close(gcf);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function plot_rgb()
+        hold on;
+        low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
+        
+        %         show_rgb(low_half, ceil(Raw.cols/2));
+        
+        show_rgb(floor(Raw.rows*5/8):floor(Raw.rows*6/8), ceil(Raw.cols/2));
+        
+        % to make it clear, we duplicate the selected column
+        
+        % purpose: strong shadow detection
+        % idea: using color information
+        % S2 notice that B component in road strong shadow is very high.
+        % R,G or B,G can detect shadow edge
+        
+        function show_rgb(rows,c) % rows c
+            % only show the low half image
+            ratio = 20; % scale the y axis
+            
+            image = repmat(Raw.data(rows,c,:), [1 ceil(ratio)]);
+            imshow(rot90(image));
+            hold on;
+            
+            X = rows - rows(1);
+            plot(X, (1-Rd(rows,c))*ratio, 'r', 'LineWidth', 1);
+            plot(X, (1-Gd(rows,c))*ratio, 'g', 'LineWidth', 1);
+            plot(X, (1-Bd(rows,c))*ratio, 'b', 'LineWidth', 1);
+            %             axis on;
+            % explain x and y
+        end
+    end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function plot_ycbcr()
+        hold on;
+        [Y,Cb,Cr] = getChannel(rgb2ycbcr(im2double(Raw.data)));
+        low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
+        
+        show_ycbcr(1:floor(Raw.rows), ceil(Raw.cols*1/4));
+        
+        function show_ycbcr(rows,c) % rows c
+            % only show the low half image
+            ratio = 100;% 20; % scale the y axis
+            
+            maxfig;
+            image = repmat(Raw.data(rows,c,:), [1 ceil(ratio)]);
+            imshow(rot90(image));
+            hold on;
+            
+            % plot
+            % plot
+            % plot will shelter previous curve
+            
+            X = rows - rows(1);
+            plot(X, (1-Y(rows,c))*ratio, 'r', 'LineWidth', 1);
+            plot(X, (1-Cb(rows,c))*ratio, 'g', 'LineWidth', 1);
+            plot(X, (1-Cr(rows,c))*ratio, 'b', 'LineWidth', 1);
+            %             axis on;
+            %             SF = ( Bd(rows,c)-( Gd(rows,c) + 0.2)/2 )./ Bd(rows,c);
+            % %             SF(isinf(SF)) = 0;
+            %             SF(SF<0) = 0;
+            %             plot(X, (1-SF)*ratio, 'm');
+            % explain x and y
+        end
+    end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function plot_ycbcr()
+        hold on;
+        [Y,Cb,Cr] = getChannel(rgb2ycbcr(im2double(Raw.data)));
+        low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
+        
+        show_ycbcr(1:floor(Raw.rows), ceil(Raw.cols*1/4));
+        
+        function show_ycbcr(rows,c) % rows c
+            % only show the low half image
+            ratio = 100;% 20; % scale the y axis
+            
+            maxfig;
+            image = repmat(Raw.data(rows,c,:), [1 ceil(ratio)]);
+            imshow(rot90(image));
+            hold on;
+            
+            % plot
+            % plot
+            % plot will shelter previous curve
+            
+            X = rows - rows(1);
+            plot(X, (1-Y(rows,c))*ratio, 'r', 'LineWidth', 1);
+            plot(X, (1-Cb(rows,c))*ratio, 'g', 'LineWidth', 1);
+            plot(X, (1-Cr(rows,c))*ratio, 'b', 'LineWidth', 1);
+            %             axis on;
+            %             SF = ( Bd(rows,c)-( Gd(rows,c) + 0.2)/2 )./ Bd(rows,c);
+            % %             SF(isinf(SF)) = 0;
+            %             SF(SF<0) = 0;
+            %             plot(X, (1-SF)*ratio, 'm');
+            % explain x and y
+        end
+    end
+    function plot_rg_minus_b()
+        hold on;
+        low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
+        
+        show_rg_minus_b(1:floor(Raw.rows), ceil(Raw.cols*1/4));
+        %         show_rg_minus_b(low_half, ceil(Raw.cols/2));
+        
+        %         show_rg_minus_b(floor(Raw.rows*5/8):floor(Raw.rows*6/8), ceil(Raw.cols/2));
+        
+        % to make it clear, we duplicate the selected column
+        
+        % purpose: strong shadow detection
+        % idea: using color information
+        % S2 notice that B component in road strong shadow is very high.
+        % R,G or B,G can detect shadow edge
+        
+        function show_rg_minus_b(rows,c) % rows c
+            % only show the low half image
+            ratio = 100;% 20; % scale the y axis
+            
+            maxfig;
+            image = repmat(Raw.data(rows,c,:), [1 ceil(ratio)]);
+            imshow(rot90(image));
+            hold on;
+            
+            % plot
+            % plot
+            % plot will shelter previous curve
+            
+            X = rows - rows(1);
+            %             plot(X, (1+Bd(rows,c)-Rd(rows,c))*ratio, 'r', ...
+            %             	 X, (1+Bd(rows,c)-Gd(rows,c))*ratio, 'g', ...
+            %                  X, (1+Bd(rows,c)-Bd(rows,c))*ratio, 'b', 'LineWidth', 3);
+            %             axis on;
+            SF = ( Bd(rows,c)-( Gd(rows,c) + 0.2)/2 )./ Bd(rows,c);
+            %             SF(isinf(SF)) = 0;
+            SF(SF<0) = 0;
+            plot(X, (1-SF)*ratio, 'm');
+            % explain x and y
+        end
+    end
     function test_gb()
         % Conclusion: strong shadow edge occurs at delta B-G peak
         % don't support weak shadow
@@ -135,21 +280,21 @@ BoundR.plot('g');
         imshow(Raw.data);%, 'Xdata',[1 Raw.cols]- 255);
         
         hold on;
-%         show_row_dld(ceil(Raw.rows*9/16), R, 'r');
-%         show_row_dld(ceil(Raw.rows*10/16), G, 'g'); 
-%         show_row_dld(ceil(Raw.rows*11/16), B, 'b');
-%         show_row_dld(ceil(Raw.rows*13/16), R, 'r'); 
-%         show_row_dld(ceil(Raw.rows*14/16), G, 'g'); 
-%         show_row_dld(ceil(Raw.rows*15/16), B, 'b');
-
+        %         show_row_dld(ceil(Raw.rows*9/16), R, 'r');
+        %         show_row_dld(ceil(Raw.rows*10/16), G, 'g');
+        %         show_row_dld(ceil(Raw.rows*11/16), B, 'b');
+        %         show_row_dld(ceil(Raw.rows*13/16), R, 'r');
+        %         show_row_dld(ceil(Raw.rows*14/16), G, 'g');
+        %         show_row_dld(ceil(Raw.rows*15/16), B, 'b');
+        
         [H,S,V] = getChannel(rgb2hsv(Raw.data));
         
         show_row_dld(ceil(Raw.rows*9/16), im2uint8(H), 'y');
-        show_row_dld(ceil(Raw.rows*10/16), im2uint8(S), 'm'); 
+        show_row_dld(ceil(Raw.rows*10/16), im2uint8(S), 'm');
         show_row_dld(ceil(Raw.rows*11/16), im2uint8(V), 'c');
         show_row_dld(ceil(Raw.rows*12/16), im2uint8(S2), 'w');
-        show_row_dld(ceil(Raw.rows*13/16),  im2uint8(H), 'y'); 
-        show_row_dld(ceil(Raw.rows*14/16), im2uint8(S), 'm'); 
+        show_row_dld(ceil(Raw.rows*13/16),  im2uint8(H), 'y');
+        show_row_dld(ceil(Raw.rows*14/16), im2uint8(S), 'm');
         show_row_dld(ceil(Raw.rows*15/16), im2uint8(V), 'c');
         
         function show_row_dld(r, chn, color)
@@ -160,8 +305,8 @@ BoundR.plot('g');
             % hsv segmentation is good for road boundary
             % detection. note we only dealing with limited cases.
             % Conclusion: low blue diff in shadow cases
-           
-           % since most algorithm precess along each line, we plot... 
+            
+            % since most algorithm precess along each line, we plot...
             b = r;
             baseline = ones(1,Raw.cols)*b;
             fill_between_lines = @(X,Y1,Y2,C) fill( [X fliplr(X)],  [Y1 fliplr(Y2)], C );
