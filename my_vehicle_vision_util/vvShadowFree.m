@@ -26,14 +26,51 @@ I = imread('%datasets\nicta-RoadImageDatabase\Sunny-Shadows\261011_p1WBoff_BUMBL
             % 261011_p1WBoff_BUMBLEBEE_06102716324200
             end
             
-            thresh = Slider([0 1],'Value', 0.2); % 0.15
+            thresh = Slider([10 40],'Value', 31); % [0 1] 0.2 0.15
             
-            ShadowFree = ImCtrl(@vvShadowFree.sf, I, thresh);
+            ShadowFree = ImCtrl(@vvShadowFree.sf2, I, thresh);
+            figure;
             Fig.subimshow(I, ShadowFree);
         end
         
+        function find_k()
+            I = imread('%datasets\roma\BDXD54\IMG00071.jpg');
+            thresh = Slider([0 1]); % 0.15
+            ShadowFree = ImCtrl(@vvShadowFree.b, I, thresh);
+            Fig.subimshow(I, ShadowFree);
+        end
+        
+        function ResImg = k(RGBImage, k) % k = 0.56
+            RGBImage = im2int16(RGBImage); % 0-255 overflow, underflow... so trouble
+%             R = RGBImage(:,:,1);
+            G = RGBImage(:,:,2);
+            B = RGBImage(:,:,3);
+            ResImg = mat2gray( B + 255 - k*G );
+        end
+        
+        function ResImg = sf2(RGBImage, k) % k = 0.56
+            RGBImage = double(RGBImage); % 0-255 overflow, underflow... so trouble
+%             R = RGBImage(:,:,1);
+            G = RGBImage(:,:,2);
+            B = RGBImage(:,:,3);
+            ResImg = B * cos(k*pi/180) -  G * sin(k*pi/180);% cos
+            max(ResImg(:)) 
+            min(ResImg(:))
+            ResImg(ResImg>50) = 50;
+            ResImg(ResImg<10) = 10;
+%             ResImg(ResImg<0) = 0;
+            ResImg = (ResImg - min(ResImg(:))) / ( max(ResImg(:)) - min(ResImg(:)) );
+            ResImg = uint8(255*ResImg);
+            
+%             ResImg = mapminmax(ResImg, 0, 1);
+% max(ResImg(:))
+%             ResImg = mapminmax(uint16(ResImg), 0, 255); % remove < 0
+%             ResImg = mat2gray(ResImg); % bigger than 255 cat some thing
+            % uint8( (G + 255 - B) /2 ); dont work
+        end
+        
         function sfImg = sf(RGBImage, thresh) % thresh
-%             RGBImage = im2int16(RGBImage);
+%             RGBImage = im2int16(RGBImage); % will change range!!!!
 %             R = RGBImage(:,:,1);
 %             G = RGBImage(:,:,2);
 %             B = RGBImage(:,:,3);
@@ -52,7 +89,7 @@ I = imread('%datasets\nicta-RoadImageDatabase\Sunny-Shadows\261011_p1WBoff_BUMBL
             % SF(isinf(SF)) = 0; % -Inf -> 0
             SF(SF<0) = 0; % imshow will assume 0-1
             % -Inf will make mat2gray fail!
-            sfbwImg = mat2gray( SF);
+            sfbwImg =  SF;%mat2gray( SF);
             % 1-( G + thresh -B)./B; % (R+B)/2 G  R (R+B)/2
             %sfImg(isnan(sfImg)) = 0;
 %             sfImg = im2uint8(sfImg);

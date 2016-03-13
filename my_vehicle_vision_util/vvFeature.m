@@ -43,13 +43,86 @@ classdef vvFeature
 %             Gray = mat2gray( 2*G - B - R );%(G+255-B);
 
               [R, G, B] = getChannel(im2double(Rgb));
-              Gray =  (G+0.2-B)./B;% (G-B.*1)./(G+B.*1);
+              Gray =  1-(G+0.2-B)./B;% (G-B.*1)./(G+B.*1);
               %Gray = abs(G+0.18-B)./B; 
               % avoid exceed 1 (saturate)
               
               % Gray = (G+0.2-B)./B; is good
               % Gray = (G+0.15-B)./(G+B); is good
         end
+        
+        function ResImg = shadowfree2(RGBImage) % k = 0.56
+            RGBImage = im2double(RGBImage); % 0-255 overflow, underflow... so trouble
+%             R = RGBImage(:,:,1);
+            G = RGBImage(:,:,2);
+            B = RGBImage(:,:,3);
+            Diff = B - 0.5*G; % 0.56*G;
+            b = min(Diff(B>G)),
+            ResImg = 2*(B- 0.5*G - 0.2)./B; return;
+            
+            Diff = B - 0.5*G; % 0.56*G;
+            b = mean(Diff(B>G)),
+            ResImg = 2*(Diff - b)./ B;
+%             ResImg(ResImg<0) = 0;
+%             ResImg = mat2gray(ResImg);
+        end
+        
+        function ResImg = shadowfree3(RGBImage) 
+            RGBImage = double(RGBImage); % 0-255 overflow, underflow... so trouble
+%             R = RGBImage(:,:,1);
+            norm_img = @(im) (im-min(im(:))) ./ (max(im(:))-min(im(:)));
+%             [min(RGBImage(:)) max(RGBImage(:))] % 0/6 255
+            
+%             RGBImage = norm_img(RGBImage); % norm_img meaningless
+            G = RGBImage(:,:,2);
+            B = RGBImage(:,:,3);
+            ResImg = B * cos(30*pi/180) -  G * sin(30*pi/180);% cos
+            % max 220.8365
+            % min -127.5000
+            
+%             [min(ResImg(:)) max(ResImg(:))]
+            
+            % -76.1987  190.3365  sunny_results
+            
+            ResImg(ResImg<0) = 0;
+            ResImg = norm_img(ResImg);
+%             [min(ResImg(:)) max(ResImg(:))]
+
+            
+            %ResImg = uint8(255*ResImg*5); % map to [0 0.2] sunny
+            ResImg = uint8(255*ResImg*2); % map to [0 0.5] roma
+%             ResImg(ResImg>50) = 255;
+%             [min(ResImg(:)) max(ResImg(:))]
+        end
+        
+        function ResImg = shadowfree4(RGBImage) 
+            RGBImage = double(RGBImage); % 0-255 overflow, underflow... so trouble
+%             R = RGBImage(:,:,1);
+            norm_img = @(im) (im-min(im(:))) ./ (max(im(:))-min(im(:)));
+%             [min(RGBImage(:)) max(RGBImage(:))] % 0/6 255
+            
+%             RGBImage = norm_img(RGBImage); % norm_img meaningless
+            G = RGBImage(:,:,2);
+            B = RGBImage(:,:,3);
+            ResImg = ( 2*B  -  G * sin(30*pi/180) )./B ;% cos
+            % max 220.8365
+            % min -127.5000
+            
+%             [min(ResImg(:)) max(ResImg(:))]
+            
+            % -76.1987  190.3365  sunny_results
+            
+            ResImg(ResImg<0) = 0;
+            ResImg = norm_img(ResImg);
+%             [min(ResImg(:)) max(ResImg(:))]
+
+            
+            %ResImg = uint8(255*ResImg*5); % map to [0 0.2] sunny
+            ResImg = uint8(255*ResImg); % map to [0 0.5] roma
+%             ResImg(ResImg>50) = 255;
+%             [min(ResImg(:)) max(ResImg(:))]
+        end
+        
 %   sunny = vvDataset('%datasets\nicta-RoadImageDatabase\Sunny-Shadows'); % BDXN01 % LRAlargeur13032003
 %   imgs = sunny.imgscell('*.tif');
 %   results = cellfun(@vvFeature.shadowfree, imgs,'UniformOutput',false);

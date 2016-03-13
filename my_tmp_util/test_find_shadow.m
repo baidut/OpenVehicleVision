@@ -21,7 +21,7 @@ Raw = RawImg(imgFile);
 S2 = vvFeature.S2(Raw.data);
 
 %% Explore color feature
-plot_ycbcr;return
+% plot_ycbcr;return
 plot_rgb;return
 % plot_rg_minus_b;return
 
@@ -112,6 +112,14 @@ BoundR.plot('g');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function plot_rgb()
         hold on;
+        %% Find the k
+        
+        a = Slider([0 5]);
+        sobel = ImCtrl(@edge, I, 'canny', range, a);
+        Fig.subimshow(I, sobel);
+        
+        return;
+        %% plot rgb
         low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
         
         %         show_rgb(low_half, ceil(Raw.cols/2));
@@ -137,43 +145,13 @@ BoundR.plot('g');
             plot(X, (1-Rd(rows,c))*ratio, 'r', 'LineWidth', 1);
             plot(X, (1-Gd(rows,c))*ratio, 'g', 'LineWidth', 1);
             plot(X, (1-Bd(rows,c))*ratio, 'b', 'LineWidth', 1);
+            SF = Gd(rows,c) - 2*Bd(rows,c);
+            plot(X, (1-SF)*ratio, 'b', 'LineWidth', 1);
             %             axis on;
             % explain x and y
         end
     end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function plot_ycbcr()
-        hold on;
-        [Y,Cb,Cr] = getChannel(rgb2ycbcr(im2double(Raw.data)));
-        low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
-        
-        show_ycbcr(1:floor(Raw.rows), ceil(Raw.cols*1/4));
-        
-        function show_ycbcr(rows,c) % rows c
-            % only show the low half image
-            ratio = 100;% 20; % scale the y axis
-            
-            maxfig;
-            image = repmat(Raw.data(rows,c,:), [1 ceil(ratio)]);
-            imshow(rot90(image));
-            hold on;
-            
-            % plot
-            % plot
-            % plot will shelter previous curve
-            
-            X = rows - rows(1);
-            plot(X, (1-Y(rows,c))*ratio, 'r', 'LineWidth', 1);
-            plot(X, (1-Cb(rows,c))*ratio, 'g', 'LineWidth', 1);
-            plot(X, (1-Cr(rows,c))*ratio, 'b', 'LineWidth', 1);
-            %             axis on;
-            %             SF = ( Bd(rows,c)-( Gd(rows,c) + 0.2)/2 )./ Bd(rows,c);
-            % %             SF(isinf(SF)) = 0;
-            %             SF(SF<0) = 0;
-            %             plot(X, (1-SF)*ratio, 'm');
-            % explain x and y
-        end
-    end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function plot_ycbcr()
