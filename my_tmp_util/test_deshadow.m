@@ -1,7 +1,6 @@
 %% 
-
-
-
+global e;
+vvShadowFree.demo();
 return;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% KITTI Road Dataset

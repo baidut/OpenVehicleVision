@@ -39,13 +39,30 @@ classdef vvFeature
         % figure,montage(cat(4,imgs{:}));
         % figure,montage(cat(4,results{:}));
         
-%             [~, G, B] = getChannel(Rgb);
-%             Gray = (G+255-B);
+%             [R, G, B] = getChannel(Rgb);
+%             Gray = mat2gray( 2*G - B - R );%(G+255-B);
 
-              [~, G, B] = getChannel(im2double(Rgb));
+              [R, G, B] = getChannel(im2double(Rgb));
+              Gray =  (G+0.2-B)./B;% (G-B.*1)./(G+B.*1);
               %Gray = abs(G+0.18-B)./B; 
-              Gray = (G+0.2-B)./B; % (G+0.18-B)./B
               % avoid exceed 1 (saturate)
+              
+              % Gray = (G+0.2-B)./B; is good
+              % Gray = (G+0.15-B)./(G+B); is good
+        end
+%   sunny = vvDataset('%datasets\nicta-RoadImageDatabase\Sunny-Shadows'); % BDXN01 % LRAlargeur13032003
+%   imgs = sunny.imgscell('*.tif');
+%   results = cellfun(@vvFeature.shadowfree, imgs,'UniformOutput',false);
+%   figure,montage(cat(4,imgs{:}));
+%   figure,montage(cat(4,results{1:9}));
+        
+        function sfImg = test(RGBImage)
+           RGBImage = im2double(RGBImage);
+%             R = RGBImage(:,:,1);
+            G = RGBImage(:,:,2);
+            B = RGBImage(:,:,3);
+            c = 0.2;
+            sfImg = (G+ c-B)./B; %0.2 %0.15 
         end
         
         function r = road(Rgb)
