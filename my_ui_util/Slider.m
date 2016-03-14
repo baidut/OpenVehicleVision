@@ -3,10 +3,12 @@ classdef Slider < UiModel
     % Example
     %
     %{
-	I = imread('circuit.tif');
+    I = imread('circuit.tif');
     thresh = Slider([0,0.2]);
     Sobel = ImCtrl(@edge, I, 'sobel', thresh);
-    Fig.subimshow(I, Sobel);
+    imshow(Sobel);
+    
+    % Fig.subimshow(I, Sobel);
     %}
     %  Project website: https://github.com/baidut/openvehiclevision
     %  Copyright 2016 Zhenqiang Ying [yingzhenqiang-at-gmail.com].

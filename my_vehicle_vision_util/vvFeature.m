@@ -32,6 +32,7 @@ classdef vvFeature
             Gray = double(RGB_max - B) ./ double(RGB_max + 1);
         end
         
+        %% shadow free feature
         function Gray = shadowfree(Rgb)
         % roma = vvDataset('%datasets\roma\BDXD54'); % BDXN01 % LRAlargeur13032003
         % imgs = roma.imgscell('*.jpg');
@@ -165,27 +166,6 @@ classdef vvFeature
         end
         
         %% II features
-        function ii_image = rgb2ii(image, alpha)
-            %RGB2II convert a RGB image to a illumination invariant grayscale image
-            % using the algorithm proposed by Will Maddern in ICRA2014.
-            % Paper:
-            % Illumination Invariant Imaging: Applications in Robust Vision-based
-            % Localisation, Mapping and Classification for Autonomous Vehicles
-            
-            % Chang log:
-            % add default alpha 0.5
-            % fix bug: Undefined function 'log' for input arguments of type 'uint8'.
-            
-            if nargin < 2
-                alpha = 0.5;
-            end
-            
-            image = im2double(image);
-            
-            ii_image = 0.5 + log(image(:,:,2)) - ...
-                alpha*log(image(:,:,3)) - (1-alpha)*log(image(:,:,1));
-            
-        end
         function Gray = ii(Rgb, a)
             %RGB2II convert a RGB image to a illumination invariant grayscale image
             % using the algorithm proposed by Will Maddern in ICRA2014.

@@ -1,9 +1,10 @@
-classdef ImCtrl<handle
+classdef ImCtrl<UiModel
     
     properties (GetAccess = public, SetAccess = private)
         func,argName,argValue
-        h_uictrls,h_axes
-        h_dst = {}
+        h_uictrls, h_axes
+        axes_src
+        axes_dst = {}
         args_imshow
     end
     
@@ -22,7 +23,7 @@ classdef ImCtrl<handle
         end
         
         function addCall(obj, func)
-            obj.h_dst{end+1} = func;
+            obj.axes_dst{end+1} = func;
         end
         
         function removeCall(obj, func)
@@ -57,7 +58,8 @@ classdef ImCtrl<handle
                        obj.argName{n} = class(obj.argValue{n}); 
                     end
                     eval(sprintf('%s=arg;',obj.argName{n}));
-                    eval(sprintf('obj.h_uictrls{n} = %s.plot(obj);',obj.argName{n}));
+                    eval(sprintf('obj.h_uictrls{n} = %s.plot();',obj.argName{n}));
+                    eval(sprintf('%s.register(obj);',obj.argName{n}));
                 end
             end%for
             
@@ -110,12 +112,29 @@ classdef ImCtrl<handle
             imshow(obj.func(args{:}),'Parent',obj.h_axes, obj.args_imshow{:});
             if ~holdstat, hold off; end
             
-            for d = obj.h_dst
+            for d = obj.axes_dst
                 d{1}.update(); % Callback
             end
             
             % We turn back on the interface
 %             set(InterfaceObj,'Enable','on');
+        end
+        
+        function value = val(obj,h)
+            value = getimage(obj.h_axes); % obj.h_axes == h
+        end
+        
+        function register(obj, imctrl)
+            obj.addCall(imctrl);
+        end
+        
+        function h = plot(obj)
+            % TODO: change watch axes
+            uicontrol('style','text',...
+				'position',obj.Position,...
+				'string', inputname(1));
+            obj.text('Src');
+            h = obj.h_axes; %obj.text('ImGet');
         end
     end% methods
 end% classdef
