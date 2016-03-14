@@ -17,27 +17,31 @@ Sobel = ImCtrl(@edge, ImGet(Gray), 'sobel', thresh, direction, thinning);
 Prewitt = ImCtrl(@edge, ImGet(Gray), 'prewitt', thresh, direction, thinning);
 
 Fig.subimshow(Image, Gray, Sobel, Prewitt);
+
+% Note: Fig.subimshow(Image, Sobel, Gray, Prewitt); will cause bug
+% because Sobel's compute need Gray's data, but Sobel is ploted before Gray
 %}
 classdef ImGet < UiModel
     properties (GetAccess = public, SetAccess = public)
-        h_watch
+        h_src
     end
     
     methods (Access = public)
         function obj = ImGet(imctrl)
             % a handle object is like a pointer, so it will not 
             % cause memory copy.
-            obj.h_watch = imctrl;
+            obj.h_src = imctrl;
             % imctrl.h_call
         end
         
         function value = val(obj,h)
-            value = getimage(obj.h_watch.h_axes);
+            value = getimage(obj.h_src.h_axes);
         end
         
-        function h = plot(obj)
+        function h = plot(obj, parent)
             % TODO: change watch axes
             h = obj.text('ImGet');
+            obj.h_src.addCall(parent);
         end
     end
 end% classdef

@@ -3,6 +3,7 @@ classdef ImCtrl<handle
     properties (GetAccess = public, SetAccess = private)
         func,argName,argValue
         h_uictrls,h_axes
+        h_dst = {}
         args_imshow
     end
     
@@ -18,6 +19,15 @@ classdef ImCtrl<handle
                 obj.argName{n} = inputname(n+nargfixed);
             end
             obj.argValue = varargin;
+        end
+        
+        function addCall(obj, func)
+            obj.h_dst{end+1} = func;
+        end
+        
+        function removeCall(obj, func)
+            % maybe buggy
+            obj.h_dst{obj.h_dst==func} = [];
         end
         
         function imshow(obj,varargin) % handle
@@ -39,23 +49,23 @@ classdef ImCtrl<handle
                     height = 20;
                     width = 180;
                     pos = a.Position .* [f.Position(3:4) 0 0] + [-100 50 0 0];
-                    arg.Position = pos + [120 -height*n width height];
-                    arg.Callback = @(h,ev)obj.callback_func();
+                    arg.Position = pos + [120 -height*idx width height];
+                    arg.Callback = @(h,ev)obj.update();
                     
                     % plot
                     if isempty(obj.argName{n})
                        obj.argName{n} = class(obj.argValue{n}); 
                     end
                     eval(sprintf('%s=arg;',obj.argName{n}));
-                    eval(sprintf('obj.h_uictrls{n} = %s.plot();',obj.argName{n}));
+                    eval(sprintf('obj.h_uictrls{n} = %s.plot(obj);',obj.argName{n}));
                 end
             end%for
             
             obj.h_axes = gca;
-            obj.callback_func(); % call once
+            obj.update(); % call once
         end
         
-        function callback_func(obj)
+        function update(obj)
             % We turn the interface off for processing.
 %             InterfaceObj=findobj(obj.h_axes,'Enable','on');
 %             set(InterfaceObj,'Enable','off');
@@ -99,6 +109,10 @@ classdef ImCtrl<handle
             
             imshow(obj.func(args{:}),'Parent',obj.h_axes, obj.args_imshow{:});
             if ~holdstat, hold off; end
+            
+            for d = obj.h_dst
+                d{1}.update(); % Callback
+            end
             
             % We turn back on the interface
 %             set(InterfaceObj,'Enable','on');
