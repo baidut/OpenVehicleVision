@@ -43,6 +43,9 @@ classdef ImCtrl<handle
                     arg.Callback = @(h,ev)obj.callback_func();
                     
                     % plot
+                    if isempty(obj.argName{n})
+                       obj.argName{n} = class(obj.argValue{n}); 
+                    end
                     eval(sprintf('%s=arg;',obj.argName{n}));
                     eval(sprintf('obj.h_uictrls{n} = %s.plot();',obj.argName{n}));
                 end

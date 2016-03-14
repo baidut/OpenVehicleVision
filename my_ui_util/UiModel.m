@@ -12,8 +12,8 @@ classdef UiModel < handle
 		end
     end
 	methods (Access = public)
-		function text(obj,txt)
-			uicontrol('style','text',...
+		function h = text(obj,txt)
+			h = uicontrol('style','text',...
 				'position',obj.Position.*[1 1 0 1] + [-50 0 50 0],...
 				'string',txt);
 		end

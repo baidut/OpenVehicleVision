@@ -1,31 +1,30 @@
 %{
-File = FileChoose();
+File = FilePick();
 Image = ImCtrl(@imread, File);
 Fig.subimshow(Image);
 %}
-classdef FileChoose < UiModel
+classdef FilePick < UiModel
     properties (GetAccess = public, SetAccess = public)
         uigetfile_params
     end
     
     methods (Access = public)
-        function obj = FileChoose(varargin)
+        function obj = FilePick(varargin)
             numvarargs = numel(varargin);
             FilterSpec = {'*.jpg;*.tif;*.png;*.gif','All Image Files';...
                     '*.*','All Files' };
             DialogTitle = 'Choose an image';
-            DefaultName = fullfile('matlabroot','toolbox\images\imdata');
-            
-            optargs = {FilterSpec,DialogTitle,DefaultName};
+            DefaultName = fullfile(matlabroot,'toolbox\images\imdata');
+            optargs = {DefaultName,FilterSpec,DialogTitle};
             
             if numvarargs > numel(optargs)
                 error('myfuns:somefun2Alt:TooManyInputs', ...
-                    'requires at most 3 optional inputs');
+                    'requires at most %d optional inputs',numel(optargs));
             end
             
             optargs(1:numvarargs) = varargin;
 
-            obj.uigetfile_params = optargs(1:3);
+            obj.uigetfile_params = optargs([2 3 1]);
         end
         
         function value = val(obj,h)
