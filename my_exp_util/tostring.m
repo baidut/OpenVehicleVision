@@ -15,7 +15,7 @@ switch class(var)
     case 'function_handle' %isscalar
         str = sprintf('@%s',char(var));
     case 'char' %ischar(var)
-        str = sprintf('''%s''',var);
+        str = ['''' var ''''];
     otherwise
         % then handle other cases
         if isscalar(var)

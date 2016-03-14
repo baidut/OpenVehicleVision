@@ -80,7 +80,7 @@ classdef ImCtrl<handle
                 if isempty(str)
                     fprintf('%s',obj.argName{n});
                 else
-                    fprintf(str);
+                    fprintf('%s',str);
                 end
             end%for
             
@@ -90,6 +90,10 @@ classdef ImCtrl<handle
             
             holdstat = ishold;
             hold on;
+            
+            % clear 
+            cla(obj.h_axes);
+            
             imshow(obj.func(args{:}),'Parent',obj.h_axes, obj.args_imshow{:});
             if ~holdstat, hold off; end
             
