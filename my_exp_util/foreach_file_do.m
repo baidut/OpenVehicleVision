@@ -1,114 +1,43 @@
-function results = foreach_file_do(files, func, varargin)
-% filePath, fileType
-% USAGE:
-% TIPS: watch a movie by showing pictures! foreach_file_do('SLD2011\dataset3\sequence\01*.jpg', @imshow) 
-% TIPS2: res = foreach_file_do('./*.jpg', @(x) vvSegBound(imread(x)));implot(res{:});
-%  	foreach_file_do('pictures/*', @disp)
-%  	foreach_file_do('pictures/*.jpg', @disp)
-%  	foreach_file_do('pictures/lanemarking/*.picture', @disp)
-%  	foreach_file_do('pictures/*shadow*.picture', @disp)
-%  	foreach_file_do('*m', @disp)
-%	foreach_file_do('dataset\roma\LRAlargeur26032003\*.jpg', @imshowcolor, 'hsv')
-% 'pictures\*.jpg
+function results = foreach_file_do(filenames, func, varargin)
+%FOREACH_FILE_DO Execure function for each specified file.
+%   results = foreach_file_do(filenames, func, params)
+%   results{n} = func(file{n}, varargin{:})
+%
+% Example
+%   
+%   % Display files in a folder
+%   files = '%datasets/SLD2011\dataset3\sequence\01*.jpg';
+%  	foreach_file_do(files,@disp);
+%
+%   % Display pictures in a folder
+%  	foreach_file_do(files,@imshow);
+%  	
+%   % Snapshot pictures.
+%  	images = foreach_file_do(files,@imread);
+%   montage(cat(4,images{:}));
+%
+% See more https://github.com/baidut/OpenVehicleVision/issues/46
 
-% 不处理子目录 处理子目录下文件http://blog.sina.com.cn/s/blog_520a99c00101dk41.html
-% 函数未定义的error没有弹出
+% check inputs
+validateattributes(filenames,{'char'},{'nonempty'});
+validateattributes(func,{'function_handle'},{'nonempty'});
 
-% matlab匿名函数 js http://cn.mathworks.com/help/matlab/matlab_prog/anonymous-functions.html
-% foreach_file_do(files, @(I) edge(I,'canny',[t1 t2]), I)
-% ```
-% figure=edge(I,'canny', [t1 t2]) 
-% edgecanny= @(I) edge(I,'canny',[t1 t2]);
-% figure = roifilt2(I, mask, edgecanny) 
-% ```
-
-% 注意foreach_file_do 不支持matlab的路径，因为用的是dir
-% 各种数据集测试，评测代码
-% SLD2011_3 = 'F:\Documents\MATLAB\dataset\SLD2011\dataset3\sequence\0164*.jpg';
-% nicta = 'F:\Documents\MATLAB\dataset\nicta-RoadImageDatabase\After-Rain\after_rain0000*.tif';
-% sunny_shadows = 'F:\Documents\MATLAB\dataset\nicta-RoadImageDatabase\Sunny-Shadows\261011_p1WBoff_BUMBLEBEE_0610271632410*.tif';
-% figs = foreach_file_do(sunny_shadows, @roadDetection);
-
-
- % dir('pictures\*2.jpg')
- 
- % dir('pictures\eas*2.jp*')
-  
- % 支持矩阵输入和字符串输入两种方式�?
- % jp*g
- % bmp
-
-if isstr(files)
-	files = str2files(files);
+% gen full path
+if 0 ~= exist('GetFullPath','file') % 2 or 3
+    filenames = GetFullPath(filenames);
 end
 
-len = size(files, 2);% 修改 注意 length 返回的是行数和列数的�?���?
-results = cell(1, len);
+% get files
+path = fileparts(filenames);
+d = dir(fullfile(filenames));
+nameFolds = {d.name}';
+files = strcat([path '/'],nameFolds);
 
-for ii = 1 : len
-	file = files{1, ii};
-	if iscell(file)
-		file = cell2mat(file);
-    end
-    if nargout == 0
-        func( file, varargin{:} );
-    else
-        results{ii} = func( file, varargin{:} );
-    end
-end
+% exec function
+f = @(x)func(x,varargin{:});
 
-return;
-
-% 以下为旧版代�?
-% function foreach_file_do(filePath, fileType, func, varargin)
-%  	foreach_file_do('./','', @disp)
-%	foreach_file_do('./pictures/','png', @disp)
-%	foreach_file_do('./pictures/','picture', @disp)
-%	foreach_file_do('./pictures/','picture', @imshow)
-% if nargin < 1
-	% path = './'; % default: current folder
-% end
-
-if( filePath(end) ~='/' && filePath(end) ~='\' )
-	filePath = [filePath, '/'];
-end
-
-% fullfile创建跨平台的文件路径，会将字符串里的/转为\ 在windows下两者都可以，但是linux下之能用\
-files = dir(fullfile(filePath)); % dir(fullfile(path,fileExt));  
-len = size(files,1); 
-
-for i = 3 : len  % skip . & ..
-	file = files(i,1).name;
-	
-	if ~ (files(i,1).isdir) % skip sub directory
-	
-		% check fileType
-		if ~isempty(fileType)
-			[junk, fileName, fileExt] = fileparts(file);
-			fileExt = fileExt(2:end);
-			fileExt = lower(fileExt);
-			
-			if ~strcmp(fileExt, fileType) 
-				switch (fileExt)
-				case {'png', 'jpg', 'bmp', 'jpeg', 'tif'}
-					if ~strcmp('picture', fileType)
-						continue;
-					end
-				
-				case {'rmvb', 'avi'}
-					if ~strcmp('video', fileType)
-						continue;
-					end
-				
-				otherwise
-					disp(['unknown file type:', fileExt]);
-					continue;
-					
-				end % switch (fileExt)
-			end % if fileExt ~= fileType
-		end % if ~isempty(fileType)
-		
-		%figure; %方便显示
-		func([filePath, file], varargin{:} );
-	end
+if nargout == 0
+    cellfun(f, files, 'UniformOutput',false);
+else 
+    results = cellfun(f, files, 'UniformOutput',false);
 end
