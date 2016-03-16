@@ -20,6 +20,16 @@ classdef RawImg<ColorImg
 			I@ColorImg( imread(ImageFile) ) ;
 			[I.path,I.name,I.ext] = fileparts(ImageFile);
         end
+        
+        function str = file(self)
+            str = fullfile(self.path,self.name,self.ext);
+        end
+        
+        function disp(self)
+            builtin('disp',self);
+            info = imfinfo(self.file);
+            disp(info);
+        end
 		
 		function I = togray(I)
 			if ~I.isgray()
