@@ -42,29 +42,21 @@ files = AfterRain.filenames('*.tif');
             RoadSmooth = medfilt2(Bw,med_size);
             RoadFace = BwImg.maxarea(RoadSmooth);
             RoadFace = imfill(RoadFace,'holes');
-            RoadBound = BwImg.bound(RoadFace);
             
             
             %% line detection
-            boundAngleRange = 30:75;
-            
-            BoundL = vvBoundModel.houghStraightLine(RoadBound, boundAngleRange); % 0:89
-            BoundR = vvBoundModel.houghStraightLine(RoadBound, -boundAngleRange); % -89:0
-            
-            Result = Raw.roidrawmask(RoadFace); % Img + mask (+g, -b, -r) use mean
-            
-            Marking = dualLaneDetector.getLaneMarking(ROI, RoadFace);
-            
-            line = vvBoundModel.houghStraightLine(Marking, -70:70);
-            
-           
+             [BoundL, BoundR] = self.parabolaModeling(RoadFace);
             
             %% Display results
+            Result = Raw.roidrawmask(RoadFace); % Img + mask (+g, -b, -r) use mean
+            Marking = dualLaneDetector.getLaneMarking(ROI, RoadFace);
+            line = vvBoundModel.houghStraightLine(Marking, -70:70);
+            
             Fig.subimshow(Raw,Result,RoadFace, Marking); % Marking RoadFace
             selplot(1);
             %plotpoint(Edge);% TODO: remove plotpoint,
-            BoundL.plot('r', 'LineWidth' , 5);
-            BoundR.plot('g', 'LineWidth' , 5);
+            plot(BoundL{:}, 'r', 'LineWidth' , 5);
+            plot(BoundR{:}, 'g', 'LineWidth' , 5);
             
             if isempty(line)
                 disp('Fail in lane markings detection.');
@@ -125,6 +117,29 @@ files = AfterRain.filenames('*.tif');
             ii_image(ii_image<0) = 0;
         end
         
+        function [BoundL, BoundR] = StraightLineModeling(RoadFace)
+            RoadBound = BwImg.bound(RoadFace);
+            boundAngleRange = 30:75;
+            
+            BoundL = vvBoundModel.houghStraightLine(RoadBound, boundAngleRange); % 0:89
+            BoundR = vvBoundModel.houghStraightLine(RoadBound, -boundAngleRange); % -89:0
+            
+            BoundL = {BoundL};
+            BoundR = {BoundR};
+        end
+        
+        function [BoundL, BoundR] = parabolaModeling(RoadFace)
+            [xL,yL, xR, yR] = dualLaneDetector.getBoundXY(RoadFace);
+            
+            pL = polyfit(xL,yL,2);
+            pR = polyfit(xR,yR,2);
+            
+            % note: reverse the x y to fit row column
+            % x - column, y - row
+            BoundL = {polyval(pL,xL),xL};
+            BoundR = {polyval(pR,xR),xR};
+        end
+        
         function Marking = getLaneMarking(ROI, roadFaceMask)
             % roi is a rgb image
             % roadFaceMask is a bw (1: road, 0: non-road)
@@ -148,6 +163,79 @@ files = AfterRain.filenames('*.tif');
             else
                 Marking = im2bw(I2, graythresh(I2(I2~=0)));
             end
+        end
+        
+        function [cBoundaryL,cBoundaryR] = getBound(roadFaceMask)
+            % r - row
+            % c - column
+            % a more simple way is find in left and right half
+            % independently.
+            
+            nRow = size(roadFaceMask, 2);
+%             cBoundaryL = zeros([1 nRow]);
+%             cBoundaryR = zeros([1 nRow]);
+%             cLeft = 0;
+%             cRight = size(roadFaceMask,1);
+%             cMid = (cLeft+cRight)/2;
+            for r = nRow:-1:1
+                % find first and last non-zero
+                c = find(roadFaceMask(r,cLeft:cMid),1,'first');
+                if isempty(c)
+                    break;
+                end
+                cBoundaryL(r) = c;
+                cBoundaryR(r) = find(roadFaceMask(r,cMid:cRight),1,'last');
+                % update
+            end
+            
+            % the data need to be clean and transform to xy locations
+            % addPoint
+        end
+        
+        function [XL,YL, XR, YR] = getBoundXY(roadFaceMask)
+            % r - row
+            % c - column
+            % a more simple way is find in left and right half
+            % independently.
+            
+            [nRow, nCol] = size(roadFaceMask);
+            rStart = nRow-10;
+            rEnd = 1;
+%             cBoundaryL = zeros([1 nRow]);
+%             cBoundaryR = zeros([1 nRow]);
+%             cLeft = 0;
+%             cRight = size(roadFaceMask,1);
+%             cMid = (cLeft+cRight)/2;
+            for r = rStart:-1:1 % last row have noice
+                % find first and last non-zero
+                c = find(roadFaceMask(r,:),1,'first');
+                if isempty(c)
+                    rEnd = r;
+                    break;
+                end
+                cBoundaryL(r) = c;
+                cBoundaryR(r) = find(roadFaceMask(r,:),1,'last');
+                % update
+            end
+            % the data need to be clean and transform to xy locations
+            % addPoint
+            
+            XL = rStart:-1:rEnd;
+            XR = rStart:-1:rEnd;
+            
+            YL = cBoundaryL(XL);
+            YR = cBoundaryR(XR);
+            
+            %% filtering points
+            XL(YL<20) = []; % note do XL first, or YL will change
+            YL(YL<20) = [];
+            
+            XR(YR==nCol) = [];
+            YR(YR==nCol) = [];
+        end
+        
+        function func = fitCurve(x)
+            % RANSAC
         end
         
         function dtLaneMarking(Img,rHorizon,cBoundaryL,cBoundaryR,thetaSet)
