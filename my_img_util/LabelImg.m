@@ -25,17 +25,27 @@ classdef LabelImg
 			bw = BwImg(obj.data == index);
 		end
     end% methods
+    
+    methods(Static)
+        function bw = maxareaOf(obj)
+		% max connected area
+		% http://stackoverflow.com/questions/20725603/how-to-select-the-object-with-the-largest-area
+			stat = regionprops(obj,'Centroid','Area','PixelIdxList');
+			[~,index] = max([stat.Area]);
+			bw = (obj == index);
+		end
+    end
 end% classdef
 
-% 提取最大联通分量
+% 提取�?��联�?分量
 
-% 先腐蚀膨胀一下，去除杂点 也可以在前面灰度膨胀
-% 找出最大的连通分量即为路面区域。 或采用膨胀腐蚀算法消去噪点
-% [L, num] = bwlabel(SaturateMap, 4); % TODO 4连通对比
+% 先腐�?���?��下，去除杂点 也可以在前面灰度膨胀
+% 找出�?��的连通分量即为路面区域�? 或采用膨�?���?��法消去噪�?
+% [L, num] = bwlabel(SaturateMap, 4); % TODO 4连�?对比
 % x=zeros(1,num);
 % for idx=1:num
 %    x(idx)=sum(sum(L == idx));
 % end
 % [m, idx] = max(x);
 % Connected = (L == idx);
-% DLD提取的为内部，而Canny为边界，求点乘就没有了。。。
+% DLD提取的为内部，�?Canny为边界，求点乘就没有了�?。�?

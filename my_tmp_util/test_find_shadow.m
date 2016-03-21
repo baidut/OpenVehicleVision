@@ -111,20 +111,23 @@ BoundR.plot('g');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function plot_rgb()
-        hold on;
         %% Find the k
         
-        a = Slider([0 5]);
-        sobel = ImCtrl(@edge, I, 'canny', range, a);
-        Fig.subimshow(I, sobel);
-        
-        return;
         %% plot rgb
-        low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
+        line_segment = {floor(Raw.rows*5/8):floor(Raw.rows*6/8), ceil(Raw.cols/2)};
+        figure,
+        subplot(121); imshow(Raw);hold on;
+        x = ones([numel(line_segment{1}) 1])*line_segment{2};
+        y = line_segment{1};
+%         plot(x,y,'m*','LineWidth',2);
+        plot(x, y, 'm*');
+        
+        subplot(122);
+%         low_half = floor(Raw.rows/2):floor(Raw.rows*3/4); %floor(Raw.rows/2):Raw.rows;
         
         %         show_rgb(low_half, ceil(Raw.cols/2));
         
-        show_rgb(floor(Raw.rows*5/8):floor(Raw.rows*6/8), ceil(Raw.cols/2));
+        show_rgb(line_segment{:});
         
         % to make it clear, we duplicate the selected column
         
@@ -145,8 +148,9 @@ BoundR.plot('g');
             plot(X, (1-Rd(rows,c))*ratio, 'r', 'LineWidth', 1);
             plot(X, (1-Gd(rows,c))*ratio, 'g', 'LineWidth', 1);
             plot(X, (1-Bd(rows,c))*ratio, 'b', 'LineWidth', 1);
-            SF = Gd(rows,c) - 2*Bd(rows,c);
-            plot(X, (1-SF)*ratio, 'b', 'LineWidth', 1);
+            plot(X, (ones([numel(rows),1]))*ratio, 'm*');
+%             SF = Gd(rows,c) - 2*Bd(rows,c);
+%             plot(X, (1-SF)*ratio, 'b', 'LineWidth', 1);
             %             axis on;
             % explain x and y
         end

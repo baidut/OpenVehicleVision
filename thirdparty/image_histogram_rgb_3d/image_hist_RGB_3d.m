@@ -55,7 +55,12 @@ end
 disp('Starting...')
 disp('Reading the image...');
 
-im = imread(imname);    % loading the image
+if ischar(imname)
+	im = imread(imname);    % loading the image
+else
+	im = imname;
+end
+
 s = size(im);
 im = double(im);
 

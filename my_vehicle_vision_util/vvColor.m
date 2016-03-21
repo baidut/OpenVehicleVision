@@ -1,3 +1,6 @@
+% Colorspace Transformations
+% http://cn.mathworks.com/matlabcentral/fileexchange/28790-colorspace-transformations
+
 function imshowcolor(RGB, colorspace)
 %IMSHOWCOLOR show the color channels of an image. 
 % IMSHOWCOLOR(RGB, colorspace) shows the specific colorspace when it is given, 
@@ -19,8 +22,8 @@ function imshowcolor(RGB, colorspace)
 
 % TEST IMAGE:
 % dataset\roma\LRAlargeur26032003\IMG00579.jpg
-% 结论： 通过饱和度划分最可靠
-% 之后就是采用横轴统计进行区域选择，消失点，地平线的检测
+% 结论�?通过饱和度划分最可靠
+% 之后就是采用横轴统计进行区域选择，消失点，地平线的检�?
 % TODO：getChannel改为子函数，支持更多颜色空间
 % help rgb2[tab]
 

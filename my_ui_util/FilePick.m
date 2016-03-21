@@ -40,4 +40,12 @@ classdef FilePick < UiModel
             text(obj,inputname(1));
         end
     end
+    
+    methods (Static)
+        function fullname = one(varargin) 
+        % pick one file
+            [FileName,PathName,~] = uigetfile(varargin{:});
+            fullname = fullfile(PathName, FileName);
+        end
+    end
 end% classdef

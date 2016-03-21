@@ -26,12 +26,18 @@ files = AfterRain.filenames('*.tif');
             ROI = Raw.rectroi({rHorizon:Raw.rows,1:Raw.cols});
             
             %% Shadow Removal
-            ShadowFreeImage = self.rgb2ii(ROI);
+            ShadowFreeImage = self.rgb2ii(ROI, 0.06); % 0.2 roma
             GraySmooth = medfilt2(ShadowFreeImage,med_size);
             %% Segmentation
-            Bw = vvThresh.otsu(GraySmooth);
+            % two-class will suffer car's interferance
+            % multi-class 
+            
             %             Bw = im2bw(GraySmooth, graythresh(GraySmooth)+0.15);
             %% Remove Noise
+            % NOTE: try the wiener2 function: Remove Noise By Adaptive Filtering
+            % see http://cn.mathworks.com/help/images/noise-removal.html
+            % try Relaxation (iterative method) 
+            
             % imguidedfilter: bad performance
             %RoadSmooth = imguidedfilter(Road);
             %imshowpair(Road,RoadSmooth,'montage');
@@ -39,24 +45,28 @@ files = AfterRain.filenames('*.tif');
             %% just get the max conn area
             %RoadSmooth = bwareaopen(~Road, 50, 8);
             %RoadSmooth = bwareaopen(Road, 500, 8);% BwImg.dilate(Road);
-            RoadSmooth = medfilt2(Bw,med_size);
-            RoadFace = BwImg.maxarea(RoadSmooth);
+            
+            % RoadFace = self.getRoadFaceMultiClass(GraySmooth);
+            Label = adaptcluster_kmeans(GraySmooth);
+            RoadFace = LabelImg.maxareaOf(Label);
             RoadFace = imfill(RoadFace,'holes');
-            
-            
+            RoadSegResult = label2rgb(Label);
+
             %% line detection
              [BoundL, BoundR] = self.parabolaModeling(RoadFace);
             
             %% Display results
-            Result = Raw.roidrawmask(RoadFace); % Img + mask (+g, -b, -r) use mean
+            Result = Raw.roidrawmask(RoadFace, 'g'); % Img + mask (+g, -b, -r) use mean
             Marking = dualLaneDetector.getLaneMarking(ROI, RoadFace);
             line = vvBoundModel.houghStraightLine(Marking, -70:70);
             
-            Fig.subimshow(Raw,Result,RoadFace, Marking); % Marking RoadFace
+            figure;
+            maxfig;
+            Fig.subimshow(Raw,Result,ShadowFreeImage, RoadSegResult); % Marking RoadFace
             selplot(1);
             %plotpoint(Edge);% TODO: remove plotpoint,
-            plot(BoundL{:}, 'r', 'LineWidth' , 5);
-            plot(BoundR{:}, 'g', 'LineWidth' , 5);
+            plot(BoundL{:}, 'r'); %, 'LineWidth' , 5);
+            plot(BoundR{:}, 'g'); %, 'LineWidth' , 5);
             
             if isempty(line)
                 disp('Fail in lane markings detection.');
@@ -111,10 +121,31 @@ files = AfterRain.filenames('*.tif');
     end
     %% Algorithm that can be used in the future
     methods (Static)
-        function ii_image = rgb2ii(image)
+        
+        function ii_image = rgb2ii(image, c)
             [~, G, B] = getChannel(im2double(image));
-            ii_image =  1-(G+0.2-B)./B;
+            ii_image =  1-(G+c-B)./B;
             ii_image(ii_image<0) = 0;
+        end
+        
+        function ii_image = rgb2ii_eps(image, c)
+            [~, G, B] = getChannel(im2double(image));
+            ii_image =  1-(G+c-B)./(B+eps);
+            % max min
+        end
+        % replace GB with logG, logB perform badly
+        
+        function RoadFace = getRoadFace2Class(GraySmooth)
+            Bw = vvThresh.otsu(GraySmooth);
+            RoadSmooth = medfilt2(Bw,med_size);
+            RoadFace = BwImg.maxarea(RoadSmooth);
+            RoadFace = imfill(RoadFace,'holes');
+        end
+        
+        function RoadFace = getRoadFaceMultiClass(GraySmooth)
+            Label = adaptcluster_kmeans(GraySmooth);
+            RoadFace = LabelImg.maxareaOf(Label);
+            RoadFace = imfill(RoadFace,'holes');
         end
         
         function [BoundL, BoundR] = StraightLineModeling(RoadFace)

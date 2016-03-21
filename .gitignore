@@ -6,7 +6,19 @@ dataset
 results
 my_test
 output
-dump
+
+# dump the intermediate results for debugging
+dump/*
+
+# matlab auto save files
 *.asv
+
+# tmp files %*/*
 %*
+
+# matlab documentation output
 html
+
+
+*.exe
+*.dll

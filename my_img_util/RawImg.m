@@ -80,11 +80,11 @@ classdef RawImg<ColorImg
 				[R,G,B] = getChannel(I.data(I.rect{:}, :)); %I.rgbchn();
 				switch lower(color)
 					case 'r'
-						R(mask) = 255;
+						R(mask) = 128;
 					case 'g'
-						G(mask) = 255;
+						G(mask) = 128;
 					case 'b'
-						B(mask) = 255;
+						B(mask) = 128;
 				end
 				
 				J = cat(3, R, G, B);

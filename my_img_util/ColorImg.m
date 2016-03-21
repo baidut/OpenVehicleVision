@@ -33,6 +33,7 @@ classdef ColorImg<handle
             
             %no need to use arrayfun since the #chn is not big
             varargout = cell(I.chns,1);
+            
             for n = 1:I.chns
                 varargout{n} = func(I.data(:,:,n));
             end
@@ -67,6 +68,10 @@ classdef ColorImg<handle
         
         %% Image Arithmetic
         function c = plus(a,b)
+%             size(a.data)
+%             size(b.data)
+%             class(a.data)
+%             class(b.data)
             c = ColorImg(imadd(a.data, b.data));
         end
         
@@ -94,23 +99,28 @@ classdef ColorImg<handle
         function out=end(A,k,n)
             out=builtin('end',A.data,k,n);
         end
-        function varargout = subsref(obj,s)
+        function [varargout] = subsref(obj,s)
             % I = ColorImg('peppers.png')
             % imshow(I.R)
             % imshow(I.G(1:2:end, 1:2:end))
-            
             switch s(1).type
                 case '.'
-                    if length(s) == 1
-                        % Implement obj.PropertyName
-                        varargout{1} = obj.channel(s(1).subs);
-                    elseif length(s) == 2
-                        % Implement obj.PropertyName(indices)
-                        chnImg = obj.channel(s(1).subs);
-                        varargout{1} = chnImg(s(2).subs{:});
+                    if numel( s(1).subs ) == 1 % R G B
+                        if length(s) == 1
+                            varargout{1} = obj.channel(s(1).subs);
+                        elseif length(s) == 2
+                            % Implement obj.PropertyName(indices)
+                            chnImg = obj.channel(s(1).subs);
+                            varargout{1} = chnImg(s(2).subs{:});
+                        else
+                            varargout = {builtin('subsref',obj,s)};
+                        end
                     else
-                        varargout = {builtin('subsref',obj,s)};
+                        %  varargout = {builtin('subsref',obj,s)}; only get
+                        %  1*1 cell
+                        [varargout{1:nargout}] = builtin('subsref',obj,s);
                     end
+                    
                 case '()'
                     varargout{1} = builtin('subsref',obj.data,s);
                     % imshow(I(1:2:end, 1:2:end, :).R(1:2:end, 1:2:end))
@@ -160,7 +170,7 @@ classdef ColorImg<handle
             
             switch s(1).type
                 case '.'
-                    if length(s) == 1
+                    if length(s) == 1 && numel( s(1).subs ) == 1
                         % Implement obj.PropertyName = varargin{:};
                         obj.setChannel(s(1).subs,varargin{1});
                     elseif length(s) == 2 && strcmp(s(2).type,'()')

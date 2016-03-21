@@ -176,6 +176,20 @@ classdef Fig < handle
             if ~holdstat, hold off; end
         end
         
+        function subimwrite() % format_string %t for title
+            h = gcf;
+            h.Children
+            for a = h.Children' % 1*n
+                whos a
+                if isa(a,'matlab.graphics.axis.Axes') % Axes UIControl
+                    % "(ImCtrl) \color{blue}Ours" -> "Ours"
+                    name = regexprep(a.Title.String,'\(\w*\)\s\\\w*{\w*}','');
+                    imwrite( getimage(a), [name '.jpg']); % eps
+                end
+            end
+        end
+        
+        %% TODO: recovery name
         function str = name2str(name)
             %NAME2STR convert an identifier to a string
             % name      -->      	string

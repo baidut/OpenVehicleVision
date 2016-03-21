@@ -22,21 +22,19 @@ classdef vvShadow<BwImg
     end
     
     methods(Access = public)
-        function shadow = detect(colorImg)
+        function obj = vvShadow(colorImg)
+        % detect shadow
             [~, G, B] = colorImg.eachChn();
-            LowerB = ~im2bw(B, graythresh( B));
-            shadow.data = (B>G & LowerB);
+            LowerB = ~im2bw(B, graythresh(B)); %mean(B(:))/255
+            obj@BwImg(B > G & LowerB);
         end
     end
     methods(Static)
-        function shadowFreeImage = free1d(colorImg, thresh)
-            % return 1d shadow-free image
-            
-            
-        end
-        
- 
-
+%         function shadowFreeImage = free1d(colorImg, thresh)
+%             % return 1d shadow-free image
+%             
+%             
+%         end
         
         %
         % vvShadowFree.demo(imread('%datasets\webRoad_pku\shadowy_urban.jpg'));
@@ -57,7 +55,7 @@ classdef vvShadow<BwImg
             
             thresh = Slider([10 40],'Value', 31); % [0 1] 0.2 0.15
             
-            ShadowFree = ImCtrl(@vvShadowFree.sf2, I, thresh);
+            ShadowFree = ImCtrl(@dualLaneDetector.rgb2ii, I, thresh);% ImCtrl(@vvShadow.sf, I, thresh);
             figure;
             Fig.subimshow(I, ShadowFree);
         end
