@@ -22,6 +22,13 @@ Road Scene Object Detection
 
 Related dataset, more detection results can be found and download free [here](http://pan.baidu.com/s/1eQ8V2aY#path=%252F%25E9%25A1%25B9%25E7%259B%25AE%25E5%2585%25AC%25E5%25BC%2580%252FOpenVehicleVision)
 
+## Document
+
+* Check code comments via matlab cmd `help foreach_file_do` or `help FilePick.one` 
+* View [online doc](https://github.com/baidut/OpenVehicleVision/issues?q=is%3Aissue+is%3Aclosed+label%3Adocument) 
+* Comment if you have any confuse
+* If your required document is not found, please add one issue [here](https://github.com/baidut/OpenVehicleVision/issues/new)
+
 ## Publications
 
 **Robust Lane Marking Detection using Boundary-Based Inverse Perspective Mapping**
