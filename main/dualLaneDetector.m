@@ -16,9 +16,9 @@ files = AfterRain.filenames('*.tif');
         % 'F:\Documents\pku-road-dataset\1\EMER0009\0379.jpg'
         function self = dualLaneDetector(imgFile)
             %% settings
-            med_size = [10 10];
-            
             Raw = RawImg(imgFile);%0289
+            
+            med_size = [10 10]; %ones([1 2])*ceil(Raw.cols/200);
             %TODO: below the horizon
             
             %% ROI selection
@@ -27,7 +27,9 @@ files = AfterRain.filenames('*.tif');
             
             %% Shadow Removal
             ShadowFreeImage = self.rgb2ii(ROI, 0.06); % 0.2 roma
-            GraySmooth = medfilt2(ShadowFreeImage,med_size);
+%             GraySmooth = medfilt2(ShadowFreeImage,med_size);
+            GraySmooth = wiener2(ShadowFreeImage,med_size);
+            
             %% Segmentation
             % two-class will suffer car's interferance
             % multi-class 
@@ -47,10 +49,14 @@ files = AfterRain.filenames('*.tif');
             %RoadSmooth = bwareaopen(Road, 500, 8);% BwImg.dilate(Road);
             
             % RoadFace = self.getRoadFaceMultiClass(GraySmooth);
-            Label = adaptcluster_kmeans(GraySmooth);
-            RoadFace = LabelImg.maxareaOf(Label);
-            RoadFace = imfill(RoadFace,'holes');
-            RoadSegResult = label2rgb(Label);
+            
+%             Label = adaptcluster_kmeans(GraySmooth);
+%             RoadFace = LabelImg.maxareaOf(Label);
+%             RoadFace = imfill(RoadFace,'holes');
+%             RoadSegResult = label2rgb(Label);
+
+            RoadFace = self.getRoadFace2Class(GraySmooth, med_size);
+            RoadSegResult = RoadFace;
 
             %% line detection
              [BoundL, BoundR] = self.parabolaModeling(RoadFace);
@@ -62,7 +68,7 @@ files = AfterRain.filenames('*.tif');
             
             figure;
             maxfig;
-            Fig.subimshow(Raw,Result,ShadowFreeImage, RoadSegResult); % Marking RoadFace
+            Fig.subimshow(Raw,Result,ShadowFreeImage, GraySmooth); % rgb2gray(ROI) Marking RoadFace RoadSegResult
             selplot(1);
             %plotpoint(Edge);% TODO: remove plotpoint,
             plot(BoundL{:}, 'r'); %, 'LineWidth' , 5);
@@ -135,7 +141,8 @@ files = AfterRain.filenames('*.tif');
         end
         % replace GB with logG, logB perform badly
         
-        function RoadFace = getRoadFace2Class(GraySmooth)
+        function RoadFace = getRoadFace2Class(GraySmooth, med_size)
+           
             Bw = vvThresh.otsu(GraySmooth);
             RoadSmooth = medfilt2(Bw,med_size);
             RoadFace = BwImg.maxarea(RoadSmooth);

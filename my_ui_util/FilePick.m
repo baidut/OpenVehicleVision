@@ -33,8 +33,11 @@ classdef FilePick < UiModel
         end
         
         function h = plot(obj)
+%             uicontrol('Style', 'pushbutton', 'String', 'Prev');
+%             uicontrol('Style', 'pushbutton', 'String', 'Next');
+            
             h = uicontrol('Style', 'pushbutton', 'String', 'Choose...');
-            h.Position= obj.Position;
+            h.Position= obj.Position * [1 1 1 0.3];
             h.Callback= obj.Callback;
             
             text(obj,inputname(1));

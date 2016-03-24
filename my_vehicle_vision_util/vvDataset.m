@@ -83,12 +83,20 @@ implay(imgsarray);
         function files = filenames(obj,selector)
             d = dir(fullfile(obj.path,selector));
             nameFolds = {d.name}';
-            files = strcat([obj.path '/'],nameFolds);
+            selpath = fileparts(selector);
+            files = strcat([obj.path '/' selpath '/'],nameFolds);
         end
         
         function a = imgsarray(obj, selector)
             imgscell = obj.imgscell(selector);
-            a = cat(4, imgscell{:});
+            % pad to same size
+            imgsSize = cellfun(@(x)transpose(size(x)),imgscell,'UniformOutput',false);
+            maxSize = max([imgsSize{:}].'); % imgsSize is an 1*N cell array
+            
+            zero_pad = @(I)padarray(I,maxSize - size(I),0,'post');
+            imgsResize = cellfun(zero_pad,imgscell,'UniformOutput',false);
+            
+            a = cat(4, imgsResize{:});
         end
         % cell to array: cat
         % a = cat(4, imgs{:})
