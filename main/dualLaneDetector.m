@@ -4,6 +4,11 @@ classdef dualLaneDetector<handle
 AfterRain = vvDataset('%datasets\nicta-RoadImageDatabase\After-Rain');
 files = AfterRain.filenames('*.tif');
  cellfun(@dualLaneDetector, files, 'UniformOutput',false);
+    
+foreach_file_do('%datasets\roma\BDXD54/*.jpg',@(x)dualLaneDetector(x,0.2));
+foreach_file_do('%datasets\roma\BDXN01/*.jpg',@(x)dualLaneDetector(x,0.2));
+foreach_file_do('%datasets\roma\LRAlargeur13032003/*.jpg',@(x)dualLaneDetector(x,0.11));
+    
     %}
     %
     % 0720
@@ -14,9 +19,12 @@ files = AfterRain.filenames('*.tif');
     
     methods (Access = public)
         % 'F:\Documents\pku-road-dataset\1\EMER0009\0379.jpg'
-        function self = dualLaneDetector(imgFile)
+        function self = dualLaneDetector(imgFile, ii_b)
             %% settings
             Raw = RawImg(imgFile);%0289
+            
+            % resize to improve size (not required)
+%             Resized = ColorImg(impyramid(Raw.data, 'reduce'));
             
             med_size = [10 10]; %ones([1 2])*ceil(Raw.cols/200);
             %TODO: below the horizon
@@ -26,7 +34,8 @@ files = AfterRain.filenames('*.tif');
             ROI = Raw.rectroi({rHorizon:Raw.rows,1:Raw.cols});
             
             %% Shadow Removal
-            ShadowFreeImage = self.rgb2ii(ROI, 0.06); % 0.2 roma
+            ShadowFreeImage = self.rgb2ii(ROI, ii_b); % 0.06 0.2 roma
+            % median filter need time-consuming sorting
 %             GraySmooth = medfilt2(ShadowFreeImage,med_size);
             GraySmooth = wiener2(ShadowFreeImage,med_size);
             
@@ -59,9 +68,11 @@ files = AfterRain.filenames('*.tif');
             RoadSegResult = RoadFace;
 
             %% line detection
-             [BoundL, BoundR] = self.parabolaModeling(RoadFace);
+            [BoundL, BoundR] = self.straightLineModeling(RoadFace);
+%              [BoundL, BoundR] = self.parabolaModeling(RoadFace);
             
             %% Display results
+            %{
             Result = Raw.roidrawmask(RoadFace, 'g'); % Img + mask (+g, -b, -r) use mean
             Marking = dualLaneDetector.getLaneMarking(ROI, RoadFace);
             line = vvBoundModel.houghStraightLine(Marking, -70:70);
@@ -92,8 +103,9 @@ files = AfterRain.filenames('*.tif');
             
             %             Fig.subimshow(Raw, ShadowFreeImage, GraySmooth, Bw, RoadArea, RoadBound);
             %             maxfig;
-            return;
+            %}
             
+            %{
             %% Preproc:Filtering road marking
             % may smooth the road boundary either
             
@@ -122,16 +134,19 @@ files = AfterRain.filenames('*.tif');
             RoadBound = RoadFace.bound(8);
             % implot(ROI, ISeg, RoadFace, imoverlay(ROI, RoadBound.data, [255, 255, 0]));
             % return;
-            
+            %}
         end
     end
     %% Algorithm that can be used in the future
     methods (Static)
         
         function ii_image = rgb2ii(image, c)
-            [~, G, B] = getChannel(im2double(image));
-            ii_image =  1-(G+c-B)./B;
-            ii_image(ii_image<0) = 0;
+            % im2double is time-consuming
+%             [~, G, B] = getChannel(im2double(image));
+%             ii_image =  1-(G+c-B)./B;
+%             ii_image(ii_image<0) = 0;
+              [~, G, B] = getChannel(image);
+              ii_image =  2 - (double(G+c))./(double(B)+eps);
         end
         
         function ii_image = rgb2ii_eps(image, c)
@@ -144,7 +159,8 @@ files = AfterRain.filenames('*.tif');
         function RoadFace = getRoadFace2Class(GraySmooth, med_size)
            
             Bw = vvThresh.otsu(GraySmooth);
-            RoadSmooth = medfilt2(Bw,med_size);
+%             RoadSmooth = medfilt2(Bw,med_size);
+            RoadSmooth = wiener2(Bw,med_size);
             RoadFace = BwImg.maxarea(RoadSmooth);
             RoadFace = imfill(RoadFace,'holes');
         end
@@ -155,8 +171,8 @@ files = AfterRain.filenames('*.tif');
             RoadFace = imfill(RoadFace,'holes');
         end
         
-        function [BoundL, BoundR] = StraightLineModeling(RoadFace)
-            RoadBound = BwImg.bound(RoadFace);
+        function [BoundL, BoundR] = straightLineModeling(RoadFace)
+            RoadBound = BwImg.boundOf(RoadFace);
             boundAngleRange = 30:75;
             
             BoundL = vvBoundModel.houghStraightLine(RoadBound, boundAngleRange); % 0:89

@@ -37,7 +37,7 @@ classdef FilePick < UiModel
 %             uicontrol('Style', 'pushbutton', 'String', 'Next');
             
             h = uicontrol('Style', 'pushbutton', 'String', 'Choose...');
-            h.Position= obj.Position * [1 1 1 0.3];
+            h.Position= obj.Position .* [1 1 0.3 1];
             h.Callback= obj.Callback;
             
             text(obj,inputname(1));
