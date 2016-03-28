@@ -2,7 +2,7 @@ classdef ConfMat < handle
     % Confusion Matrix
     %{
     % eg.1 Single Image
-    imgFile = '%datasets\roma\BDXD54\IMG00002.jpg';
+    imgFile = '%datasets\roma\BDXD54\IMG00002.jpg'; % IMG00106
     rawImg = imread(imgFile);
     result = road_detection_via_ii(imgFile,0.2*255);
     GT = imread(RomaDataset.roadAreaGt(imgFile));
@@ -11,6 +11,16 @@ classdef ConfMat < handle
     disp(eval);
     
     % eg.2 Image Dataset
+    imgFiles = foreach_file_do('%datasets\roma\BDXD54\*.jpg',@(x)x);
+    rawImgs = foreach_file_do('%datasets\roma\BDXD54\*.jpg',@imread);
+    gtImgs = foreach_file_do('%datasets\roma\BDXD54\*.png',@imread);
+    
+    func = @(f)road_detection_via_ii(f,0.2*255);
+    results = cellfun(func,imgFiles,'UniformOutput',false);
+    
+    eval = ConfMat(results,gtImgs);
+    disp(eval);
+    vis(eval,rawImgs);
     
     %}
     properties (GetAccess = public, SetAccess = private)
@@ -45,6 +55,10 @@ classdef ConfMat < handle
     
     methods (Access = public)
         function eval = ConfMat(results, GTs, label)
+            if nargin < 3
+                label = 1;
+            end
+            
             func = @(res,gt) ConfMat.compute(res,gt,label);
             
             [cTP,cFP,cTN,cFN,eval.mask] = ...
@@ -70,25 +84,25 @@ classdef ConfMat < handle
     
     methods (Access = public)
         function ACC = accuracy(eval)
-            ACC = (eval.TP + eval.TN) / (eval.TP + eval.TN + eval.FP + eval.FN);
+            ACC = (eval.TP + eval.TN) ./ (eval.TP + eval.TN + eval.FP + eval.FN);
         end
         
         function PRE = precision(eval)
-            PRE = eval.TP / (eval.TP + eval.FP);
+            PRE = eval.TP ./ (eval.TP + eval.FP);
         end
         
         function REC = recall(eval)
-            REC = eval.TP / (eval.TP + eval.FN);
+            REC = eval.TP ./ (eval.TP + eval.FN);
         end
         
         function FPR = fallout(eval)
             % fall-out or false positive rate (FPR)
-            FPR = eval.FP / (eval.FP + eval.TN);
+            FPR = eval.FP ./ (eval.FP + eval.TN);
         end
         
         function FNR = missrate(eval)
             % miss rate or false negative rate (FNR)
-            FNR = eval.FN / (eval.FN + eval.TP);
+            FNR = eval.FN ./ (eval.FN + eval.TP);
         end
         
         function disp(eval)

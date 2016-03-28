@@ -9,6 +9,10 @@ function results = foreach_file_do(filenames, func, varargin)
 %   files = '%datasets/SLD2011\dataset3\sequence\01*.jpg';
 %  	foreach_file_do(files,@disp);
 %
+%   % Get file names
+%  	filename = foreach_file_do(files,@(x)x);
+%   montage(filename(1:2:end));
+% 
 %   % Display pictures in a folder
 %  	foreach_file_do(files,@imshow);
 %  	
