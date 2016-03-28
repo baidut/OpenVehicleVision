@@ -43,8 +43,7 @@ roadFace = imfill(maxConnected,'holes');
 
 
 %% Debug
-% roadFace = [zeros([rHorizon-1 nCol]); roadFace];
-Fig.subimshow(rawImg, iiImg, smoothImg, bw, bwEroded, roadFace);
+% Fig.subimshow(rawImg, iiImg, smoothImg, bw, bwEroded, roadFace);
 
 if nargout == 0
     [name, ext] = filename(imgFile);

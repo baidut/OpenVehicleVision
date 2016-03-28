@@ -127,27 +127,10 @@ classdef RomaDataset < vvDataset
             FNs = cell2mat(cFN);
             
             function [TP,FP,TN,FN,visualizeMask] = eval(result, GT)
-                % Note TP... is not a ratio but a count number about
-                % how many true positive pixels in image or images.
-                
                 % lane-marking    GT == 255   result == 1
                 % special-marking GT == 125   result == 0
                 % non-marking     GT == 0     result == 0
-                TP_bw = (result == 1) & (GT == 255);
-                FP_bw = (result == 1) & (GT ~= 255);
-                TN_bw = (result == 0) & (GT ~= 255);
-                FN_bw = (result == 0) & (GT == 255);
-                
-                TP = sum(TP_bw(:));
-                FP = sum(FP_bw(:));
-                TN = sum(TN_bw(:));
-                FN = sum(FN_bw(:));
-                % red denotes false negatives, blue areas correspond to
-                % false positives and green represents true positives.
-                % FP and FN need to be transparent for finding the
-                % possible reason.
-                % -------------------------- R ---------- G ------- B -----
-                visualizeMask = uint8(cat(3,FN_bw*128,TP_bw*255,FP_bw*128));
+                [TP,FP,TN,FN,visualizeMask] = vvDataset.evalDetector(result, GT==255, 1);
             end
         end
         %
@@ -237,6 +220,15 @@ classdef RomaDataset < vvDataset
             % RIMG00007.pgm
             func = @(f) [f(1:end-12) 'R' f(end-11:end-4) '.pgm'];
             gtFiles = cellfun(func,varargin,'UniformOutput',false);
+        end
+        
+        function gtFiles = roadAreaGt(varargin)
+            func = @(f) [f(1:end-4) '.png'];
+            if numel(varargin) == 1
+                gtFiles =  func(varargin{1});  
+            else
+                gtFiles = cellfun(func,varargin,'UniformOutput',false);
+            end
         end
     end
 end
