@@ -2,25 +2,35 @@ classdef ConfMat < handle
     % Confusion Matrix
     %{
     % eg.1 Single Image
-    imgFile = '%datasets\roma\BDXD54\IMG00002.jpg'; % IMG00106
+    imgFile = '%datasets\roma\BDXD54\IMG00106.jpg'; % IMG00106 IMG00002
     rawImg = imread(imgFile);
-    result = road_detection_via_ii(imgFile,0.2*255);
-    GT = imread(RomaDataset.roadAreaGt(imgFile));
-    eval = ConfMat({result},{GT},1);
-    imshow(rawImg/3+eval.mask{1});
+    gtImg = imread(RomaDataset.roadAreaGt(imgFile));
+    
+    roiOf = @(x)x(ceil(end/2):end,:,:);
+    roiImg = roiOf(rawImg);
+    gt = roiOf(gtImg);
+    
+    result = road_detection_via_ii(roiImg,0.2*255);
+    
+    eval = ConfMat({result},{gt},1);
+    imshow(roiImg/3+eval.mask{1});
     disp(eval);
     
     % eg.2 Image Dataset
-    imgFiles = foreach_file_do('%datasets\roma\BDXD54\*.jpg',@(x)x);
-    rawImgs = foreach_file_do('%datasets\roma\BDXD54\*.jpg',@imread);
-    gtImgs = foreach_file_do('%datasets\roma\BDXD54\*.png',@imread);
+    imgFile = foreach_file_do('%datasets\roma\BDXD54\*.jpg',@(x)x);
+    rawImg = foreach_file_do('%datasets\roma\BDXD54\*.jpg',@imread);
+    gtImg = foreach_file_do('%datasets\roma\BDXD54\*.png',@imread);
     
-    func = @(f)road_detection_via_ii(f,0.2*255);
-    results = cellfun(func,imgFiles,'UniformOutput',false);
+    roiOf = @(x)x(ceil(end/2):end,:,:);
+    roiImg = cellfun(roiOf,rawImg,'UniformOutput',false);
+    gt = cellfun(roiOf,gtImg,'UniformOutput',false);
     
-    eval = ConfMat(results,gtImgs);
+    f = @(im)road_detection_via_ii(im,0.2*255);
+    result = cellfun(f,roiImg,'UniformOutput',false);
+    
+    eval = ConfMat(result,gt);
     disp(eval);
-    vis(eval,rawImgs);
+    vis(eval,roiImg);
     
     %}
     properties (GetAccess = public, SetAccess = private)
@@ -74,11 +84,12 @@ classdef ConfMat < handle
         % visualize
             disp_method = @(raw,mask)(raw/3+mask);
 
-            MaskedImgs = cell2mat(arrayfun(@(x,y)disp_method(x{:},y{:}), ...
-            num2cell(rawImgs,1:3),num2cell(eval.mask,1:3),...
-            'UniformOutput', false));
-        
-            implay(MaskedImgs);
+            MaskedImgs = cellfun(disp_method,rawImgs,eval.mask,'UniformOutput',false);
+            
+%             cell2mat(arrayfun(@(x,y)disp_method(x{:},y{:}), ...
+%             num2cell(rawImgs,1:3),num2cell(eval.mask,1:3),...
+%             'UniformOutput', false));
+            implay(cat(4, MaskedImgs{:}));
         end
     end
     

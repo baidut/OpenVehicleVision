@@ -1,13 +1,9 @@
-function roadFace = road_detection_via_ii(imgFile, ii_b)
-rawImg = imread(imgFile);
-[nRow, ~, ~] = size(rawImg);
+function roadFace = road_detection_via_ii(rawImg, ii_b)
+% please do ROI selection before calling road_detection_via_ii
 % 1000 10
 % 480  4
 szFilter = [8 8]; %[8 8]; %ones([1 2])*ceil(nCol/10);
-rHorizon = ceil(nRow/2);
 % otsu is very unstable when there are sky (very high gray value)
-
-% roiImg = rawImg(rHorizon:end,:,:);
 
 %% RGB --> II
 G = rawImg(:,:,2);
@@ -25,8 +21,7 @@ iiImg =  2 - (im2double(G+ii_b))./(im2double(B)+eps);
 smoothImg = wiener2(iiImg, szFilter);
 
 %%
-bw = im2bw(smoothImg, graythresh(smoothImg(rHorizon:end,:,:)));
-
+bw = im2bw(smoothImg, graythresh(smoothImg));
 
 bwSmooth = medfilt2(bw, [5 5]); % first use wiener2 then use medfilt2
 bwEroded =  imopen(bwSmooth, strel('disk',8,8)); %imerode(bwSmooth, strel('disk',4,4));
