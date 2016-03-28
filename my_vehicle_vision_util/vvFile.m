@@ -8,7 +8,7 @@ classdef vvFile  < handle
 % vvFor.each(Imgs, @imshow); % cell array
 % vvFor.each(Imgs, @(im) {} );
 
-I = files{i}
+% I = files{i}
 
     properties (GetAccess = public, SetAccess = private)
 		results % cell array to save result
@@ -18,6 +18,15 @@ I = files{i}
     methods (Static)
         function filename = name(file) 
 			[~,filename,~] = fileparts(file);
+        end
+        
+        function path = path(file) 
+			[path,~,~] = fileparts(file);
+        end
+        
+        function path_name = pn(file) 
+			[path,name,~] = fileparts(file);
+            path_name = [path,'\', name];
         end
     end
 	
