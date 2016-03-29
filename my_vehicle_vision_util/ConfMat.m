@@ -2,7 +2,7 @@ classdef ConfMat < handle
     % Confusion Matrix
     %{
     % eg.1 Single Image
-    imgFile = '%datasets\roma\BDXD54\IMG00106.jpg'; % IMG00106 IMG00002
+    imgFile = '%datasets\roma\BDXD54\IMG00164.jpg'; % IMG00106 IMG00002 IMG00164
     rawImg = imread(imgFile);
     gtImg = imread(RomaDataset.roadAreaGt(imgFile));
     
@@ -80,7 +80,7 @@ classdef ConfMat < handle
             eval.FN = cell2mat(cFN);
         end
         
-        function vis(eval, rawImgs)
+        function MaskedImgs = vis(eval, rawImgs)
         % visualize
             disp_method = @(raw,mask)(raw/3+mask);
 
@@ -89,7 +89,9 @@ classdef ConfMat < handle
 %             cell2mat(arrayfun(@(x,y)disp_method(x{:},y{:}), ...
 %             num2cell(rawImgs,1:3),num2cell(eval.mask,1:3),...
 %             'UniformOutput', false));
-            implay(cat(4, MaskedImgs{:}));
+            if nargout == 0
+                implay(cat(4, MaskedImgs{:}));
+            end
         end
     end
     
@@ -118,6 +120,9 @@ classdef ConfMat < handle
         
         function disp(eval)
             % evaluation report
+            builtin('disp',eval);
+            if isempty(eval), return; end
+            
             ACC = eval.accuracy;
             PRE = eval.precision;
             REC = eval.recall;

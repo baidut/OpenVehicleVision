@@ -5,16 +5,16 @@
 classdef RomaDataset < vvDataset
     properties (Constant)
         situations = {
-            'BDXD54'  				...
-            'BDXN01'  				...
-            'IRC04510'  			...
-            'IRC041500'  			...
-            'LRAlargeur13032003'	...
-            'LRAlargeur14062002' 	...
-            'LRAlargeur26032003' 	...
-            'RD116'  				...
-            'RouenN8IRC051900' 		...
-            'RouenN8IRC052310' 		...
+            'BDXD54'  				... %1
+            'BDXN01'  				... %2
+            'IRC04510'  			... %3
+            'IRC041500'  			... %4 
+            'LRAlargeur13032003'	... %5 
+            'LRAlargeur14062002' 	... %6 
+            'LRAlargeur26032003' 	... %7 
+            'RD116'  				... %8 
+            'RouenN8IRC051900' 		... %9 
+            'RouenN8IRC052310' 		... %10
             }
         scenarioMap = containers.Map(...
             {'Original','Reference','Normal','AdverseLight','CurvedRoad'}, ...
@@ -22,12 +22,14 @@ classdef RomaDataset < vvDataset
             'imghighcurv.mov'} ...
             );
         
+        
     end
     properties
-        T
+        data
         %{
-            rows = strcmp(roma.T.scenario,'AdverseLight') == 1;
-            T3 = roma.T(rows,:);
+            rows = strcmp(roma.data.scenario,'AdverseLight') == 1;
+            adverseLightCases = roma.data(rows,:);
+            adverseLightFiles = adverseLightCases.filename;
         %}
     end
     
@@ -48,7 +50,7 @@ classdef RomaDataset < vvDataset
             
             for iSit = 1:numel(sit)
                for jSce = 1:numel(sceVal)
-                   f = roma.images(sit{iSit},sceVal{jSce}); % column vector
+                   f = roma.loadMov(sit{iSit},sceVal{jSce}); % column vector
                    n = numel(f);
                    filename = [filename; f(:)];%filename = {filename{:}, f{:}};            
                    situation = [situation; repmat(sit(iSit), [n 1])];
@@ -56,8 +58,8 @@ classdef RomaDataset < vvDataset
                end
             end
             
-            roma.T = table(filename, situation, scenario);
-            disp(roma.T);
+            roma.data = table(filename, situation, scenario);
+%             disp(roma.data);
         end
         
         % 		function disp(roma)
@@ -97,19 +99,14 @@ classdef RomaDataset < vvDataset
             
             situ = repmat(situation, [1 numel(scenario)]);
             scen = repmat(scenario, [1 numel(situation)]);
-            files = cellfun(@getAndLoadMov,situ,scen,'UniformOutput',false);
+            files = cellfun(@roma.loadMov,situ,scen,'UniformOutput',false);
             images = cat(1, files{:});
-            
-            function imageList = getAndLoadMov(situation, scenario)
-                folder = fullfile(roma.path,situation);
-                movFile = fullfile(folder,scenario);
-                imageList = strcat(folder,filesep,roma.loadmov(movFile));
-            end
         end
         
-        function disp(roma)
-            % file situation scenario ii_b
-            
+        function imageList = loadMov(roma, situation, scenario)
+            folder = fullfile(roma.path,situation);
+            movFile = fullfile(folder,scenario);
+            imageList = strcat(folder,filesep,roma.loadmov(movFile));
         end
     end
     
@@ -265,11 +262,8 @@ classdef RomaDataset < vvDataset
         
         function gtFiles = roadAreaGt(varargin)
             func = @(f) [f(1:end-4) '.png'];
-            if numel(varargin) == 1
-                gtFiles =  func(varargin{1});  
-            else
-                gtFiles = cellfun(func,varargin,'UniformOutput',false);
-            end
+            gtFiles = cellfun(func,varargin,'UniformOutput',false)';
+            % N*1 cell
         end
     end
 end
