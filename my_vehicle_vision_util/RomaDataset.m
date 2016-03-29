@@ -1,4 +1,4 @@
-% roma = RomaDataset('%dataset\roma'), % disp
+% roma = RomaDataset('%datasets\roma'), % disp
 % roma
 % imshow(road_im.groundTruth);
 
@@ -21,6 +21,14 @@ classdef RomaDataset < vvDataset
             {'img.mov','Rimg.mov','imgnormal.mov','imgadvlight.mov', ...
             'imghighcurv.mov'} ...
             );
+        
+    end
+    properties
+        T
+        %{
+            rows = strcmp(roma.T.scenario,'AdverseLight') == 1;
+            T3 = roma.T(rows,:);
+        %}
     end
     
     methods (Access = public)
@@ -28,6 +36,28 @@ classdef RomaDataset < vvDataset
             roma@vvDataset(varargin{:});
             % init
             addpath(roma.path); % call loadlist
+            
+            filename = {};
+            situation = {};
+            scenario = {};
+            
+            sit = roma.situations;
+            sceKey = {'Normal','AdverseLight','CurvedRoad'};
+            sceVal = roma.scenarioMap.values(sceKey);
+            
+            
+            for iSit = 1:numel(sit)
+               for jSce = 1:numel(sceVal)
+                   f = roma.images(sit{iSit},sceVal{jSce}); % column vector
+                   n = numel(f);
+                   filename = [filename; f(:)];%filename = {filename{:}, f{:}};            
+                   situation = [situation; repmat(sit(iSit), [n 1])];
+                   scenario = [scenario; repmat(sceKey(jSce), [n 1])];
+               end
+            end
+            
+            roma.T = table(filename, situation, scenario);
+            disp(roma.T);
         end
         
         % 		function disp(roma)
@@ -36,6 +66,12 @@ classdef RomaDataset < vvDataset
         % 			% disp('Database Information');
         % 			% ...
         % 		end
+        function varargout = scenarios(roma, n)
+            % roma.situations(1)
+            % roma.situations(1:3)
+            val = roma.scenarioMap.values();
+            varargout = val{n};
+        end
         
         function images = images(roma, situation, scenario)
             % roma = RomaDataset('%datasets\roma');
@@ -69,6 +105,11 @@ classdef RomaDataset < vvDataset
                 movFile = fullfile(folder,scenario);
                 imageList = strcat(folder,filesep,roma.loadmov(movFile));
             end
+        end
+        
+        function disp(roma)
+            % file situation scenario ii_b
+            
         end
     end
     
