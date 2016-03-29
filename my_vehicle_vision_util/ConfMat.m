@@ -34,7 +34,9 @@ classdef ConfMat < handle
     
     %}
     properties (GetAccess = public, SetAccess = private)
-        TP,FP
+        % we use 1*N instead of N*1 
+        % since the [eval(:).TP] is more convenient than vertcat(eval(:).TP)
+        TP,FP % 1*N double 
         FN,TN
         
         mask % for visualization
@@ -65,6 +67,7 @@ classdef ConfMat < handle
     
     methods (Access = public)
         function eval = ConfMat(results, GTs, label)
+            if nargin == 0, return; end % for initialization
             if nargin < 3
                 label = 1;
             end
@@ -74,21 +77,21 @@ classdef ConfMat < handle
             [cTP,cFP,cTN,cFN,eval.mask] = ...
                 cellfun(func,results,GTs,'UniformOutput',false);
             
-            eval.TP = cell2mat(cTP);
-            eval.FP = cell2mat(cFP);
-            eval.TN = cell2mat(cTN);
-            eval.FN = cell2mat(cFN);
+            eval.TP = cell2mat(cTP)';
+            eval.FP = cell2mat(cFP)';
+            eval.TN = cell2mat(cTN)';
+            eval.FN = cell2mat(cFN)';
         end
         
         function MaskedImgs = vis(eval, rawImgs)
-        % visualize
+            % visualize
             disp_method = @(raw,mask)(raw/3+mask);
-
+            
             MaskedImgs = cellfun(disp_method,rawImgs,eval.mask,'UniformOutput',false);
             
-%             cell2mat(arrayfun(@(x,y)disp_method(x{:},y{:}), ...
-%             num2cell(rawImgs,1:3),num2cell(eval.mask,1:3),...
-%             'UniformOutput', false));
+            %             cell2mat(arrayfun(@(x,y)disp_method(x{:},y{:}), ...
+            %             num2cell(rawImgs,1:3),num2cell(eval.mask,1:3),...
+            %             'UniformOutput', false));
             if nargout == 0
                 implay(cat(4, MaskedImgs{:}));
             end
@@ -97,44 +100,81 @@ classdef ConfMat < handle
     
     methods (Access = public)
         function ACC = accuracy(eval)
-            ACC = (eval.TP + eval.TN) ./ (eval.TP + eval.TN + eval.FP + eval.FN);
+            ACC = ([eval(:).TP] + [eval(:).TN]) ./ ...
+                ([eval(:).TP] + [eval(:).TN] + [eval(:).FP] + [eval(:).FN]);
         end
         
         function PRE = precision(eval)
-            PRE = eval.TP ./ (eval.TP + eval.FP);
+            % precision or positive predictive value (PPV)
+            PRE = [eval(:).TP] ./ ([eval(:).TP] + [eval(:).FP]);
         end
         
         function REC = recall(eval)
-            REC = eval.TP ./ (eval.TP + eval.FN);
+            REC = [eval(:).TP] ./ ([eval(:).TP] + [eval(:).FN]);
         end
         
         function FPR = fallout(eval)
             % fall-out or false positive rate (FPR)
-            FPR = eval.FP ./ (eval.FP + eval.TN);
+            FPR = [eval(:).FP] ./ ([eval(:).FP] + [eval(:).TN]);
         end
         
         function FNR = missrate(eval)
             % miss rate or false negative rate (FNR)
-            FNR = eval.FN ./ (eval.FN + eval.TP);
+            FNR = [eval(:).FN] ./ ([eval(:).FN] + [eval(:).TP]);
         end
         
-        function disp(eval)
-            % evaluation report
-            builtin('disp',eval);
-            if isempty(eval), return; end
-            
-            ACC = eval.accuracy;
-            PRE = eval.precision;
-            REC = eval.recall;
-            FPR = eval.fallout;
-            FNR = eval.missrate;
+        function TPR = sensitivity(eval)
+            % sensitivity or true positive rate (TPR)
+            TPR = [eval(:).TP] ./ ([eval(:).FN] + [eval(:).TP]);
+        end
+        
+        function T = table(eval)
+            ACC = eval.accuracy';
+            PRE = eval.precision';
+            REC = eval.recall';
+            FPR = eval.fallout';
+            FNR = eval.missrate';
             
             T = table(ACC,...
                 PRE,REC,...
                 FPR,FNR...
                 );
-            disp(T);
+        end
+        
+        function roc(eval, varargin)
+            hold on;
+            FPR = eval.fallout;
+            TPR = eval.sensitivity;
+            
+            [FPR,TPR] = sortxy(FPR,TPR);
+            
+            xlabel('False positive rate', 'fontsize', 12);
+            ylabel('True positive rate', 'fontsize', 12);
+            plot(FPR, TPR, varargin{:});
+            
+            function [xsorted,ysorted] = sortxy(x,y)
+                [xsorted, I] = sort(x);
+                ysorted = y(I);
+            end
+
+%             arrayfun(@(x)roc1(x,color),eval);
+%             function roc1(eval, color)
+%                 FPR = eval.fallout;
+%                 TPR = eval.sensitivity;
+%                 xlabel('False positive rate', 'fontsize', 12);
+%                 ylabel('True positive rate', 'fontsize', 12);
+%                 plot(FPR, TPR, color, 'LineWidth', 2);
+%             end
+        end
+        
+        function disp(eval)
+            % if eval is an object array
+            % evaluation report
+            builtin('disp',eval);
+            disp(table(eval));
+%             if isempty(eval), return; end
+%             arrayfun(@(x)disp(table(x)),eval);
         end
     end
-  
+    
 end

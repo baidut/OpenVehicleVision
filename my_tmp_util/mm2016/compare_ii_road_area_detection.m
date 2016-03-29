@@ -26,8 +26,8 @@ function [eval, time] = benchmark_on_roma(algo, paramList)
 
 roma = RomaDataset('%datasets\roma');
 n = numel(roma.situations);
-time = zeros([1 n]);
-eval = ConfMat.empty([n 0]);
+time = zeros([n 1]);
+eval = repmat(ConfMat(),[n 1]);
 
 for iSitu = 1:n
     rows = strcmp(roma.data.situation,roma.situations{iSitu}) == 1;
