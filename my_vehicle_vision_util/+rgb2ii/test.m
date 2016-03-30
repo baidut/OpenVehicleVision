@@ -1,8 +1,20 @@
 function test()
 % GetInvariantImage
-
-  compare_ours_and_others
+    compare_ii_methods
+%   compare_ours_and_others
 % test_ours
+end
+
+function compare_ii_methods()
+inputImage = ImCtrl(@imread, FilePick());
+alpha = Slider([0 1], 'Value', 0.2);
+
+will2014 = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha); % .53
+alvarez2011 = ImCtrl(@rgb2ii.alvarez2011inv, inputImage, alpha); % .6
+Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, alpha); % .06
+
+Fig.subimshow(inputImage, alvarez2011, will2014, Ours);
+% Fig.subimwrite(); %auto-write after closed
 end
 
 function compare_ours_and_others()
@@ -27,7 +39,7 @@ ii_image = ImCtrl(@rgb2ii.will2014, inputImage, alpha);
 % s2_image = ImCtrl(func, inputImage);
 
 %% ours
-Ours = ImCtrl(@dualLaneDetector.rgb2ii, inputImage, 255*alpha);
+Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, alpha);
 
 Fig.subimshow(inputImage, InvariantImage, ii_image, Ours);
 % Fig.subimwrite(); %auto-write after closed

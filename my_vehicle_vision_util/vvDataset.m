@@ -94,12 +94,13 @@ implay(imgsarray);
         end
         % cell to array: cat
         % a = cat(4, imgs{:})
-    end
-    methods (Static)
-        function c = imgscell(selector)
+        function c = imgscell(obj,selector)
             files = obj.filenames(selector);
             c = cellfun(@imread,files,'UniformOutput',false);
         end
+    end
+    methods (Static)
+        
     end
     methods (Access = public)
         function montage(obj, varargin)

@@ -7,10 +7,7 @@ function ii_image = will2014(image, alpha)
 
 image = im2double(image);
 
-% ii_image = 0.5 + log(image(:,:,2)) - ...
-%     alpha*log(image(:,:,3)) - (1-alpha)*log(image(:,:,1));
+ii_image = 0.5 + log(image(:,:,2)) - ...
+    alpha*log(image(:,:,3)) - (1-alpha)*log(image(:,:,1));
 
-% inverse
-ii_image = 0.5 - log(image(:,:,2)) + ...
-    alpha*log(image(:,:,3)) + (1-alpha)*log(image(:,:,1));
 end

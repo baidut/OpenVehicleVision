@@ -17,14 +17,16 @@ iiImg =  ii_method(rawImg, ii_params{:}); %2 - (im2double(G+ii_b))./(im2double(B
 smoothImg = wiener2(iiImg, szFilter);
 
 %% Thresholding 1
-% bw = im2bw(smoothImg, graythresh(smoothImg)); % smoothImg(1:ceil(end/2),:)
+% darker = smoothImg<0.8; % upper threshold 0.5;
+bw = im2bw(smoothImg, graythresh(smoothImg(smoothImg<0.8))); % smoothImg(1:ceil(end/2),:)
 
 %% Thresholding 2
-T = otsuthresh(imhist(smoothImg, 16));
-bw = imbinarize(smoothImg,T);
+% T = otsuthresh(imhist(smoothImg(smoothImg<0.8), 16));
+% bw = imbinarize(smoothImg,T);
 
 bwSmooth = medfilt2(bw, [5 5]); % first use wiener2 then use medfilt2
 bwEroded =  imopen(bwSmooth, strel('disk',8,8)); %imerode(bwSmooth, strel('disk',4,4));
+% bwEroded =  ~imclose(~bwSmooth, strel('disk',8,8)); % same result
 
 %% max area
 maxConnected = false(size(bw));
@@ -38,7 +40,7 @@ roadFace = imfill(maxConnected,'holes');
 
 
 %% Debug
-% Fig.subimshow(rawImg, iiImg, smoothImg, bw, bwEroded, roadFace);
+% Fig.subimshow(rawImg, iiImg, smoothImg, bw, bwSmooth, bwEroded, roadFace);
 
 if nargout == 0
     [name, ext] = filename(imgFile);
