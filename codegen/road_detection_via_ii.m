@@ -16,8 +16,12 @@ iiImg =  ii_method(rawImg, ii_params{:}); %2 - (im2double(G+ii_b))./(im2double(B
 
 smoothImg = wiener2(iiImg, szFilter);
 
-%%
-bw = im2bw(smoothImg, graythresh(smoothImg)); % smoothImg(1:ceil(end/2),:)
+%% Thresholding 1
+% bw = im2bw(smoothImg, graythresh(smoothImg)); % smoothImg(1:ceil(end/2),:)
+
+%% Thresholding 2
+T = otsuthresh(imhist(smoothImg, 16));
+bw = imbinarize(smoothImg,T);
 
 bwSmooth = medfilt2(bw, [5 5]); % first use wiener2 then use medfilt2
 bwEroded =  imopen(bwSmooth, strel('disk',8,8)); %imerode(bwSmooth, strel('disk',4,4));
