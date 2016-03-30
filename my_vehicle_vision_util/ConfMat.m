@@ -61,7 +61,8 @@ classdef ConfMat < handle
             % FP and FN need to be transparent for finding the
             % possible reason.
             % ------------------ R ---------- G ------- B -----
-            mask = uint8(cat(3,FN_bw*128,TP_bw*255,FP_bw*128));
+%             mask = uint8(cat(3,FN_bw*128,TP_bw*255,FP_bw*128));
+            mask = uint8(cat(3,FN_bw*200,TP_bw*200,FP_bw*200));
         end
     end
     

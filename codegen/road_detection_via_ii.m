@@ -1,4 +1,4 @@
-function roadFace = road_detection_via_ii(rawImg, ii_b)
+function roadFace = road_detection_via_ii(rawImg, ii_method, ii_params)
 % please do ROI selection before calling road_detection_via_ii
 % 1000 10
 % 480  4
@@ -6,11 +6,7 @@ szFilter = [8 8]; %[8 8]; %ones([1 2])*ceil(nCol/10);
 % otsu is very unstable when there are sky (very high gray value)
 
 %% RGB --> II
-G = rawImg(:,:,2);
-B = rawImg(:,:,3);
-% im2double 0~1
-iiImg =  2 - (im2double(G+ii_b))./(im2double(B)+eps);
-% iiImg(iiImg<0)=0;
+iiImg =  ii_method(rawImg, ii_params{:}); %2 - (im2double(G+ii_b))./(im2double(B)+eps);
 
 % roiImg = im2double(roiImg);
 % G = roiImg(:,:,2);

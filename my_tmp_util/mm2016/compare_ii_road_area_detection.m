@@ -1,28 +1,53 @@
 function [eval, time] = compare_ii_road_area_detection
 
+%% compare the results of diff rgb2ii methods
+algonames = {'dualLaneDetector.rgb2ii_ori', ...
+             'will2014', ...
+             'GetInvariantImage01', ...
+};
+ii_methods = {@dualLaneDetector.rgb2ii_ori,...
+              @rgb2ii.will2014,...
+              @(im,p)GetInvariantImage(im,p,0,1),...
+}; 
+
 % since different situations are captured by different cameras,
 % the params of ii image is different.
-                  %1   2   3   4   5   6   7   8   9   10
-iiParamList = 255*[0.2,.10,.06,.06,.05,.05,.05,.13,.07,.04];
-iiParamList = num2cell(iiParamList,1); % to cell array
-[eval, time] = benchmark_on_roma(@road_detection_via_ii, iiParamList);
+% --------------------- 1   2   3   4   5   6   7   8   9   10 ------------
+ii_params = {num2cell([0.2,.10,.06,.06,.05,.05,.05,.13,.07,.04],1),...
+             num2cell([.69,.52,.42,.42,.43,.43,.66,.90,.81,.83],1),...
+             num2cell([ 66, 79, 40, 40, 39, 39, 61,108, 76, 80],1),...
+};
 
+N = numel(ii_methods);
+time = cell([N 1]);
+eval = cell([N 1]);
 
-disp ok
+for n = 1:N % 1
+    ii_method = ii_methods{n};
+    ii_param = ii_params{n};
+    [eval{n}, time{n}] = benchmark_on_roma(@(im,p)road_detection_via_ii(im,ii_method,{p}), ii_param, algonames{n});
+    % save
 end
 
-%% Invariant Image
-% GetInvariantImage(inputImage,40.3274,0,1);
-%  1   2   3   4   5   6   7   8   9   10
-% [ 66, 79, 40, 40, 39, 39, 61,108, 76, 80];
-%% ii image
-% [.69,.52,.42,.42,.43,.43,.66,.90,.81,.83];
+end
 
-%  iiParamList(iSitu)
-function [eval, time] = benchmark_on_roma(algo, paramList)
+%% Clean
+%{
+
+for n = 1:numel(RomaDataset.situations)
+    foreach_file_do(['%datasets/roma/', RomaDataset.situations{n}, '/*@*.png'], @delete);
+end
+%}
+
+function [eval, time] = benchmark_on_roma(algo, paramList, algoname)
 %Benchmark on Roma Dataset
 % Benchmark single algo in multi situation
 % paramList is a cell array
+
+if nargin < 3
+    algoname = char(algo);
+end
+    
 
 roma = RomaDataset('%datasets\roma');
 n = numel(roma.situations);
@@ -37,7 +62,7 @@ for iSitu = 1:n
     param = paramList(iSitu);
     
     f = @(im)algo(im,param{:});
-    [eval(iSitu), time(iSitu)] = benchmark1Algo1Situ(rawImgFile, gtImgFile, f, char(algo));
+    [eval(iSitu), time(iSitu)] = benchmark1Algo1Situ(rawImgFile, gtImgFile, f, algoname);
 end
 
 end
@@ -45,6 +70,9 @@ end
 function [eval, time] = benchmark1Algo1Situ(rawImgFile, gtImgFile, algo, algoname)
 %Benchmark single algo in single situation
 % Note we just benchmark the lower half of image.
+if nargin < 3
+    algoname = char(algo);
+end
 
 rawImg = cellfun(@imread,rawImgFile,'UniformOutput',false);
 gtImg = cellfun(@imread,gtImgFile,'UniformOutput',false);

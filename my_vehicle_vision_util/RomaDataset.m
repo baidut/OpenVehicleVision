@@ -8,12 +8,12 @@ classdef RomaDataset < vvDataset
             'BDXD54'  				... %1
             'BDXN01'  				... %2
             'IRC04510'  			... %3
-            'IRC041500'  			... %4 
-            'LRAlargeur13032003'	... %5 
-            'LRAlargeur14062002' 	... %6 
-            'LRAlargeur26032003' 	... %7 
-            'RD116'  				... %8 
-            'RouenN8IRC051900' 		... %9 
+            'IRC041500'  			... %4
+            'LRAlargeur13032003'	... %5
+            'LRAlargeur14062002' 	... %6
+            'LRAlargeur26032003' 	... %7
+            'RD116'  				... %8
+            'RouenN8IRC051900' 		... %9
             'RouenN8IRC052310' 		... %10
             }
         scenarioMap = containers.Map(...
@@ -49,17 +49,17 @@ classdef RomaDataset < vvDataset
             
             
             for iSit = 1:numel(sit)
-               for jSce = 1:numel(sceVal)
-                   f = roma.loadMov(sit{iSit},sceVal{jSce}); % column vector
-                   n = numel(f);
-                   filename = [filename; f(:)];%filename = {filename{:}, f{:}};            
-                   situation = [situation; repmat(sit(iSit), [n 1])];
-                   scenario = [scenario; repmat(sceKey(jSce), [n 1])];
-               end
+                for jSce = 1:numel(sceVal)
+                    f = roma.loadMov(sit{iSit},sceVal{jSce}); % column vector
+                    n = numel(f);
+                    filename = [filename; f(:)];%filename = {filename{:}, f{:}};
+                    situation = [situation; repmat(sit(iSit), [n 1])];
+                    scenario = [scenario; repmat(sceKey(jSce), [n 1])];
+                end
             end
             
             roma.data = table(filename, situation, scenario);
-%             disp(roma.data);
+            %             disp(roma.data);
         end
         
         % 		function disp(roma)
@@ -251,7 +251,7 @@ classdef RomaDataset < vvDataset
         
         function gtFiles = groundTruth(varargin)
             % % USAGE:
-            %    RomaDataset.groundTruth(IMG00007.jpg')
+            %    RomaDataset.groundTruth('IMG00007.jpg')
             %    RomaDataset.groundTruth(imageFiles{:})
             
             % IMG00007.jpg
@@ -264,6 +264,7 @@ classdef RomaDataset < vvDataset
             func = @(f) [f(1:end-4) '.png'];
             gtFiles = cellfun(func,varargin,'UniformOutput',false)';
             % N*1 cell
+            if numel(gtFiles) == 1, gtFiles = gtFiles{1}; end
         end
     end
 end

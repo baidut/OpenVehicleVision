@@ -21,12 +21,13 @@ foreach_file_do('%datasets\roma\LRAlargeur13032003/*.jpg',@(x)dualLaneDetector(x
         % 'F:\Documents\pku-road-dataset\1\EMER0009\0379.jpg'
         function self = dualLaneDetector(imgFile, ii_b)
             %% settings
+            ii_method = @(x)self.rgb2ii(x, ii_b);  % 0.06 0.2 roma
+            
             Raw = RawImg(imgFile);%0289
             
             % resize to improve size (not required)
 %             Resized = ColorImg(impyramid(Raw.data, 'reduce'));
             
-            med_size = [10 10]; %ones([1 2])*ceil(Raw.cols/200);
             %TODO: below the horizon
             
             %% ROI selection
@@ -34,38 +35,8 @@ foreach_file_do('%datasets\roma\LRAlargeur13032003/*.jpg',@(x)dualLaneDetector(x
             ROI = Raw.rectroi({rHorizon:Raw.rows,1:Raw.cols});
             
             %% Shadow Removal
-            ShadowFreeImage = self.rgb2ii(ROI, ii_b); % 0.06 0.2 roma
-            % median filter need time-consuming sorting
-%             GraySmooth = medfilt2(ShadowFreeImage,med_size);
-            GraySmooth = wiener2(ShadowFreeImage,med_size);
-            
-            %% Segmentation
-            % two-class will suffer car's interferance
-            % multi-class 
-            
-            %             Bw = im2bw(GraySmooth, graythresh(GraySmooth)+0.15);
-            %% Remove Noise
-            % NOTE: try the wiener2 function: Remove Noise By Adaptive Filtering
-            % see http://cn.mathworks.com/help/images/noise-removal.html
-            % try Relaxation (iterative method) 
-            
-            % imguidedfilter: bad performance
-            %RoadSmooth = imguidedfilter(Road);
-            %imshowpair(Road,RoadSmooth,'montage');
-            
-            %% just get the max conn area
-            %RoadSmooth = bwareaopen(~Road, 50, 8);
-            %RoadSmooth = bwareaopen(Road, 500, 8);% BwImg.dilate(Road);
-            
-            % RoadFace = self.getRoadFaceMultiClass(GraySmooth);
-            
-%             Label = adaptcluster_kmeans(GraySmooth);
-%             RoadFace = LabelImg.maxareaOf(Label);
-%             RoadFace = imfill(RoadFace,'holes');
-%             RoadSegResult = label2rgb(Label);
-
-            RoadFace = self.getRoadFace2Class(GraySmooth, med_size);
-            RoadSegResult = RoadFace;
+            RoadFace = roadDetectionViaIllumInvariant(ROI, ii_method);
+%             RoadSegResult = RoadFace;
 
             %% line detection
             [BoundL, BoundR] = self.straightLineModeling(RoadFace);
@@ -140,13 +111,44 @@ foreach_file_do('%datasets\roma\LRAlargeur13032003/*.jpg',@(x)dualLaneDetector(x
     %% Algorithm that can be used in the future
     methods (Static)
         
+        function RoadFace = roadDetectionViaIllumInvariant(ROI, ii_method) % Illum abbr. for illumination
+            % TODO: for noise removal, try Relaxation (iterative method) 
+            % ii_method: @(x)self.rgb2ii(x, ii_b)  % 0.06 0.2 roma
+            
+            ShadowFreeImage = ii_method(ROI);
+            
+            % median filter need time-consuming sorting, especially when
+            % window is large
+            
+            % GraySmooth = wiener2(ShadowFreeImage,[8 8]); % medfilt2
+            % RoadFace = dualLaneDetector.getRoadFaceMultiClass(GraySmooth); 
+            
+%             Label = adaptcluster_kmeans(GraySmooth);
+%             RoadFace = LabelImg.maxareaOf(Label);
+%             RoadFace = imfill(RoadFace,'holes');
+%             RoadSegResult = label2rgb(Label);
+
+            RoadFace = dualLaneDetector.getRoadFaceMultiClass(ShadowFreeImage); 
+            % getRoadFace2Class GraySmooth
+        end
+        
         function ii_image = rgb2ii(image, c)
-            % im2double is time-consuming
+
+            
 %             [~, G, B] = getChannel(im2double(image));
-%             ii_image =  1-(G+c-B)./B;
+%             ii_image =  1-(G+c-B)./(B+eps);
 %             ii_image(ii_image<0) = 0;
+            
+% im2double is time-consuming
               [~, G, B] = getChannel(image);
               ii_image =  2 - (double(G+c))./(double(B)+eps);
+        end
+        
+        function ii_image = rgb2ii_ori(image, c)
+        %initial version 
+            [~, G, B] = getChannel(im2double(image));
+            ii_image =  1-(G+c-B)./B;
+            ii_image(ii_image<0) = 0;
         end
         
         function ii_image = rgb2ii_eps(image, c)
@@ -156,12 +158,25 @@ foreach_file_do('%datasets\roma\LRAlargeur13032003/*.jpg',@(x)dualLaneDetector(x
         end
         % replace GB with logG, logB perform badly
         
-        function RoadFace = getRoadFace2Class(GraySmooth, med_size)
+        function RoadFace = getRoadFace2Class(GraySmooth)
+           % two-class will suffer car's interferance
            
-            Bw = vvThresh.otsu(GraySmooth);
-%             RoadSmooth = medfilt2(Bw,med_size);
-            RoadSmooth = wiener2(Bw,med_size);
-            RoadFace = BwImg.maxarea(RoadSmooth);
+            %% Binarization
+            bw = vvThresh.otsu(GraySmooth);
+            % Bw = im2bw(GraySmooth, graythresh(GraySmooth)+0.15);
+            %
+            %% Remove noise 
+            %
+            % imguidedfilter: bad performance
+            % RoadSmooth = imguidedfilter(Road);
+            % imshowpair(Road,RoadSmooth,'montage');
+            %
+            % RoadSmooth = bwareaopen(~Road, 50, 8);
+            
+            bwSmooth = medfilt2(bw, [5 5]);
+            bwEroded =  imopen(bwSmooth, strel('disk',8,8));
+            
+            RoadFace = BwImg.maxarea(bwEroded);
             RoadFace = imfill(RoadFace,'holes');
         end
         

@@ -27,7 +27,7 @@ ii_image = ImCtrl(@rgb2ii.will2014, inputImage, alpha);
 % s2_image = ImCtrl(func, inputImage);
 
 %% ours
-Ours = ImCtrl(@dualLaneDetector.rgb2ii, inputImage, alpha);
+Ours = ImCtrl(@dualLaneDetector.rgb2ii, inputImage, 255*alpha);
 
 Fig.subimshow(inputImage, InvariantImage, ii_image, Ours);
 % Fig.subimwrite(); %auto-write after closed

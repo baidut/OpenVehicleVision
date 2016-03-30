@@ -7,9 +7,8 @@ classdef vvDataset<handle
     properties
         path
         %sub % subdataset N*1 cell
-        %curDataset
-        selected % selected files
-        gt
+        %curDataset=
+        %gt
     end
     %Example
     %{
@@ -72,14 +71,9 @@ implay(imgsarray);
             else
                 obj.path = GetFullPath(fullfile(varargin{:}));
             end
-            %             obj.sub = subfolder(path);
             
         end
         
-        function selected = select(obj,selector)
-            obj.selected = obj.filenames(selector);
-            selected = obj.selected;
-        end
         function files = filenames(obj,selector)
             d = dir(fullfile(obj.path,selector));
             nameFolds = {d.name}';
@@ -100,16 +94,14 @@ implay(imgsarray);
         end
         % cell to array: cat
         % a = cat(4, imgs{:})
-        
-        function c = imgscell(obj, selector)
-            if nargin < 2
-                files = obj.selected;
-            else
-                files = obj.select(selector);
-            end
+    end
+    methods (Static)
+        function c = imgscell(selector)
+            files = obj.filenames(selector);
             c = cellfun(@imread,files,'UniformOutput',false);
         end
-        
+    end
+    methods (Access = public)
         function montage(obj, varargin)
             montage(obj.selected, varargin{:});
         end
@@ -122,8 +114,8 @@ implay(imgsarray);
         %         end
         
         function ProbImg = baseline(obj, selector) % averaging images
-             %Example
-             %{
+            %Example
+            %{
                 % After Rain
                 AfterRain = vvDataset('%datasets\nicta-RoadImageDatabase\After-Rain');
 
@@ -141,7 +133,7 @@ implay(imgsarray);
                 Fig.subimshow(ProbImg_AfterRain,ProbImg_SunnyShadows,ProbImg_All);
                 imwrite(ProbImg_All,'%datasets\nicta-RoadImageDatabase\All.png');
              
-             %}
+            %}
             GtImgs = obj.imgsarray(selector);
             % 480   640     1   754
             GtImgs = permute(GtImgs,[1 2 4 3]); % 1 2 3 4 to 1 2 4 3
@@ -151,10 +143,11 @@ implay(imgsarray);
     end
     %% Satic methods
     methods (Static)
-        function roi = selroi(video, roi_size)
-            % select region of interest
-            % GUI tool for choosing roi
-        end
+        %% TODO
+        %         function roi = selroi(video, roi_size)
+        %             % select region of interest
+        %             % GUI tool for choosing roi
+        %         end
         
         function vid2img(video, Out)
             %VID2IMG convert video to images
