@@ -10,7 +10,7 @@ inputImage = ImCtrl(@imread, FilePick());
 alpha = Slider([0 1], 'Value', 0.2);
 
 will2014 = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha); % .53
-alvarez2011 = ImCtrl(@rgb2ii.alvarez2011inv, inputImage, alpha); % .6
+alvarez2011 = ImCtrl(@rgb2ii.alvarez2011, inputImage, alpha, false); % .6
 Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, alpha); % .06
 
 Fig.subimshow(inputImage, alvarez2011, will2014, Ours);
