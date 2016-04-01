@@ -1,8 +1,9 @@
 function test()
 % GetInvariantImage
-    compare_ii_methods
-%   compare_ours_and_others
+% compare_ii_methods
+% compare_ours_and_others
 % test_ours
+show_proj_table
 end
 
 function compare_ii_methods()
@@ -29,7 +30,7 @@ InvariantImage = ImCtrl(@GetInvariantImage, inputImage, angle, tipus, regularize
 
 %% will2014
 alpha = Slider([0 1], 'Value', 0.2);
-ii_image = ImCtrl(@rgb2ii.will2014, inputImage, alpha);
+ii_image = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha);
 
 %% S2
 % S2 perform badly
@@ -44,6 +45,27 @@ Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, alpha);
 Fig.subimshow(inputImage, InvariantImage, ii_image, Ours);
 % Fig.subimwrite(); %auto-write after closed
 
+end
+
+function show_proj_table()
+inputImage = imread('%results/test_rgb2ii_128.png');
+
+%% GetInvariantImage
+angle = Slider([1 180]);
+tipus = Checkbox('norm');
+regularize = Checkbox('Discard outliers', 'Value', 1);
+InvariantImage = ImCtrl(@GetInvariantImage, inputImage, angle, tipus, regularize);
+
+alpha = Slider([0 1], 'Value', 0.2);
+ii_image = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha);
+
+b = Slider([0 1], 'Value', 0.2);
+Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, b);
+
+Gray = repmat(rgb2gray(inputImage), [1 1 3]);
+im = [inputImage, Gray];
+
+Fig.subimshow(im, InvariantImage, ii_image, Ours);
 end
 
 %% test some varient form of our methods

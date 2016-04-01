@@ -1,4 +1,4 @@
-function ii_image = will2014(image, alpha)
+function ii_image = will2014inv(image, alpha)
 %RGB2II convert a RGB image to a illumination invariant grayscale image
 % using the algorithm proposed by Will Maddern in ICRA2014.
 % Paper:
