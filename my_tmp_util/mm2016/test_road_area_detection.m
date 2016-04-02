@@ -1,4 +1,4 @@
-function [  ] = test_road_area_detection(  )
+function [  ] = test_road_area_detection(algo)
 %TEST_ROAD_AREA_DETECTION Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -6,13 +6,15 @@ function [  ] = test_road_area_detection(  )
 % algo = @(im)dualLaneDetector.roadDetectionViaIllumInvariant(im,ii_method);
 
 %% !!!!!!!!!!!!!!!
-algo = @(im)road_detection_via_ii(im,@dualLaneDetector.rgb2ii_ori, {0.08});
+if nargin < 1
+    algo = @(im)road_detection_via_ii(im,@dualLaneDetector.rgb2ii_ori, {0.08});
+end
 
 % algo = @(im)road_detection_via_ii(im,0.2*255);
 
 %% Good cases
 % BDXD54 % IMG00106 IMG00002 IMG00164
-% imgFile = '%datasets\roma\BDXD54\IMG00002.jpg'; 
+imgFile = '%datasets\roma\BDXD54\IMG00106.jpg'; 
 %% Fail cases
 % \IRC04510\IMG00075 % IMG00075
 % \IRC041500\IMG00322
@@ -23,11 +25,19 @@ algo = @(im)road_detection_via_ii(im,@dualLaneDetector.rgb2ii_ori, {0.08});
 
 % imgFile = '%datasets\roma\IRC04510\IMG00075.jpg'; 
 % imgFile = '%datasets\roma\LRAlargeur13032003\IMG01513.jpg';  % IMG01771 IMG01513 IMG01480
-imgFile = '%datasets\roma\RouenN8IRC052310\IMG00915.jpg';  %  IMG01339 IMG01545 IMG00915
+% imgFile = '%datasets\roma\RouenN8IRC052310\IMG00915.jpg';  %  IMG01339 IMG01545 IMG00915
 rawImg = imread(imgFile);
-gtImg = imread(RomaDataset.roadAreaGt(imgFile));
 
-roiOf = @(x)x(ceil(end/2):end,:,:);
+%% Note: we do impyramid to acc speed
+rawImg = impyramid(rawImg,'reduce');
+rawImg = impyramid(rawImg,'reduce');
+
+gtImg = imread(RomaDataset.roadAreaGt(imgFile));
+gtImg = impyramid(gtImg,'reduce');
+gtImg = impyramid(gtImg,'reduce');
+
+roiOf = @(x)x(ceil(end/3):end,:,:); % ceil(end/2)
+
 roiImg = roiOf(rawImg);
 gt = roiOf(gtImg);
 

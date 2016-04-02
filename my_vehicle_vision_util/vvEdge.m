@@ -41,8 +41,8 @@ classdef vvEdge
             range = RangeSlider([0 1]);
             sigma = Slider([0 10]);
             
-            sobel = ImCtrl(@edge, I, 'canny', range, sigma);
-            Fig.subimshow(I, sobel);
+            canny = ImCtrl(@edge, I, 'canny', range, sigma);
+            Fig.subimshow(I, canny);
         end
         
         function E=pdollar(I)

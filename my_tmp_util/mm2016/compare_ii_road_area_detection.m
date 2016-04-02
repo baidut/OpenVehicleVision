@@ -1,16 +1,16 @@
 function [eval, time] = compare_ii_road_area_detection
 
 %% compare the results of diff rgb2ii methods
-extend = '_light';% add light constraint
+extend = '_felzen';% add light constraint
 % extend = '_histotsu';
 
-algonames = {'dualLaneDetector.rgb2ii_ori', ...
+algonames = {'rgb2ii_2d', ...
              'will2014', ...
              'GetInvariantImage01', ...
 };
 algonames = strcat(algonames, extend);
 
-ii_methods = {@dualLaneDetector.rgb2ii_ori,...
+ii_methods = {@rgb2ii_2d,... % dualLaneDetector.rgb2ii_ori
               @rgb2ii.will2014,...
               @(im,p)GetInvariantImage(im,p,0,1),...
 }; 
@@ -31,6 +31,7 @@ for n = 1:N % 1
     ii_method = ii_methods{n};
     ii_param = ii_params{n};
     [eval{n}, time{n}] = benchmark_on_roma(@(im,p)road_detection_via_ii(im,ii_method,{p}), ii_param, algonames{n});
+%     [eval{n}, time{n}] = benchmark_on_roma(@(im,p)road_detection_via_ii(im,ii_method,{p}), ii_param, algonames{n});
     % save
 end
 
@@ -102,7 +103,13 @@ end
 rawImg = cellfun(@imread,rawImgFile,'UniformOutput',false);
 gtImg = cellfun(@imread,gtImgFile,'UniformOutput',false);
 
-roiOf = @(x)x(ceil(end/2):end,:,:);
+%% NOTE: add resize to acc speed
+rawImg = cellfun(@(im)impyramid(im,'reduce'),rawImg,'UniformOutput',false);
+rawImg = cellfun(@(im)impyramid(im,'reduce'),rawImg,'UniformOutput',false);
+gtImg = cellfun(@(im)impyramid(im,'reduce'),gtImg,'UniformOutput',false);
+gtImg = cellfun(@(im)impyramid(im,'reduce'),gtImg,'UniformOutput',false);
+
+roiOf = @(x)x(ceil(end/3):end,:,:);
 roiImg = cellfun(roiOf,rawImg,'UniformOutput',false);
 gt = cellfun(roiOf,gtImg,'UniformOutput',false);
 

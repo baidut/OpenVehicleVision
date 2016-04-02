@@ -1,4 +1,9 @@
 function roadFace = road_detection_via_ii(rawImg, ii_method, ii_params, debug)
+
+if nargin < 4
+    debug = false;
+end
+
 % please do ROI selection before calling road_detection_via_ii
 % 1000 10
 % 480  4
