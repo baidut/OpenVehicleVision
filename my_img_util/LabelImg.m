@@ -17,7 +17,7 @@ classdef LabelImg
 			h = imshow(label2rgb(obj.data), varargin{:});
         end
 		
-		function bw = maxarea(obj)
+		function [bw,index] = maxarea(obj)
 		% max connected area
 		% http://stackoverflow.com/questions/20725603/how-to-select-the-object-with-the-largest-area
 			stat = regionprops(obj.data,'Centroid','Area','PixelIdxList');
@@ -27,7 +27,7 @@ classdef LabelImg
     end% methods
     
     methods(Static)
-        function bw = maxareaOf(obj)
+        function [bw,index] = maxareaOf(obj)
 		% max connected area
 		% http://stackoverflow.com/questions/20725603/how-to-select-the-object-with-the-largest-area
 			stat = regionprops(obj,'Centroid','Area','PixelIdxList');

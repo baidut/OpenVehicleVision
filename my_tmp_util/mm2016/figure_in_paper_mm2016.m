@@ -1,7 +1,7 @@
 %% 3D shadow free image
 function figure_in_paper_mm2016(figno)
 if nargin == 0
-    figno = 2;
+    figno = 8;
 end
 
 figs = {...
@@ -12,6 +12,7 @@ figs = {...
     @ii_help_edge ...
     @ii_help_edge_param ...
     @ii_help_seg ...
+    @compare_ii_road_seg ...
     @kitti_results ...
     };
 figs{figno}();
@@ -254,6 +255,22 @@ res = label2rgb(label.data);
 imwrite(res,'%results/seg/seg_via_ii.png');
 end
 
+function compare_ii_road_seg() 
+
+
+end
+
+function tune_ii_param()
+inputImage = ImCtrl(@imread, FilePick());
+Ours = ImCtrl(@rgb2ii_2d, inputImage, Slider([0 50], 'Value', 0.2));
+Alvarez2011 = ImCtrl(@rgb2ii.alvarez2011, inputImage, Slider([0 1], 'Value', 0.2), 1);
+
+f = Fig;
+f.maximize();
+f.subimshow(inputImage, Ours, Alvarez2011);
+    
+end
+
 function roma_results()
 
 rgb = imread('%datasets\roma\BDXD54\IMG00002.jpg');
@@ -275,26 +292,100 @@ end
 
 
 function kitti_results()
-% UM_ROAD
+% tune_ii_param;return;
+
+% extract ground truth
+
+% I = imread('%results\compare\Persp_umm_road_000025.png');
+% G = I(:,:,2);
+% G(1:ceil(end/3),:) = 0;
+% bw = BwImg(G==255);
+% gt = bw.maxarea();
+% imwrite(gt, '%results\compare\gt_umm_road_000025.png');
+% return;
+%% UU_ROAD
+
+%% UM_ROAD
 
 testImages = {'uu_000020.png','uu_000027.png' ...
+    'um_000095.png'...
+    'umm_000025.png'...
+    'umm_000066.png'
 };
 % 
-now_test = testImages{1};
+now_test = testImages{4};
 % 209 216
 % 271 44
-% 77 94
-
+% 77 94 umm_000095.png
+% umm_000025
+% umm_000066
 rgb = imread(['%datasets\KITTI\data_road\testing\image_2\', now_test]);
-rgb = impyramid(rgb,'reduce');
-rgb = impyramid(rgb,'reduce');
+
+gray = im2double(rgb2gray(rgb));
+alvarez2011 = rgb2ii.alvarez2011(rgb,.1,false); % .6 bad .07
+will2014 = rgb2ii.will2014(rgb,.53);
+ours = rgb2ii_2d(rgb,18.7499); % dualLaneDetector.rgb2ii_ori(imr,.06);
+saturation = vvFeature.S(rgb);
+s2 = vvFeature.S2(rgb);
+
+% min(will2014(:)) -Inf
+% max(will2014(:)) 2.4726
+% min(alvarez2011(:)) 0-1
+% max(alvarez2011(:))
+% Fig.subimshow(alvarez2011,will2014,ours);return;
+
+test_ii_kitti(now_test, gray);
+test_ii_kitti(now_test, alvarez2011);
+test_ii_kitti(now_test, will2014);
+test_ii_kitti(now_test, ours);
+test_ii_kitti(now_test, rgb);
+test_ii_kitti(now_test, saturation);
+test_ii_kitti(now_test, s2);
+
+end
+
+function test_ii_kitti(now_test, raw_ii)
+gt = imread(['%results\compare\gt\image_2\', now_test]);
 
 %% improve
-% gray = rgb2ii_2d(rgb,[2,3],.2*255); %im2double(rgb2gray(rgb));
-% ii = repmat(im2uint8(gray), [1 1 3]);
-ii = rgb2ii_3d(rgb);
+if size(raw_ii,3) == 1
+   ii = repmat(im2uint8(raw_ii), [1 1 3]); 
+else
+    ii = im2uint8(raw_ii);
+end
+%or
+% ii = im2uint8(rgb2ii_3d(rgb));
 
-label = vvSeg.felzen(ii, 0.5, 600, 300);
+label = vvSeg.felzen(ii, 1.5, 500, 800);% near filed should have big "min"  do segmentation in IPM image.
+% Get IPM image.
 res = label2rgb(label.data);
-imshow(res);
+% Fig.subimshow(gt, ii,res);
+
+[~,index] = LabelImg.maxareaOf(label.data(ceil(end*2/3):end,:));
+
+result = label.data == index;
+
+algoname = inputname(2);
+disp(algoname);
+eval = ConfMat({result},{gt},1);
+% imshow(roiImg/3+eval.mask{1});
+disp(eval);
+% 0.98484    0.96515    0.9737    0.011512    0.026296
+% part of error are caused by false gt label
+
+% compare with gt
+
+imwrite(label2rgb(label.data),['%results/compare/label_' algoname '_' now_test]);
+imwrite(raw_ii,['%results/compare/ii_'  algoname '_'  now_test]);
+imwrite(result,['%results/compare/res_' algoname '_' now_test]);
+end
+
+function tune_ii_param()
+inputImage = ImCtrl(@imread, FilePick());
+Ours = ImCtrl(@rgb2ii_2d, inputImage, Slider([0 50], 'Value', 0.2));
+Alvarez2011 = ImCtrl(@rgb2ii.alvarez2011, inputImage, Slider([0 1], 'Value', 0.2), 1);
+
+f = Fig;
+f.maximize();
+f.subimshow(inputImage, Ours, Alvarez2011);
 end

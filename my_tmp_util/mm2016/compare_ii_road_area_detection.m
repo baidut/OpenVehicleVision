@@ -65,67 +65,13 @@ for n = 1:numel(RomaDataset.situations)
 end
 %}
 
-function [eval, time] = benchmark_on_roma(algo, paramList, algoname)
-%Benchmark on Roma Dataset
-% Benchmark single algo in multi situation
-% paramList is a cell array
 
-if nargin < 3
-    algoname = char(algo);
-end
-    
+% function [eval, time] = benchmark_on_roma(algo, paramList, algoname)
+% this function has been moved to RomaDataset class
+% end
 
-roma = RomaDataset('%datasets\roma');
-n = numel(roma.situations);
-time = zeros([n 1]);
-eval = repmat(ConfMat(),[n 1]);
+% function [eval, time] = benchmark1Algo1Situ(rawImgFile, gtImgFile, algo, algoname)
+% this function has been moved to ConfMat class
+% end
 
-for iSitu = 1:n
-    rows = strcmp(roma.data.situation,roma.situations{iSitu}) == 1;
-    rawImgFile = roma.data(rows,:).filename;
-    
-    gtImgFile = roma.roadAreaGt(rawImgFile{:});
-    param = paramList(iSitu);
-    
-    f = @(im)algo(im,param{:});
-    [eval(iSitu), time(iSitu)] = benchmark1Algo1Situ(rawImgFile, gtImgFile, f, algoname);
-end
 
-end
-
-function [eval, time] = benchmark1Algo1Situ(rawImgFile, gtImgFile, algo, algoname)
-%Benchmark single algo in single situation
-% Note we just benchmark the lower half of image.
-if nargin < 3
-    algoname = char(algo);
-end
-
-rawImg = cellfun(@imread,rawImgFile,'UniformOutput',false);
-gtImg = cellfun(@imread,gtImgFile,'UniformOutput',false);
-
-%% NOTE: add resize to acc speed
-rawImg = cellfun(@(im)impyramid(im,'reduce'),rawImg,'UniformOutput',false);
-rawImg = cellfun(@(im)impyramid(im,'reduce'),rawImg,'UniformOutput',false);
-gtImg = cellfun(@(im)impyramid(im,'reduce'),gtImg,'UniformOutput',false);
-gtImg = cellfun(@(im)impyramid(im,'reduce'),gtImg,'UniformOutput',false);
-
-roiOf = @(x)x(ceil(end/3):end,:,:);
-roiImg = cellfun(roiOf,rawImg,'UniformOutput',false);
-gt = cellfun(roiOf,gtImg,'UniformOutput',false);
-
-tic
-result = cellfun(algo,roiImg,'UniformOutput',false);
-time = toc/numel(roiImg);
-
-eval = ConfMat(result,gt);
-% disp(eval);
-% vis(eval,roiImg);
-maskedImg = vis(eval, roiImg);
-
-rename = @(f) [f(1:end-4) '_', algoname, '.png'];
-maskedImgFile = cellfun(rename,rawImgFile,'UniformOutput',false);
-
-cellfun(@imwrite,maskedImg,maskedImgFile,'UniformOutput',false);
-% save visualization images
-
-end

@@ -41,6 +41,9 @@ classdef BwImg
         function value = uplus(obj)
             value = obj.data;
         end
+        function bw = maxarea(obj)
+            bw = obj.maxareaOf(obj);
+        end
     end
     methods (Static)
         
@@ -54,7 +57,7 @@ classdef BwImg
         % I = BwImg(imread('text.png'));
         % imshow(I.maxarea(+I));
         % 
-        function bw = maxarea(obj) % input can be an obj or bw image.
+        function bw = maxareaOf(obj) % input can be an obj or bw image.
         % http://cn.mathworks.com/help/images/ref/bwconncomp.html
             bw = false(size(+obj));
             CC = bwconncomp(+obj); % support BwImg

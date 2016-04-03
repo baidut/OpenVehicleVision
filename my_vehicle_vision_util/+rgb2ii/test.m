@@ -1,9 +1,9 @@
 function test()
 % GetInvariantImage
 % compare_ii_methods
-% compare_ours_and_others
+compare_ours_and_others
 % test_ours
-show_proj_table
+% show_proj_table
 end
 
 function compare_ii_methods()

@@ -34,9 +34,9 @@ classdef ConfMat < handle
     
     %}
     properties (GetAccess = public, SetAccess = private)
-        % we use 1*N instead of N*1 
+        % we use 1*N instead of N*1
         % since the [eval(:).TP] is more convenient than vertcat(eval(:).TP)
-        TP,FP % 1*N double 
+        TP,FP % 1*N double
         FN,TN
         
         mask % for visualization
@@ -61,7 +61,7 @@ classdef ConfMat < handle
             % FP and FN need to be transparent for finding the
             % possible reason.
             % ------------------ R ---------- G ------- B -----
-%             mask = uint8(cat(3,FN_bw*128,TP_bw*255,FP_bw*128));
+            %             mask = uint8(cat(3,FN_bw*128,TP_bw*255,FP_bw*128));
             mask = uint8(cat(3,FN_bw*200,TP_bw*200,FP_bw*200));
         end
     end
@@ -157,15 +157,15 @@ classdef ConfMat < handle
                 [xsorted, I] = sort(x);
                 ysorted = y(I);
             end
-
-%             arrayfun(@(x)roc1(x,color),eval);
-%             function roc1(eval, color)
-%                 FPR = eval.fallout;
-%                 TPR = eval.sensitivity;
-%                 xlabel('False positive rate', 'fontsize', 12);
-%                 ylabel('True positive rate', 'fontsize', 12);
-%                 plot(FPR, TPR, color, 'LineWidth', 2);
-%             end
+            
+            %             arrayfun(@(x)roc1(x,color),eval);
+            %             function roc1(eval, color)
+            %                 FPR = eval.fallout;
+            %                 TPR = eval.sensitivity;
+            %                 xlabel('False positive rate', 'fontsize', 12);
+            %                 ylabel('True positive rate', 'fontsize', 12);
+            %                 plot(FPR, TPR, color, 'LineWidth', 2);
+            %             end
         end
         
         function disp(eval)
@@ -173,8 +173,57 @@ classdef ConfMat < handle
             % evaluation report
             builtin('disp',eval);
             disp(table(eval));
-%             if isempty(eval), return; end
-%             arrayfun(@(x)disp(table(x)),eval);
+            %             if isempty(eval), return; end
+            %             arrayfun(@(x)disp(table(x)),eval);
+        end
+    end
+    
+    methods (Static)
+        function [eval, time] = eval(rawImgFile, gtImgFile, algo, algoname)
+            %Benchmark single algo in single situation
+            %  ConfMat.eval({}, {}, algo, algoname)
+            % 
+            if nargin < 3
+                algoname = char(algo);
+            end
+            N = numel(rawImgFile);
+            
+            rawImg = cellfun(@imread,rawImgFile,'UniformOutput',false);
+            gtImg = cellfun(@imread,gtImgFile,'UniformOutput',false);
+            
+            %%
+            % it is not recommended to do resize or roi selection
+            % when evaluating
+            %% RESIZE
+            %             rawImg = cellfun(@(im)impyramid(im,'reduce'),rawImg,'UniformOutput',false);
+            %             rawImg = cellfun(@(im)impyramid(im,'reduce'),rawImg,'UniformOutput',false);
+            %             gtImg = cellfun(@(im)impyramid(im,'reduce'),gtImg,'UniformOutput',false);
+            %             gtImg = cellfun(@(im)impyramid(im,'reduce'),gtImg,'UniformOutput',false);
+            
+            %% ROI
+            %             roiOf = @(x)x(ceil(end/3):end,:,:);
+            %             rawImg = cellfun(roiOf,rawImg,'UniformOutput',false);
+            %             gtImg = cellfun(roiOf,gtImg,'UniformOutput',false);
+            
+            result = cell(1,N);
+            tic
+            %             result = cellfun(algo,rawImg,'UniformOutput',false);
+            %cellfun is slower
+            for n = 1:N
+                result{n} = algo(rawImg);
+            end
+            time = toc/N;
+            
+            eval = ConfMat(result,gtImg);
+            % disp(eval);
+            % vis(eval,roiImg);
+            maskedImg = vis(eval, rawImg);
+            
+            rename = @(f) [f(1:end-4) '_', algoname, '.png'];
+            maskedImgFile = cellfun(rename,rawImgFile,'UniformOutput',false);
+            
+            cellfun(@imwrite,maskedImg,maskedImgFile,'UniformOutput',false);
+            % save visualization images
         end
     end
     

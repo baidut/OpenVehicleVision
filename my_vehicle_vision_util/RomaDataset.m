@@ -111,6 +111,77 @@ classdef RomaDataset < vvDataset
     end
     
     methods (Static)
+        function [eval, time] = eval_road(algos, situations)
+            % road detection evaluation on ROMA
+            % Benchmark single algo in multi situation
+            
+            % PRAM      | TYPE   | USE CASE | DEFAULT VALUE
+            % algo       struct or struct array
+            % .name      char
+            % .func      function_handle
+            % .param     1X10 cell
+            % situations array      1:2,2      1:10
+            
+            disp('load algo...');
+            if ~isfield(algos, 'func')
+                error('func is needed!');
+            end
+            if ~isfield(algos, 'name')
+                if isempty(inputname(1)) % algoArr(2)
+                    for algo = algos
+                        algo.name = char(algo.func);
+                    end
+                else
+                    if numel(algos) > 1
+                        names = num2str([1:numel(algos)]', [inputname(1) '%0d']);
+                        for n = 1:numel(algos)
+                            algos(n).name = names(n);
+                        end
+                    else
+                        algos.name = inputname(1);
+                    end
+                end
+            end
+            if ~isfield(algos, 'param')
+                for algo = algos
+                	algo.param = cell(numel(RomaDataset.situations), 1); % empty
+                end
+            end
+            disp(algos);
+            
+            disp('load situations...');
+            roma = RomaDataset('%datasets\roma');
+            n = numel(roma.situations);
+            
+            if nargin < 2
+                % test all situations
+                situations = 1:n;
+            end
+            
+            time = zeros([n 1]);
+            eval = repmat(ConfMat(),[n 1]);
+            
+            for algo = algos
+                for iSitu = situations % 1:n
+                    disp(roma.data.situation);
+                    
+                    rows = strcmp(roma.data.situation,roma.situations{iSitu}) == 1;
+                    rawImgFile = roma.data(rows,:).filename;
+                    
+                    gtImgFile = roma.roadAreaGt(rawImgFile{:});
+                    param = algo.param(iSitu);
+                    
+                    f = @(im)algo(im,param{:});
+                    [eval(iSitu), time(iSitu)] = ConfMat.eval(rawImgFile, gtImgFile, f, algoname);
+                end
+            end
+        end
+        
+        function [] = eval_road_bound()
+            % TODO: extract curve via GT
+            % then evaluate it
+        end
+        
         function [TPs,FPs,TNs,FNs, time] = benchmark(algo, imageFiles, threshRange)
             % images = roma.images('BDXD54','Rimg.mov');
             % roma.benchmark(@vvMark.LT, images, [1 254])
