@@ -36,6 +36,7 @@ classdef RomaDataset < vvDataset
     methods (Access = public)
         function roma = RomaDataset(varargin)
             roma@vvDataset(varargin{:});
+            
             % init
             addpath(roma.path); % call loadlist
             
@@ -111,7 +112,7 @@ classdef RomaDataset < vvDataset
     end
     
     methods (Static)
-        function [eval, time] = eval_road(algos, situations)
+        function [eval, time] = eval_road(algos, situationIndex, fileIndex)
             % road detection evaluation on ROMA
             % Benchmark single algo in multi situation
             
@@ -120,7 +121,8 @@ classdef RomaDataset < vvDataset
             % .name      char
             % .func      function_handle
             % .param     1X10 cell
-            % situations array      1:2,2      1:10
+            % situationIndex array  1:2,2      1:10
+            % fileIndex  array
             
             disp('load algo...');
             if ~isfield(algos, 'func')
@@ -153,26 +155,31 @@ classdef RomaDataset < vvDataset
             roma = RomaDataset('%datasets\roma');
             n = numel(roma.situations);
             
-            if nargin < 2
+            if ~exist('situationIndex','var')
                 % test all situations
-                situations = 1:n;
+                situationIndex = 1:n;
             end
             
             time = zeros([n 1]);
             eval = repmat(ConfMat(),[n 1]);
             
             for algo = algos
-                for iSitu = situations % 1:n
-                    disp(roma.data.situation);
+                for iSitu = situationIndex % 1:n
+                    disp(roma.situations{iSitu});
                     
                     rows = strcmp(roma.data.situation,roma.situations{iSitu}) == 1;
-                    rawImgFile = roma.data(rows,:).filename;
+                    rawImgFile = roma.data(rows,:).filename;%cell
                     
-                    gtImgFile = roma.roadAreaGt(rawImgFile{:});
-                    param = algo.param(iSitu);
+                    if exist('fileIndex','var')
+                        rawImgFile = rawImgFile(fileIndex);%cell
+                    end
                     
-                    f = @(im)algo(im,param{:});
-                    [eval(iSitu), time(iSitu)] = ConfMat.eval(rawImgFile, gtImgFile, f, algoname);
+                    gtImgFile = roma.roadAreaGt(rawImgFile);
+                    
+                    evalAlgo = algo;
+                    evalAlgo.param = algo.param(iSitu);
+                    
+                    [eval(iSitu), time(iSitu)] = ConfMat.eval(rawImgFile, gtImgFile, evalAlgo);
                 end
             end
         end
@@ -321,6 +328,8 @@ classdef RomaDataset < vvDataset
         end
         
         function gtFiles = groundTruth(varargin)
+        % note the output is a N*1 cell
+        % we wont convert the cell to str when there are only one input
             % % USAGE:
             %    RomaDataset.groundTruth('IMG00007.jpg')
             %    RomaDataset.groundTruth(imageFiles{:})
@@ -331,11 +340,16 @@ classdef RomaDataset < vvDataset
             gtFiles = cellfun(func,varargin,'UniformOutput',false);
         end
         
-        function gtFiles = roadAreaGt(varargin)
+        function gtFiles = roadAreaGt(files)
+        %Converter: output type is the same as the input
             func = @(f) [f(1:end-4) '.png'];
-            gtFiles = cellfun(func,varargin,'UniformOutput',false)';
-            % N*1 cell
-            if numel(gtFiles) == 1, gtFiles = gtFiles{1}; end
+            if iscell(files)
+                gtFiles = cellfun(func,files,'UniformOutput',false)';
+            elseif ischar(files)
+                gtFiles = func(files);
+            else
+                error('input type not support!');
+            end
         end
     end
 end

@@ -23,7 +23,11 @@ classdef LabelImg
 			stat = regionprops(obj.data,'Centroid','Area','PixelIdxList');
 			[maxValue,index] = max([stat.Area]);
 			bw = BwImg(obj.data == index);
-		end
+        end
+        
+        function c = uplus(a)
+            c = a.data;
+        end
     end% methods
     
     methods(Static)

@@ -57,10 +57,17 @@ classdef vvSeg
 			if nargout == 0 && nargin < 2
 				if nargin < 1
 					Img = imread('F:\Documents\pku-road-dataset\1\EMER0009\0379.jpg');
-				end
-				Sigma = Uiview('slider','min',0,'max',2,'value',0.5);
-				Segments = Uictrl(@vvSeg.felzen, Img, Sigma, 500, 50);
-				Ui.subplot(Img, Segments);
+                end
+                sigma = Slider([0 3]);
+                k = Slider([1 1000]);
+                min = Slider([1 size(Img,1)*size(Img,2)/20]);
+                
+                felzen = @(im,sigma,k,min)label2rgb(+vvSeg.felzen(im,sigma,k,min));
+                seg = ImCtrl(felzen, Img, sigma, k, min);
+                
+				F = Fig;
+                F.maximize();
+                F.subimshow(Img, seg);
 				return;
 			end
 		

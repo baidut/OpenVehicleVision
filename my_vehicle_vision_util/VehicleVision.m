@@ -17,14 +17,7 @@ classdef VehicleVision
             % Supported specifications:
             % 'tacking'         - true to enable tracking module. Note the images should 
             %                     have same size and be sorted by time when tracking is on. 
-        	% 'displayLevel'   -  determine how much information to be displayed. (default is 1)
-        	%                     0 : no display, only output result to file (release)
-            %                     1 : errors
-        	%                     2 : + warnings
-        	%                     3 : + show main figure (debug, time consuming)
-            %                     4 : + output intermediate results (when encountering bugs)
-        	%                     5 : + progression (progressbar)
-        	%                     6 : + information (disp more information)
+
         	p = inputParser;
         	addRequired(p,'imList',@isstr);
 		   	addOptional(p,'displayLevel', 1,@isnumeric); 

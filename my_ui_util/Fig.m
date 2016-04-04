@@ -223,6 +223,14 @@ classdef Fig < handle
                 str = [s1, s2];
             end
         end
+        
+        function subplotxy(x,y)
+            % rearrange the subplot #rows and #cols
+        end
+        
+        function image = montage()
+            % subplot images to one montage image
+        end
     end
     
 end% classdef

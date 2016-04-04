@@ -6,8 +6,8 @@ function ii = ying2016(rgb, c)
     ii =  2 - (R1+c)./(R2+1); % +1 to avoid /0
     
     % matlab will do following when doing imshow
-%     ii(ii<0) = 0;
-%     ii(ii>1) = 1;
+	ii(ii<0) = 0;
+	ii(ii>1) = 1;
 end
 
 % MATLAB is very fast at parsing, so the PCODE function rarely makes much

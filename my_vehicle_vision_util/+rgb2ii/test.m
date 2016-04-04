@@ -10,7 +10,7 @@ function compare_ii_methods()
 inputImage = ImCtrl(@imread, FilePick());
 alpha = Slider([0 1], 'Value', 0.2);
 
-will2014 = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha); % .53
+will2014 = ImCtrl(@rgb2ii.maddern2014, inputImage, alpha); % .53
 alvarez2011 = ImCtrl(@rgb2ii.alvarez2011, inputImage, alpha, false); % .6
 Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, alpha); % .06
 
@@ -30,7 +30,7 @@ InvariantImage = ImCtrl(@GetInvariantImage, inputImage, angle, tipus, regularize
 
 %% will2014
 alpha = Slider([0 1], 'Value', 0.2);
-ii_image = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha);
+ii_image = ImCtrl(@rgb2ii.maddern2014, inputImage, alpha);
 
 %% S2
 % S2 perform badly
@@ -57,7 +57,7 @@ regularize = Checkbox('Discard outliers', 'Value', 1);
 InvariantImage = ImCtrl(@GetInvariantImage, inputImage, angle, tipus, regularize);
 
 alpha = Slider([0 1], 'Value', 0.2);
-ii_image = ImCtrl(@rgb2ii.will2014inv, inputImage, alpha);
+ii_image = ImCtrl(@rgb2ii.maddern2014, inputImage, alpha);
 
 b = Slider([0 1], 'Value', 0.2);
 Ours = ImCtrl(@dualLaneDetector.rgb2ii_ori, inputImage, b);

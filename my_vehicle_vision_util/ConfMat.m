@@ -179,13 +179,11 @@ classdef ConfMat < handle
     end
     
     methods (Static)
-        function [eval, time] = eval(rawImgFile, gtImgFile, algo, algoname)
+        function [eval, time] = eval(rawImgFile, gtImgFile, algo)
             %Benchmark single algo in single situation
             %  ConfMat.eval({}, {}, algo, algoname)
             % 
-            if nargin < 3
-                algoname = char(algo);
-            end
+            
             N = numel(rawImgFile);
             
             rawImg = cellfun(@imread,rawImgFile,'UniformOutput',false);
@@ -210,7 +208,7 @@ classdef ConfMat < handle
             %             result = cellfun(algo,rawImg,'UniformOutput',false);
             %cellfun is slower
             for n = 1:N
-                result{n} = algo(rawImg);
+                result{n} = algo.func(rawImg{n}, algo.param{:});
             end
             time = toc/N;
             
@@ -219,11 +217,17 @@ classdef ConfMat < handle
             % vis(eval,roiImg);
             maskedImg = vis(eval, rawImg);
             
-            rename = @(f) [f(1:end-4) '_', algoname, '.png'];
+            rename = @(f) [f(1:end-4) '_', algo.name, '.png'];
             maskedImgFile = cellfun(rename,rawImgFile,'UniformOutput',false);
+            
+%             d = exDebugger('level',4);
+%             for n = 1:N
+%                d.implot(4,maskedImg{n});
+%             end
             
             cellfun(@imwrite,maskedImg,maskedImgFile,'UniformOutput',false);
             % save visualization images
+            disp ok
         end
     end
     
