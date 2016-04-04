@@ -39,7 +39,7 @@ classdef ConfMat < handle
         TP,FP % 1*N double
         FN,TN
         
-        mask % for visualization
+        mask % for visualization % 1xN cell
     end
     
     methods (Static)
@@ -87,9 +87,11 @@ classdef ConfMat < handle
         function MaskedImgs = vis(eval, rawImgs)
             % visualize
             disp_method = @(raw,mask)(raw/3+mask);
-            
-            MaskedImgs = cellfun(disp_method,rawImgs,eval.mask,'UniformOutput',false);
-            
+            N = numel(rawImgs);
+            MaskedImgs = cell([1 N]);
+            for n = 1:N
+                MaskedImgs{n} = disp_method(rawImgs{n},eval.mask{n});
+            end
             %             cell2mat(arrayfun(@(x,y)disp_method(x{:},y{:}), ...
             %             num2cell(rawImgs,1:3),num2cell(eval.mask,1:3),...
             %             'UniformOutput', false));
@@ -130,11 +132,11 @@ classdef ConfMat < handle
         end
         
         function T = table(eval)
-            ACC = eval.accuracy';
-            PRE = eval.precision';
-            REC = eval.recall';
-            FPR = eval.fallout';
-            FNR = eval.missrate';
+            ACC = eval.accuracy;
+            PRE = eval.precision;
+            REC = eval.recall;
+            FPR = eval.fallout;
+            FNR = eval.missrate;
             
             T = table(ACC,...
                 PRE,REC,...
@@ -182,7 +184,7 @@ classdef ConfMat < handle
         function [eval, time] = eval(rawImgFile, gtImgFile, algo)
             %Benchmark single algo in single situation
             %  ConfMat.eval({}, {}, algo, algoname)
-            % 
+            %
             
             N = numel(rawImgFile);
             
@@ -212,20 +214,21 @@ classdef ConfMat < handle
             end
             time = toc/N;
             
+            
             eval = ConfMat(result,gtImg);
             % disp(eval);
             % vis(eval,roiImg);
             maskedImg = vis(eval, rawImg);
             
-            rename = @(f) [f(1:end-4) '_', algo.name, '.png'];
-            maskedImgFile = cellfun(rename,rawImgFile,'UniformOutput',false);
+            for n = 1:N
+                maskedImgFile = [rawImgFile{n}(1:end-4) '_', algo.name, '.png'];
+                imwrite(maskedImg{n},maskedImgFile);
+            end
+            %             d = exDebugger('level',4);
+            %             for n = 1:N
+            %                d.implot(4,maskedImg{n});
+            %             end
             
-%             d = exDebugger('level',4);
-%             for n = 1:N
-%                d.implot(4,maskedImg{n});
-%             end
-            
-            cellfun(@imwrite,maskedImg,maskedImgFile,'UniformOutput',false);
             % save visualization images
             disp ok
         end

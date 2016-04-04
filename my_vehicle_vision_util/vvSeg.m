@@ -60,7 +60,7 @@ classdef vvSeg
                 end
                 sigma = Slider([0 3]);
                 k = Slider([1 1000]);
-                min = Slider([1 size(Img,1)*size(Img,2)/20]);
+                min = Slider([1 size(Img,1)*size(Img,2)/10]);
                 
                 felzen = @(im,sigma,k,min)label2rgb(+vvSeg.felzen(im,sigma,k,min));
                 seg = ImCtrl(felzen, Img, sigma, k, min);

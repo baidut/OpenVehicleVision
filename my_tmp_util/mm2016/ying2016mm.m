@@ -300,7 +300,7 @@ classdef ying2016mm
         end
         
         function compare_ii_road_seg()
-            tune = false;%true;
+            tune = true;%false;
 
             algo.name = 'ours+felzen';
             algo.func = @ying2016mm.road_seg_via_ii_felzen;
@@ -313,7 +313,8 @@ classdef ying2016mm
                 ii_algo.func = ying2016mm.OURS.func;
                 ii_algo.param = ying2016mm.OURS.param(1);
                 
-                rawImg = imread('%datasets\roma\BDXD54\IMG00002.jpg');
+                rawImg = imread('%datasets\roma\BDXD54\IMG00146.jpg');
+                % IMG00002 IMG00146 IMG00030
                 
                 iiImg =  ii_algo.func(rawImg,ii_algo.param{:});
                 ii = repmat(im2uint8(iiImg), [1 1 3]);
@@ -326,9 +327,10 @@ classdef ying2016mm
                 ii_algo.param = param;
                 algo.param{end+1} = ii_algo;
             end
-            
+            disp ok
 %             RomaDataset.eval_road(algo, 1, 1)
-                RomaDataset.eval_road(algo, 1)
+              RomaDataset.eval_road(algo, 1);
+              
                 %TODO sep processing and evaluating
         end
         
@@ -344,12 +346,21 @@ classdef ying2016mm
             %% Illumination Invariant Imaging
             % RGB --> II
             iiImg =  ii_algo.func(rawImg,ii_algo.param{:});
-            ii = repmat(im2uint8(iiImg), [1 1 3]);
-            label = vvSeg.felzen(ii, 1.5, 600, 5000);%1.5,600,1000
+            
+            %% ROI selection
+            ii = repmat(im2uint8(iiImg(ceil(end/3):end,:)), [1 1 3]);
+            label = vvSeg.felzen(ii, 1, 550, 5000);%1.5,600,1000
+            % 1.1029,559.2652,8.1929e+03
+            % 2.6912,67.1098,65536
 %             1.5000,551.9195,77111;
-            RoadFace = label.maxarea();
-            Fig.subimshow(rawImg, label2rgb(label.data), RoadFace);
-            res = RoadFace.data;
+%             RoadFace = label.maxarea();
+%             res = RoadFace.data;
+            
+            [~,index] = LabelImg.maxareaOf(label.data(ceil(end/3):end,:));
+            res = zeros([size(iiImg,1),size(iiImg,2)]);
+            res(ceil(end/3):end,:) = label.data == index;
+            
+            Fig.subimshow(rawImg, label2rgb(label.data), res);
             
             %% Debug
             if debugLevel > 4
