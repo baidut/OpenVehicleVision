@@ -55,3 +55,7 @@ Related dataset, more detection results can be found and download free [here](ht
 ## License
 
 MIT
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/baidut/openvehiclevision/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
