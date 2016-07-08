@@ -1,6 +1,8 @@
 # OpenVV: Open Source Vehicle Vision Library
 
 [![Join the chat at https://gitter.im/baidut/OpenVehicleVision](https://badges.gitter.im/baidut/OpenVehicleVision.svg)](https://gitter.im/baidut/OpenVehicleVision?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at Tencent QQ Group 538432092](https://img.shields.io/badge/chat%20on-QQ-green.svg)](doc/join-qq-group.md)
+
 
 by [Zhenqiang Ying](https://github.com/baidut/)
 
