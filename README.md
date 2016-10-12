@@ -8,7 +8,7 @@ by [Zhenqiang Ying](https://github.com/baidut/)
 
 ## Publications
 
-- [MM2016 "A Novel Shadow-Free Feature Extractor for Real-Time Road Detection"](https://github.com/baidut/Shaffe)
+- [MM2016 "A Novel Shadow-Free Feature Extractor for Real-Time Road Detection"](https://github.com/baidut/Shaffer)
 - ICASSP2016 "Robust Lane Marking Detection using Boundary-Based Inverse Perspective Mapping"
 - [ISM2015 "An Illumination-Robust Approach for Feature-Based Road Detection"](https://github.com/baidut/s-prime)
 
